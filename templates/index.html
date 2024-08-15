@@ -107,14 +107,47 @@
 
         #file-input,
         #mode-toggle,
-        #settings-icon {
-            cursor: pointer;
-            font-size: 24px;
+        #top-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 15px;
         }
 
+        #settings-icon {
+            cursor: pointer;
+            font-size: 24px;
+        }
+
+        #page-navigation {
+            display: flex;
+            align-items: center;
+        }
+
+        #page-input {
+            width: 60px;
+            margin-right: 10px;
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+        }
+
+        #go-to-page-btn {
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        #go-to-page-btn:hover {
+            background-color: #34495e;
+        }
+
         #settings-panel {
-            margin-bottom: 15px;
+            margin-top: 15px;
         }
 
         #api-key-input,
@@ -282,17 +315,19 @@
 <body>
     <div id="top-bar">
         <input type="file" id="file-input">
-        <div id="page-navigation">
-            <span id="current-page">Page: 1</span>
-            <input type="number" id="page-input" min="1" placeholder="Go to page">
-            <button id="go-to-page-btn">Go</button>
-        </div>
+        <span id="current-page">Page: 1</span>
     </div>
     <div id="left-panel">
         <div id="pdf-viewer"></div>
     </div>
     <div id="right-panel">
-        <div id="settings-icon">⚙️</div>
+        <div id="top-controls">
+            <div id="settings-icon">⚙️</div>
+            <div id="page-navigation">
+                <input type="number" id="page-input" min="1" placeholder="Go to page">
+                <button id="go-to-page-btn">Go</button>
+            </div>
+        </div>
         <div id="settings-panel" style="display: none;">
             <input type="password" id="api-key-input" placeholder="Enter Claude API Key">
             <select id="model-select">
