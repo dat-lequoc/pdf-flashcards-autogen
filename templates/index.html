@@ -184,6 +184,7 @@ Now generate flashcards for this text:</textarea>
         <div id="flashcards"></div>
         <div id="collection">
             <button id="add-to-collection-btn">Add to Collection (0)</button>
+            <button id="clear-collection-btn">Clear Collection</button>
         </div>
         <button id="export-csv-btn" style="display: none;">Export Flashcards to CSV</button>
         <div id="recent-pdfs">
@@ -513,6 +514,19 @@ Now generate flashcards for this text:</textarea>
         }
 
         document.getElementById('export-csv-btn').addEventListener('click', exportToCSV);
+
+        function clearCollection() {
+            if (confirm('Are you sure you want to clear the entire collection? This action cannot be undone.')) {
+                collectedFlashcards = [];
+                collectionCount = 0;
+                updateCollectionCount(0);
+                updateExportButtonVisibility();
+                localStorage.removeItem('collectedFlashcards');
+                localStorage.removeItem('collectionCount');
+            }
+        }
+
+        document.getElementById('clear-collection-btn').addEventListener('click', clearCollection);
 
         // Initialize export button visibility
         updateExportButtonVisibility();
