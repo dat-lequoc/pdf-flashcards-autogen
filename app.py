@@ -57,23 +57,28 @@ def generate_flashcard():
         
         content = message.content[0].text
         print(content)
-        flashcards = []
-        current_question = ''
-        current_answer = ''
 
-        for line in content.split('\n'):
-            if line.startswith('Q:'):
-                if current_question and current_answer:
-                    flashcards.append({'question': current_question, 'answer': current_answer})
-                current_question = line[2:].strip()
-                current_answer = ''
-            elif line.startswith('A:'):
-                current_answer = line[2:].strip()
+        if 'flashcard' in prompt.lower():
+            flashcards = []
+            current_question = ''
+            current_answer = ''
 
-        if current_question and current_answer:
-            flashcards.append({'question': current_question, 'answer': current_answer})
+            for line in content.split('\n'):
+                if line.startswith('Q:'):
+                    if current_question and current_answer:
+                        flashcards.append({'question': current_question, 'answer': current_answer})
+                    current_question = line[2:].strip()
+                    current_answer = ''
+                elif line.startswith('A:'):
+                    current_answer = line[2:].strip()
 
-        response = make_response(jsonify({'flashcards': flashcards}))
+            if current_question and current_answer:
+                flashcards.append({'question': current_question, 'answer': current_answer})
+
+            response = make_response(jsonify({'flashcards': flashcards}))
+        else:
+            # For Explain mode, return the entire content as the explanation
+            response = make_response(jsonify({'explanation': content}))
 
         # Set cookie with the API key
         response.set_cookie('last_working_api_key', api_key, secure=True, httponly=True, samesite='Strict')

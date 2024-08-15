@@ -603,6 +603,7 @@ Explanation:</textarea>
         }
 
         function displayExplanation(explanation) {
+            flashcardsContainer.innerHTML = ''; // Clear existing content
             const explanationElement = document.createElement('div');
             explanationElement.className = 'explanation';
             explanationElement.innerHTML = `
