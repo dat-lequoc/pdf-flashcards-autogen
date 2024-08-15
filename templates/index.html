@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Viewer with Flashcard Generation</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.9.359/pdf.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        #left-panel {
+            width: 80%;
+            height: 100%;
+            overflow-y: auto;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        #right-panel {
+            width: 20%;
+            height: 100%;
+            position: fixed;
+            right: 0;
+            top: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            overflow-y: auto;
+            background-color: #f0f0f0;
+        }
+
+        #file-input,
+        #quality-toggle,
+        #mode-toggle,
+        #api-key-input {
+            margin-bottom: 10px;
+            width: 100%;
+        }
+
+        #pdf-viewer {
+            border: 1px solid #ccc;
+        }
+
+        .page {
+            position: relative;
+            margin-bottom: 10px;
+        }
+
+        .text-layer {
+            position: absolute;
+            left: 0;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            overflow: hidden;
+            opacity: 0.2;
+            line-height: 1.0;
+        }
+
+        .text-layer>span {
+            color: transparent;
+            position: absolute;
+            white-space: pre;
+            cursor: text;
+            transform-origin: 0% 0%;
+        }
+
+        ::selection {
+            background: rgba(0, 0, 255, 0.3);
+        }
+
+        .highlight {
+            background-color: #ffff00;
+            mix-blend-mode: multiply;
+        }
+
+        #system-prompt {
+            width: 100%;
+            height: 150px;
+            margin-bottom: 10px;
+        }
+
+        #submit-btn {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        #flashcards {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-top: 10px;
+            background-color: white;
+        }
+
+        .flashcard {
+            margin-bottom: 10px;
+            padding: 5px;
+            border: 1px solid #ddd;
+            background-color: white;
+        }
+
+        .remove-btn {
+            float: right;
+        }
+
+        #recent-pdfs {
+            margin-top: 10px;
+        }
+
+        #recent-pdfs ul {
+            padding-left: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="left-panel">
+        <input type="file" id="file-input">
+        <label><input type="checkbox" id="quality-toggle" checked> High Quality</label>
+        <div id="pdf-viewer"></div>
+    </div>
+    <div id="right-panel">
+        <input type="password" id="api-key-input" placeholder="Enter Claude API Key">
+        <select id="mode-toggle">
+            <option value="flashcard">Flashcard Mode</option>
+            <option value="highlight">Highlight Mode</option>
+        </select>
+        <textarea id="system-prompt" placeholder="Enter system prompt for flashcard generation">Generate a short and precise flashcard with a question and answer based on the following text. The question should be concise and test a key concept. The answer should be brief but complete.
+
+Example:
+Text: "The mitochondrion is often described as the powerhouse of the cell because it generates most of the cell's supply of adenosine triphosphate (ATP), used as a source of chemical energy."
+Q: What is the primary function of mitochondria in cells?
+A: To generate ATP, the main source of cellular energy.
+
+Now generate a flashcard for this text:</textarea>
+        <button id="submit-btn">Generate Flashcard</button>
+        <div id="flashcards"></div>
+        <div id="recent-pdfs">
+            <h3>Recent PDFs</h3>
+            <ul id="pdf-list"></ul>
+        </div>
+    </div>
+
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.9.359/pdf.worker.min.js';
+
+        const fileInput = document.getElementById('file-input');
+        const pdfViewer = document.getElementById('pdf-viewer');
+        const qualityToggle = document.getElementById('quality-toggle');
+        const modeToggle = document.getElementById('mode-toggle');
+        const systemPrompt = document.getElementById('system-prompt');
+        const submitBtn = document.getElementById('submit-btn');
+        const flashcardsContainer = document.getElementById('flashcards');
+        const apiKeyInput = document.getElementById('api-key-input');
+        const recentPdfList = document.getElementById('recent-pdf-list');
+
+        let pdfDoc = null;
+        let pageNum = 1;
+        let pageRendering = false;
+        let pageNumPending = null;
+        let scale = 1.5;
+        let isHighQuality = true;
+        let mode = 'flashcard';
+        let apiKey = '';
+
+        function getScale() {
+            return isHighQuality ? scale * 2 : scale;
+        }
+
+        function renderPage(num) {
+            pageRendering = true;
+            pdfDoc.getPage(num).then(function (page) {
+                const viewport = page.getViewport({ scale: getScale() });
+                const pixelRatio = window.devicePixelRatio || 1;
+                const adjustedScale = isHighQuality ? getScale() : getScale() * pixelRatio;
+                const adjustedViewport = page.getViewport({ scale: adjustedScale });
+
+                const pageDiv = document.createElement('div');
+                pageDiv.className = 'page';
+                pageDiv.style.width = `${viewport.width}px`;
+                pageDiv.style.height = `${viewport.height}px`;
+
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.height = adjustedViewport.height;
+                canvas.width = adjustedViewport.width;
+                canvas.style.width = `${viewport.width}px`;
+                canvas.style.height = `${viewport.height}px`;
+
+                const renderContext = {
+                    canvasContext: ctx,
+                    viewport: adjustedViewport,
+                    enableWebGL: true,
+                    renderInteractiveForms: true,
+                };
+
+                const renderTask = page.render(renderContext);
+
+                renderTask.promise.then(function () {
+                    pageRendering = false;
+                    if (pageNumPending !== null) {
+                        renderPage(pageNumPending);
+                        pageNumPending = null;
+                    }
+                });
+
+                pageDiv.appendChild(canvas);
+
+                // Text layer
+                const textLayerDiv = document.createElement('div');
+                textLayerDiv.className = 'text-layer';
+                textLayerDiv.style.width = `${viewport.width}px`;
+                textLayerDiv.style.height = `${viewport.height}px`;
+                pageDiv.appendChild(textLayerDiv);
+
+                page.getTextContent().then(function (textContent) {
+                    pdfjsLib.renderTextLayer({
+                        textContent: textContent,
+                        container: textLayerDiv,
+                        viewport: viewport,
+                        textDivs: []
+                    });
+                });
+
+                pdfViewer.appendChild(pageDiv);
+
+                // Check if we need to load more pages
+                if (num < pdfDoc.numPages && pdfViewer.scrollHeight <= window.innerHeight * 2) {
+                    renderPage(num + 1);
+                }
+            });
+        }
+
+        function loadPDF(file) {
+            const fileReader = new FileReader();
+            fileReader.onload = function () {
+                const typedarray = new Uint8Array(this.result);
+
+                pdfjsLib.getDocument(typedarray).promise.then(function (pdf) {
+                    pdfDoc = pdf;
+                    pdfViewer.innerHTML = '';
+                    pageNum = 1;
+                    renderPage(pageNum);
+                });
+            };
+            fileReader.readAsArrayBuffer(file);
+        }
+
+        function highlight(event) {
+            if (mode !== 'highlight') return;
+
+            const selection = window.getSelection();
+            if (selection.rangeCount > 0) {
+                const range = selection.getRangeAt(0);
+                const highlightSpan = document.createElement('span');
+                highlightSpan.className = 'highlight';
+
+                if (range.commonAncestorContainer.closest('.text-layer')) {
+                    try {
+                        range.surroundContents(highlightSpan);
+                    } catch (e) {
+                        console.error("Highlighting failed:", e);
+                        const textNodes = getTextNodesInRange(range);
+                        textNodes.forEach(node => {
+                            const nodeRange = document.createRange();
+                            nodeRange.selectNodeContents(node);
+                            nodeRange.surroundContents(highlightSpan.cloneNode(true));
+                        });
+                    }
+                }
+            }
+            selection.removeAllRanges();
+        }
+
+        function getTextNodesInRange(range) {
+            const textNodes = [];
+            const treeWalker = document.createTreeWalker(
+                range.commonAncestorContainer,
+                NodeFilter.SHOW_TEXT,
+                { acceptNode: node => range.intersectsNode(node) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT }
+            );
+            while (treeWalker.nextNode()) {
+                textNodes.push(treeWalker.currentNode);
+            }
+            return textNodes;
+        }
+
+        async function generateFlashcard() {
+            if (!apiKey) {
+                alert('Please enter your Claude API key first.');
+                return;
+            }
+
+            const selection = window.getSelection();
+            if (selection.rangeCount > 0) {
+                const selectedText = selection.toString();
+                const prompt = `${systemPrompt.value}\n\n${selectedText}`;
+
+                try {
+                    const response = await callClaudeAPI(prompt);
+                    displayFlashcard(response);
+                } catch (error) {
+                    console.error('Error calling Claude API:', error);
+                    alert('Failed to generate flashcard. Please check your API key and try again.');
+                }
+            } else {
+                alert('Please select some text from the PDF to generate a flashcard.');
+            }
+        }
+
+        async function callClaudeAPI(prompt) {
+            const response = await fetch('/generate_flashcard', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-API-Key': apiKey
+                },
+                body: JSON.stringify({ prompt: prompt })
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            return await response.json();
+        }
+
+        function displayFlashcard(flashcard) {
+            const flashcardElement = document.createElement('div');
+            flashcardElement.className = 'flashcard';
+            flashcardElement.innerHTML = `
+                <strong>Q: ${flashcard.question}</strong><br>
+                A: ${flashcard.answer}
+                <button class="remove-btn">Remove</button>
+            `;
+            flashcardElement.querySelector('.remove-btn').addEventListener('click', function () {
+                flashcardElement.remove();
+            });
+            flashcardsContainer.appendChild(flashcardElement);
+        }
+
+        function addRecentPDF(filename) {
+            let recentPDFs = JSON.parse(localStorage.getItem('recentPDFs')) || [];
+            recentPDFs = recentPDFs.filter(pdf => pdf.filename !== filename);
+            recentPDFs.unshift({ filename: filename, date: new Date().toISOString() });
+            recentPDFs = recentPDFs.slice(0, 5);  // Keep only the 5 most recent
+            localStorage.setItem('recentPDFs', JSON.stringify(recentPDFs));
+            updateRecentPDFsList();
+        }
+
+        function updateRecentPDFsList() {
+            const recentPDFs = JSON.parse(localStorage.getItem('recentPDFs')) || [];
+            recentPdfList.innerHTML = '';
+            recentPDFs.forEach(pdf => {
+                const li = document.createElement('li');
+                li.textContent = `${pdf.filename} (${new Date(pdf.date).toLocaleDateString()})`;
+                recentPdfList.appendChild(li);
+            });
+        }
+
+        fileInput.addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (file.type !== 'application/pdf') {
+                console.error('Error: Not a PDF file');
+                return;
+            }
+            loadPDF(file);
+            addRecentPDF(file.name);
+        });
+
+        qualityToggle.addEventListener('change', function () {
+            isHighQuality = this.checked;
+            if (pdfDoc) {
+                pdfViewer.innerHTML = '';
+                pageNum = 1;
+                renderPage(pageNum);
+            }
+        });
+
+        modeToggle.addEventListener('change', function () {
+            mode = this.value;
+            pdfViewer.style.cursor = mode === 'highlight' ? 'crosshair' : 'default';
+        });
+
+        pdfViewer.addEventListener('mouseup', highlight);
+
+        submitBtn.addEventListener('click', generateFlashcard);
+
+        apiKeyInput.addEventListener('change', function () {
+            apiKey = this.value;
+            localStorage.setItem('lastWorkingAPIKey', apiKey);
+        });
+
+        // Load last working API key
+        const lastWorkingAPIKey = localStorage.getItem('lastWorkingAPIKey');
+        if (lastWorkingAPIKey) {
+            apiKeyInput.value = lastWorkingAPIKey;
+            apiKey = lastWorkingAPIKey;
+        }
+
+        // Infinite scrolling
+        document.getElementById('left-panel').addEventListener('scroll', function () {
+            if (this.scrollTop + this.clientHeight >= this.scrollHeight - 500) {
+                if (pageNum < pdfDoc.numPages) {
+                    pageNum++;
+                    renderPage(pageNum);
+                }
+            }
+        });
+
+        function loadRecentPDFs() {
+            // This is a placeholder. In a real application, you'd fetch this data from the server.
+            const recentPDFs = ['document1.pdf', 'document2.pdf', 'document3.pdf'];
+            const pdfList = document.getElementById('pdf-list');
+            pdfList.innerHTML = '';
+            recentPDFs.forEach(pdf => {
+                const li = document.createElement('li');
+                const a = document.createElement('a');
+                a.href = `/open_pdf/${pdf}`;
+                a.textContent = pdf;
+                a.target = '_blank'; // Open in a new tab
+                li.appendChild(a);
+                pdfList.appendChild(li);
+            });
+        }
+
+        // Initialize recent PDFs list
+        <!-- updateRecentPDFsList(); -->
+        window.onload = loadRecentPDFs;
+    </script>
+</body>
+
+</html>
