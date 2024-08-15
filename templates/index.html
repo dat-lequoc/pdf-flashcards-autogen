@@ -567,7 +567,7 @@ Explanation:</textarea>
             return textNodes;
         }
 
-        async function generateFlashcard() {
+        async function generateContent() {
             if (!apiKey) {
                 alert('Please enter your Claude API key first.');
                 return;
@@ -576,18 +576,44 @@ Explanation:</textarea>
             const selection = window.getSelection();
             if (selection.rangeCount > 0 && selection.toString().trim() !== '') {
                 const selectedText = selection.toString();
-                const prompt = `${systemPrompt.value}\n\n${selectedText}`;
+                let prompt;
+                
+                if (mode === 'flashcard') {
+                    prompt = `${systemPrompt.value}\n\n${selectedText}`;
+                } else if (mode === 'explain') {
+                    prompt = `${explainPrompt.value}\n\n${selectedText}`;
+                } else {
+                    return;
+                }
 
                 try {
                     const response = await callClaudeAPI(prompt);
-                    displayFlashcards(response.flashcards, true); // Append new flashcards
+                    if (mode === 'flashcard') {
+                        displayFlashcards(response.flashcards, true);
+                    } else if (mode === 'explain') {
+                        displayExplanation(response.explanation);
+                    }
                 } catch (error) {
                     console.error('Error calling Claude API:', error);
-                    alert('Failed to generate flashcards. Please check your API key and try again.');
+                    alert(`Failed to generate ${mode === 'flashcard' ? 'flashcards' : 'explanation'}. Please check your API key and try again.`);
                 }
             } else {
-                alert('Please select some text from the PDF to generate flashcards.');
+                alert(`Please select some text from the PDF to generate ${mode === 'flashcard' ? 'flashcards' : 'an explanation'}.`);
             }
+        }
+
+        function displayExplanation(explanation) {
+            const explanationElement = document.createElement('div');
+            explanationElement.className = 'explanation';
+            explanationElement.innerHTML = `
+                <h3>Explanation</h3>
+                <p>${explanation}</p>
+                <button class="remove-btn">Remove</button>
+            `;
+            explanationElement.querySelector('.remove-btn').addEventListener('click', function () {
+                explanationElement.remove();
+            });
+            flashcardsContainer.appendChild(explanationElement);
         }
 
         async function callClaudeAPI(prompt) {
