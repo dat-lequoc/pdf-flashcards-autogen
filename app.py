@@ -76,9 +76,11 @@ def generate_flashcard():
                 flashcards.append({'question': current_question, 'answer': current_answer})
 
             response = make_response(jsonify({'flashcards': flashcards}))
-        else:
+        elif 'explain' in prompt.lower():
             # For Explain mode, return the entire content as the explanation
             response = make_response(jsonify({'explanation': content}))
+        else:
+            response = make_response(jsonify({'error': 'Invalid mode'}))
 
         # Set cookie with the API key
         response.set_cookie('last_working_api_key', api_key, secure=True, httponly=True, samesite='Strict')

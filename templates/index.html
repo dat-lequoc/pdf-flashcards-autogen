@@ -581,17 +581,19 @@ Explanation:</textarea>
                 if (mode === 'flashcard') {
                     prompt = `${systemPrompt.value}\n\n${selectedText}`;
                 } else if (mode === 'explain') {
-                    prompt = `${explainPrompt.value}\n\n${selectedText}`;
+                    prompt = `${document.getElementById('explain-prompt').value}\n\n${selectedText}`;
                 } else {
                     return;
                 }
 
                 try {
                     const response = await callClaudeAPI(prompt);
-                    if (mode === 'flashcard') {
+                    if (mode === 'flashcard' && response.flashcards) {
                         displayFlashcards(response.flashcards, true);
-                    } else if (mode === 'explain') {
+                    } else if (mode === 'explain' && response.explanation) {
                         displayExplanation(response.explanation);
+                    } else {
+                        throw new Error('Invalid response from API');
                     }
                 } catch (error) {
                     console.error('Error calling Claude API:', error);
