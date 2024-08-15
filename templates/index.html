@@ -124,6 +124,10 @@
     <div id="left-panel">
         <input type="file" id="file-input">
         <label><input type="checkbox" id="quality-toggle" checked> High Quality</label>
+        <div>
+            <input type="number" id="page-input" min="1" placeholder="Go to page">
+            <button id="go-to-page-btn">Go</button>
+        </div>
         <div id="pdf-viewer"></div>
     </div>
     <div id="right-panel">
@@ -169,6 +173,7 @@ Now generate a flashcard for this text:</textarea>
         let isHighQuality = true;
         let mode = 'flashcard';
         let apiKey = '';
+        let currentFileName = '';
 
         function getScale() {
             return isHighQuality ? scale * 2 : scale;
@@ -246,11 +251,24 @@ Now generate a flashcard for this text:</textarea>
                 pdfjsLib.getDocument(typedarray).promise.then(function (pdf) {
                     pdfDoc = pdf;
                     pdfViewer.innerHTML = '';
-                    pageNum = 1;
+                    currentFileName = file.name;
+                    const lastPage = localStorage.getItem(`lastPage_${currentFileName}`);
+                    pageNum = lastPage ? parseInt(lastPage) : 1;
                     renderPage(pageNum);
                 });
             };
             fileReader.readAsArrayBuffer(file);
+        }
+
+        function goToPage(num) {
+            if (num >= 1 && num <= pdfDoc.numPages) {
+                pageNum = num;
+                pdfViewer.innerHTML = '';
+                renderPage(pageNum);
+                localStorage.setItem(`lastPage_${currentFileName}`, pageNum);
+            } else {
+                alert('Invalid page number');
+            }
         }
 
         function highlight(event) {
@@ -375,6 +393,12 @@ Now generate a flashcard for this text:</textarea>
             addRecentPDF(file.name);
         });
 
+        document.getElementById('go-to-page-btn').addEventListener('click', function() {
+            const pageInput = document.getElementById('page-input');
+            const pageNumber = parseInt(pageInput.value);
+            goToPage(pageNumber);
+        });
+
         qualityToggle.addEventListener('change', function () {
             isHighQuality = this.checked;
             if (pdfDoc) {
@@ -438,6 +462,13 @@ Now generate a flashcard for this text:</textarea>
                 pdfList.appendChild(li);
             });
         }
+
+        // Save current page before unloading
+        window.addEventListener('beforeunload', function() {
+            if (currentFileName) {
+                localStorage.setItem(`lastPage_${currentFileName}`, pageNum);
+            }
+        });
 
         // Initialize recent PDFs list
         window.onload = loadRecentPDFs;
