@@ -12,13 +12,37 @@
             margin: 0;
             padding: 0;
             display: flex;
+            flex-direction: column;
             height: 100vh;
             overflow: hidden;
         }
 
+        #top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background-color: #f0f0f0;
+            border-bottom: 1px solid #ccc;
+        }
+
+        #page-navigation {
+            display: flex;
+            align-items: center;
+        }
+
+        #current-page {
+            margin-right: 10px;
+        }
+
+        #page-input {
+            width: 60px;
+            margin-right: 5px;
+        }
+
         #left-panel {
+            flex-grow: 1;
             width: 80%;
-            height: 100%;
             overflow-y: auto;
             padding: 20px;
             box-sizing: border-box;
@@ -26,10 +50,10 @@
 
         #right-panel {
             width: 20%;
-            height: 100%;
+            height: calc(100vh - 50px);
             position: fixed;
             right: 0;
-            top: 0;
+            top: 50px;
             padding: 20px;
             box-sizing: border-box;
             overflow-y: auto;
@@ -37,9 +61,9 @@
         }
 
         #file-input,
-        #quality-toggle,
         #mode-toggle,
-        #api-key-input {
+        #api-key-input,
+        #quality-toggle {
             margin-bottom: 10px;
             width: 100%;
         }
@@ -121,13 +145,15 @@
 </head>
 
 <body>
-    <div id="left-panel">
+    <div id="top-bar">
         <input type="file" id="file-input">
-        <label><input type="checkbox" id="quality-toggle" checked> High Quality</label>
-        <div>
+        <div id="page-navigation">
+            <span id="current-page">Page: 1</span>
             <input type="number" id="page-input" min="1" placeholder="Go to page">
             <button id="go-to-page-btn">Go</button>
         </div>
+    </div>
+    <div id="left-panel">
         <div id="pdf-viewer"></div>
     </div>
     <div id="right-panel">
@@ -136,6 +162,7 @@
             <option value="flashcard">Flashcard Mode</option>
             <option value="highlight">Highlight Mode</option>
         </select>
+        <label><input type="checkbox" id="quality-toggle" checked> High Quality</label>
         <textarea id="system-prompt" placeholder="Enter system prompt for flashcard generation">Generate a short and precise flashcard with a question and answer based on the following text. The question should be concise and test a key concept. The answer should be brief but complete.
 
 Example:
@@ -174,6 +201,7 @@ Now generate a flashcard for this text:</textarea>
         let mode = 'flashcard';
         let apiKey = '';
         let currentFileName = '';
+        let currentPage = 1;
 
         function getScale() {
             return isHighQuality ? scale * 2 : scale;
@@ -189,6 +217,7 @@ Now generate a flashcard for this text:</textarea>
 
                 const pageDiv = document.createElement('div');
                 pageDiv.className = 'page';
+                pageDiv.dataset.pageNumber = num;
                 pageDiv.style.width = `${viewport.width}px`;
                 pageDiv.style.height = `${viewport.height}px`;
 
@@ -255,6 +284,7 @@ Now generate a flashcard for this text:</textarea>
                     const lastPage = localStorage.getItem(`lastPage_${currentFileName}`);
                     pageNum = lastPage ? parseInt(lastPage) : 1;
                     renderPage(pageNum);
+                    updateCurrentPage(pageNum);
                 });
             };
             fileReader.readAsArrayBuffer(file);
@@ -265,11 +295,39 @@ Now generate a flashcard for this text:</textarea>
                 pageNum = num;
                 pdfViewer.innerHTML = '';
                 renderPage(pageNum);
+                updateCurrentPage(pageNum);
                 localStorage.setItem(`lastPage_${currentFileName}`, pageNum);
             } else {
                 alert('Invalid page number');
             }
         }
+
+        function updateCurrentPage(num) {
+            currentPage = num;
+            document.getElementById('current-page').textContent = `Page: ${num}`;
+            document.getElementById('page-input').value = num;
+        }
+
+        // Infinite scrolling with page tracking
+        document.getElementById('left-panel').addEventListener('scroll', function () {
+            if (this.scrollTop + this.clientHeight >= this.scrollHeight - 500) {
+                if (pageNum < pdfDoc.numPages) {
+                    pageNum++;
+                    renderPage(pageNum);
+                }
+            }
+
+            // Update current page based on scroll position
+            const pages = document.querySelectorAll('.page');
+            for (let i = 0; i < pages.length; i++) {
+                const page = pages[i];
+                const rect = page.getBoundingClientRect();
+                if (rect.top >= 0 && rect.bottom <= window.innerHeight) {
+                    updateCurrentPage(parseInt(page.dataset.pageNumber));
+                    break;
+                }
+            }
+        });
 
         function highlight(event) {
             if (mode !== 'highlight') return;
