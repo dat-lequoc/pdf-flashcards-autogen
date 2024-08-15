@@ -155,6 +155,7 @@
     </div>
     <div id="left-panel">
         <div id="pdf-viewer"></div>
+        <button id="export-csv-btn">Export Flashcards to CSV</button>
     </div>
     <div id="right-panel">
         <input type="password" id="api-key-input" placeholder="Enter Claude API Key">
@@ -163,14 +164,21 @@
             <option value="highlight">Highlight Mode</option>
         </select>
         <label><input type="checkbox" id="quality-toggle" checked> High Quality</label>
-        <textarea id="system-prompt" placeholder="Enter system prompt for flashcard generation">Generate a short and precise flashcard with a question and answer based on the following text. The question should be concise and test a key concept. The answer should be brief but complete.
+        <textarea id="system-prompt" placeholder="Enter system prompt for flashcard generation">Generate 1-3 concise flashcards based on the following text. Each flashcard should have a question (Q:) that tests a key concept and an answer (A:) that is brief but complete. Ensure that the flashcards cover different aspects of the text when possible.
 
 Example:
-Text: "The mitochondrion is often described as the powerhouse of the cell because it generates most of the cell's supply of adenosine triphosphate (ATP), used as a source of chemical energy."
+Text: "The mitochondrion is often described as the powerhouse of the cell because it generates most of the cell's supply of adenosine triphosphate (ATP), used as a source of chemical energy. Mitochondria are found in nearly all eukaryotic organisms and vary in number and location according to cell type."
+
 Q: What is the primary function of mitochondria in cells?
 A: To generate ATP, the main source of cellular energy.
 
-Now generate a flashcard for this text:</textarea>
+Q: In which types of organisms are mitochondria typically found?
+A: In nearly all eukaryotic organisms.
+
+Q: How do mitochondria vary among different cell types?
+A: They vary in number and location according to the cell type.
+
+Now generate flashcards for this text:</textarea>
         <button id="submit-btn">Generate Flashcard</button>
         <div id="flashcards"></div>
         <div id="recent-pdfs">
@@ -381,13 +389,13 @@ Now generate a flashcard for this text:</textarea>
 
                 try {
                     const response = await callClaudeAPI(prompt);
-                    displayFlashcard(response);
+                    displayFlashcards(response.flashcards);
                 } catch (error) {
                     console.error('Error calling Claude API:', error);
-                    alert('Failed to generate flashcard. Please check your API key and try again.');
+                    alert('Failed to generate flashcards. Please check your API key and try again.');
                 }
             } else {
-                alert('Please select some text from the PDF to generate a flashcard.');
+                alert('Please select some text from the PDF to generate flashcards.');
             }
         }
 
@@ -408,19 +416,42 @@ Now generate a flashcard for this text:</textarea>
             return await response.json();
         }
 
-        function displayFlashcard(flashcard) {
-            const flashcardElement = document.createElement('div');
-            flashcardElement.className = 'flashcard';
-            flashcardElement.innerHTML = `
-                <strong>Q: ${flashcard.question}</strong><br>
-                A: ${flashcard.answer}
-                <button class="remove-btn">Remove</button>
-            `;
-            flashcardElement.querySelector('.remove-btn').addEventListener('click', function () {
-                flashcardElement.remove();
+        function displayFlashcards(flashcards) {
+            flashcards.forEach(flashcard => {
+                const flashcardElement = document.createElement('div');
+                flashcardElement.className = 'flashcard';
+                flashcardElement.innerHTML = `
+                    <strong>Q: ${flashcard.question}</strong><br>
+                    A: ${flashcard.answer}
+                    <button class="remove-btn">Remove</button>
+                `;
+                flashcardElement.querySelector('.remove-btn').addEventListener('click', function () {
+                    flashcardElement.remove();
+                });
+                flashcardsContainer.appendChild(flashcardElement);
             });
-            flashcardsContainer.appendChild(flashcardElement);
         }
+
+        function exportToCSV() {
+            const flashcards = document.querySelectorAll('.flashcard');
+            let csvContent = "data:text/csv;charset=utf-8,Question,Answer\n";
+
+            flashcards.forEach(flashcard => {
+                const question = flashcard.querySelector('strong').textContent.slice(3);
+                const answer = flashcard.innerHTML.split('<br>')[1].split('<button')[0].trim().slice(3);
+                csvContent += `"${question}","${answer}"\n`;
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "flashcards.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        document.getElementById('export-csv-btn').addEventListener('click', exportToCSV);
 
         function addRecentPDF(filename) {
             let recentPDFs = JSON.parse(localStorage.getItem('recentPDFs')) || [];

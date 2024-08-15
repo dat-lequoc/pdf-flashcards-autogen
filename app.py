@@ -47,7 +47,7 @@ def generate_flashcard():
 
     try:
         message = client.messages.create(
-            model="claude-3-opus-20240229",
+            model="claude-3-sonnet-20240229",
             max_tokens=1024,
             messages=[
                 {"role": "user", "content": prompt}
@@ -56,18 +56,23 @@ def generate_flashcard():
         
         content = message.content[0].text
         print(content)
-        lines = content.split('\n')
-        question = ''
-        answer = ''
+        flashcards = []
+        current_question = ''
+        current_answer = ''
 
-        for line in lines:
+        for line in content.split('\n'):
             if line.startswith('Q:'):
-                question = line[2:].strip()
+                if current_question and current_answer:
+                    flashcards.append({'question': current_question, 'answer': current_answer})
+                current_question = line[2:].strip()
+                current_answer = ''
             elif line.startswith('A:'):
-                answer = line[2:].strip()
-                break
+                current_answer = line[2:].strip()
 
-        response = make_response(jsonify({'question': question, 'answer': answer}))
+        if current_question and current_answer:
+            flashcards.append({'question': current_question, 'answer': current_answer})
+
+        response = make_response(jsonify({'flashcards': flashcards}))
 
         # Set cookie with the API key
         response.set_cookie('last_working_api_key', api_key, secure=True, httponly=True, samesite='Strict')
