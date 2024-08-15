@@ -183,7 +183,7 @@ Now generate flashcards for this text:</textarea>
         <button id="submit-btn">Generate Flashcard</button>
         <div id="flashcards"></div>
         <div id="collection">
-            <button id="add-to-collection-btn">Add to Collection</button>
+            <button id="add-to-collection-btn">Add to Collection (0)</button>
         </div>
         <button id="export-csv-btn" style="display: none;">Export Flashcards to CSV</button>
         <div id="recent-pdfs">
@@ -455,6 +455,8 @@ Now generate flashcards for this text:</textarea>
             updateExportButtonVisibility();
         }
 
+        let collectionCount = 0;
+
         function addToCollection() {
             const newFlashcards = Array.from(document.querySelectorAll('.flashcard')).map(flashcard => {
                 const question = flashcard.querySelector('strong').textContent.slice(3);
@@ -463,6 +465,7 @@ Now generate flashcards for this text:</textarea>
             });
             
             const existingFlashcards = Array.from(flashcardsContainer.children);
+            let addedCount = 0;
             newFlashcards.forEach(newCard => {
                 if (!existingFlashcards.some(existingCard => 
                     existingCard.querySelector('strong').textContent.slice(3) === newCard.question &&
@@ -478,11 +481,24 @@ Now generate flashcards for this text:</textarea>
                     flashcardElement.querySelector('.remove-btn').addEventListener('click', function () {
                         flashcardElement.remove();
                         updateExportButtonVisibility();
+                        updateCollectionCount(-1);
                     });
                     flashcardsContainer.appendChild(flashcardElement);
+                    addedCount++;
                 }
             });
             updateExportButtonVisibility();
+            updateCollectionCount(addedCount);
+            
+            // Clear existing flashcards that are not in the collection
+            const flashcardsToRemove = document.querySelectorAll('.flashcard:not(.in-collection)');
+            flashcardsToRemove.forEach(flashcard => flashcard.remove());
+        }
+
+        function updateCollectionCount(change) {
+            collectionCount += change;
+            const addToCollectionBtn = document.getElementById('add-to-collection-btn');
+            addToCollectionBtn.textContent = `Add to Collection (${collectionCount})`;
         }
 
         document.getElementById('add-to-collection-btn').addEventListener('click', addToCollection);
