@@ -737,8 +737,9 @@ Now explain this text:</textarea>
                     return;
                 }
 
-                // Disable the button and show notification
+                // Disable the button, change its color, and show notification
                 submitBtn.disabled = true;
+                submitBtn.style.backgroundColor = '#808080'; // Change to gray
                 const notification = document.createElement('div');
                 notification.textContent = 'Generating...';
                 notification.style.position = 'fixed';
@@ -764,10 +765,11 @@ Now explain this text:</textarea>
                     console.error('Error calling Claude API:', error);
                     alert(`Failed to generate ${mode === 'flashcard' ? 'flashcards' : 'explanation'}. Please check your API key and try again.`);
                 } finally {
-                    // Remove notification and re-enable button after 3 seconds
+                    // Remove notification, re-enable button, and restore its color after 3 seconds
                     setTimeout(() => {
                         document.body.removeChild(notification);
                         submitBtn.disabled = false;
+                        submitBtn.style.backgroundColor = ''; // Restore original color
                     }, 3000);
                 }
             } else {
