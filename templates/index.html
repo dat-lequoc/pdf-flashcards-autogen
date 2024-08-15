@@ -949,10 +949,18 @@ Now explain this text:</textarea>
         fileNameDisplay.style.marginLeft = '10px';
         fileInput.parentNode.insertBefore(fileNameDisplay, fileInput.nextSibling);
 
-        document.getElementById('go-to-page-btn').addEventListener('click', function() {
+        function handleGoToPage() {
             const pageInput = document.getElementById('page-input');
             const pageNumber = parseInt(pageInput.value);
             goToPage(pageNumber);
+        }
+
+        document.getElementById('go-to-page-btn').addEventListener('click', handleGoToPage);
+
+        document.getElementById('page-input').addEventListener('keyup', function(event) {
+            if (event.key === 'Enter') {
+                handleGoToPage();
+            }
         });
 
         const modeButtons = document.querySelectorAll('.mode-btn');
