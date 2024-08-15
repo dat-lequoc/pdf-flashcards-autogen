@@ -199,7 +199,7 @@
             mix-blend-mode: multiply;
         }
 
-        #system-prompt {
+        #system-prompt, #explain-prompt {
             width: 100%;
             height: 150px;
             margin-bottom: 15px;
@@ -207,6 +207,10 @@
             border: 1px solid #ddd;
             border-radius: 3px;
             resize: vertical;
+        }
+
+        #explain-prompt {
+            display: none;
         }
 
         #submit-btn {
@@ -348,12 +352,16 @@ Q: How do mitochondria <b>vary</b> among different cell types?
 A: They vary in <b>number and location</b> according to the <b>cell type</b>.
 
 Now generate flashcards for this text:</textarea>
+            <textarea id="explain-prompt" placeholder="Enter system prompt for explanation" style="display: none;">Explain the following text in simple terms, focusing on the main concepts and their relationships. Use clear and concise language, and break down complex ideas into easily understandable parts. If there are any technical terms, provide brief explanations for them.
+
+Explanation:</textarea>
         </div>
         <select id="mode-toggle">
             <option value="flashcard">Flashcard Mode</option>
             <option value="highlight">Highlight Mode</option>
+            <option value="explain">Explain Mode</option>
         </select>
-        <button id="submit-btn">Generate Flashcard</button>
+        <button id="submit-btn">Generate</button>
         <div id="flashcards"></div>
         <div id="collection">
             <button id="add-to-collection-btn">Add to Collection (0)</button>
@@ -746,11 +754,14 @@ Now generate flashcards for this text:</textarea>
         modeToggle.addEventListener('change', function () {
             mode = this.value;
             pdfViewer.style.cursor = mode === 'highlight' ? 'crosshair' : 'default';
+            systemPrompt.style.display = mode === 'flashcard' ? 'block' : 'none';
+            explainPrompt.style.display = mode === 'explain' ? 'block' : 'none';
+            submitBtn.textContent = mode === 'flashcard' ? 'Generate Flashcards' : 'Generate Explanation';
         });
 
         pdfViewer.addEventListener('mouseup', highlight);
 
-        submitBtn.addEventListener('click', generateFlashcard);
+        submitBtn.addEventListener('click', generateContent);
 
         apiKeyInput.addEventListener('change', function () {
             apiKey = this.value;
