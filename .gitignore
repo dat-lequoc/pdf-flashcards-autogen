@@ -1,0 +1,13 @@
+**/*.swp
+**/*.un~
+
+**/*.swo
+**/*.swn
+
+# Python cache files
+**/__pycache__/
+*.pyc
+.aider*
+
+
+uploads/
