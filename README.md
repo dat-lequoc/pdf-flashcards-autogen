@@ -1,6 +1,8 @@
-# PDF Flashcard Generator: Your AI Study Companion for **ANKI**
+# PDF Flashcard Generator: AI Study Companion
 
 Unlock the power of your PDFs with AI-driven learning! This web application transforms your documents into interactive flashcards and explanations using Claude AI, perfect for importing into **ANKI**. Ideal for students, researchers, and lifelong learners looking to supercharge their study sessions and spaced repetition practice.
+
+![image](https://github.com/user-attachments/assets/c82dc51e-588e-4d14-b399-34c6784d5d99)
 
 ## Key Features:
 - 📚 Upload and view PDFs directly in your browser
@@ -24,8 +26,8 @@ Dive into your documents, emerge with knowledge at your fingertips, and supercha
 
 1. Clone the repository:
    ```
-   git clone https://github.com/yourusername/pdf-flashcard-generator.git
-   cd pdf-flashcard-generator
+   git clone https://github.com/quocdat-le-insacvl/pdf-anki-autogen.git
+   cd pdf-anki-autogen
    ```
 
 2. Install the required packages:
