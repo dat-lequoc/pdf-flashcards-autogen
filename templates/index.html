@@ -182,9 +182,9 @@ A: They vary in <b>number and location</b> according to the <b>cell type</b>.
 Now generate flashcards for this text:</textarea>
         <button id="submit-btn">Generate Flashcard</button>
         <div id="flashcards"></div>
-        <div id="tampon">
-            <button id="add-to-tampon-btn">Add to Tampon (<span id="tampon-count">0</span>)</button>
-            <button id="clear-tampon-btn">Clear Tampon</button>
+        <div id="collection">
+            <button id="add-to-collection-btn">Add to Collection (<span id="collection-count">0</span>)</button>
+            <button id="clear-collection-btn">Clear Collection</button>
         </div>
         <button id="export-csv-btn" style="display: none;">Export Flashcards to CSV</button>
         <div id="recent-pdfs">
@@ -435,6 +435,8 @@ Now generate flashcards for this text:</textarea>
             selectedModel = this.value;
         });
 
+        let collection = [];
+
         function displayFlashcards(flashcards, append = false) {
             if (!append) {
                 flashcardsContainer.innerHTML = ''; // Clear existing flashcards only if not appending
@@ -455,6 +457,28 @@ Now generate flashcards for this text:</textarea>
             });
             updateExportButtonVisibility();
         }
+
+        function addToCollection() {
+            const flashcards = document.querySelectorAll('.flashcard');
+            flashcards.forEach(flashcard => {
+                const question = flashcard.querySelector('strong').textContent.slice(3);
+                const answer = flashcard.innerHTML.split('<br>')[1].split('<button')[0].trim().slice(3);
+                collection.push({ question, answer });
+            });
+            updateCollectionCount();
+        }
+
+        function clearCollection() {
+            collection = [];
+            updateCollectionCount();
+        }
+
+        function updateCollectionCount() {
+            document.getElementById('collection-count').textContent = collection.length;
+        }
+
+        document.getElementById('add-to-collection-btn').addEventListener('click', addToCollection);
+        document.getElementById('clear-collection-btn').addEventListener('click', clearCollection);
 
         function updateExportButtonVisibility() {
             const exportButton = document.getElementById('export-csv-btn');
