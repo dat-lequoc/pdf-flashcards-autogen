@@ -90,14 +90,15 @@
             overflow-y: auto;
             padding: 20px;
             box-sizing: border-box;
+            height: 100vh;
         }
 
         #right-panel {
             width: 25%;
-            height: calc(100vh - 60px);
+            height: 100vh;
             position: fixed;
             right: 0;
-            top: 60px;
+            top: 0;
             padding: 20px;
             box-sizing: border-box;
             overflow-y: auto;
@@ -466,9 +467,14 @@ Now generate flashcards for this text:</textarea>
                     pageNum = lastPage ? parseInt(lastPage) : 1;
                     renderPage(pageNum);
                     updateCurrentPage(pageNum);
+                    hideHeaderPanel();
                 });
             };
             fileReader.readAsArrayBuffer(file);
+        }
+
+        function hideHeaderPanel() {
+            document.getElementById('top-bar').style.display = 'none';
         }
 
         function goToPage(num) {
