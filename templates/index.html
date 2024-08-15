@@ -325,6 +325,113 @@
         #export-csv-btn:hover {
             background-color: #34495e;
         }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        /* Markdown styles */
+        #explanationModalContent {
+            font-family: -apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif,Apple Color Emoji,Segoe UI Emoji;
+            font-size: 16px;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+
+        #explanationModalContent h1,
+        #explanationModalContent h2,
+        #explanationModalContent h3,
+        #explanationModalContent h4,
+        #explanationModalContent h5,
+        #explanationModalContent h6 {
+            margin-top: 24px;
+            margin-bottom: 16px;
+            font-weight: 600;
+            line-height: 1.25;
+        }
+
+        #explanationModalContent h1 { font-size: 2em; }
+        #explanationModalContent h2 { font-size: 1.5em; }
+        #explanationModalContent h3 { font-size: 1.25em; }
+        #explanationModalContent h4 { font-size: 1em; }
+        #explanationModalContent h5 { font-size: 0.875em; }
+        #explanationModalContent h6 { font-size: 0.85em; }
+
+        #explanationModalContent p {
+            margin-top: 0;
+            margin-bottom: 16px;
+        }
+
+        #explanationModalContent code {
+            padding: 0.2em 0.4em;
+            margin: 0;
+            font-size: 85%;
+            background-color: rgba(27,31,35,0.05);
+            border-radius: 3px;
+        }
+
+        #explanationModalContent pre {
+            padding: 16px;
+            overflow: auto;
+            font-size: 85%;
+            line-height: 1.45;
+            background-color: #f6f8fa;
+            border-radius: 3px;
+        }
+
+        #explanationModalContent ul,
+        #explanationModalContent ol {
+            padding-left: 2em;
+            margin-top: 0;
+            margin-bottom: 16px;
+        }
+
+        #explanationModalContent img {
+            max-width: 100%;
+            box-sizing: content-box;
+            background-color: #fff;
+        }
+
+        #explanationModalContent blockquote {
+            padding: 0 1em;
+            color: #6a737d;
+            border-left: 0.25em solid #dfe2e5;
+            margin: 0 0 16px 0;
+        }
     </style>
 </head>
 
@@ -387,6 +494,15 @@ Now explain this text:</textarea>
         </div>
     </div>
 
+    <!-- Explanation Modal -->
+    <div id="explanationModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div id="explanationModalContent"></div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/1.9.1/showdown.min.js"></script>
     <script>
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.9.359/pdf.worker.min.js';
 
@@ -619,24 +735,26 @@ Now explain this text:</textarea>
         }
 
         function displayExplanation(explanation) {
-            flashcardsContainer.innerHTML = ''; // Clear existing content
-            const explanationElement = document.createElement('div');
-            explanationElement.className = 'explanation';
-    
-            // Convert line breaks to <br> tags and preserve bullet points
-            const formattedExplanation = explanation
-                .replace(/\n/g, '<br>')
-                .replace(/•/g, '<br>•');
-    
-            explanationElement.innerHTML = `
-                <h3>Explanation</h3>
-                <div class="explanation-content">${formattedExplanation}</div>
-                <button class="remove-btn">Remove</button>
-            `;
-            explanationElement.querySelector('.remove-btn').addEventListener('click', function () {
-                explanationElement.remove();
-            });
-            flashcardsContainer.appendChild(explanationElement);
+            const modal = document.getElementById('explanationModal');
+            const modalContent = document.getElementById('explanationModalContent');
+            const closeBtn = document.getElementsByClassName('close')[0];
+
+            // Convert markdown to HTML
+            const converter = new showdown.Converter();
+            const htmlContent = converter.makeHtml(explanation);
+
+            modalContent.innerHTML = htmlContent;
+            modal.style.display = 'block';
+
+            closeBtn.onclick = function() {
+                modal.style.display = 'none';
+            }
+
+            window.onclick = function(event) {
+                if (event.target == modal) {
+                    modal.style.display = 'none';
+                }
+            }
         }
 
         async function callClaudeAPI(prompt) {
