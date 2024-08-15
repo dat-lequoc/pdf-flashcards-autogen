@@ -32,10 +32,24 @@
             justify-content: space-between;
             align-items: center;
             padding: 15px;
-            background-color: rgba(52, 152, 219, 0.8); /* More transparent primary color */
+            background-color: rgba(52, 152, 219, 0.4); /* More transparent background */
             color: white;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
             backdrop-filter: blur(5px); /* Add blur effect for better readability */
+        }
+
+        #file-input {
+            color: transparent;
+        }
+
+        #file-input::before {
+            content: 'Choose PDF';
+            display: inline-block;
+            background: var(--secondary-color);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
         }
 
         #page-navigation {
@@ -674,7 +688,13 @@ Now generate flashcards for this text:</textarea>
             }
             loadPDF(file);
             addRecentPDF(file.name);
+            this.nextElementSibling.textContent = file.name;
         });
+
+        // Add a span next to the file input to display the selected file name
+        const fileNameDisplay = document.createElement('span');
+        fileNameDisplay.style.marginLeft = '10px';
+        fileInput.parentNode.insertBefore(fileNameDisplay, fileInput.nextSibling);
 
         document.getElementById('go-to-page-btn').addEventListener('click', function() {
             const pageInput = document.getElementById('page-input');
