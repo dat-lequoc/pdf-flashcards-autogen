@@ -622,7 +622,7 @@ Now explain this text:</textarea>
                     pdfViewer.innerHTML = '';
                     currentFileName = file.name;
                     const lastPage = localStorage.getItem(`lastPage_${currentFileName}`);
-                    pageNum = lastPage ? parseInt(lastPage) : 1;
+                    pageNum = lastPage ? Math.max(parseInt(lastPage) - 2, 1) : 1;
                     renderPage(pageNum);
                     updateCurrentPage(pageNum);
                     hideHeaderPanel();
