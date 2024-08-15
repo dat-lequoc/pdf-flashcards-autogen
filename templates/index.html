@@ -435,8 +435,10 @@ Now generate flashcards for this text:</textarea>
             selectedModel = this.value;
         });
 
-        function displayFlashcards(flashcards) {
-            flashcardsContainer.innerHTML = ''; // Clear existing flashcards
+        function displayFlashcards(flashcards, append = false) {
+            if (!append) {
+                flashcardsContainer.innerHTML = ''; // Clear existing flashcards only if not appending
+            }
             flashcards.forEach(flashcard => {
                 const flashcardElement = document.createElement('div');
                 flashcardElement.className = 'flashcard';
