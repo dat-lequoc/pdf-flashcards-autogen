@@ -456,6 +456,7 @@ Now generate flashcards for this text:</textarea>
         }
 
         let collectionCount = 0;
+        let collectedFlashcards = [];
 
         function addToCollection() {
             const newFlashcards = Array.from(document.querySelectorAll('.flashcard:not(.in-collection)')).map(flashcard => {
@@ -464,60 +465,41 @@ Now generate flashcards for this text:</textarea>
                 return { question, answer };
             });
             
-            let addedCount = 0;
-            newFlashcards.forEach(newCard => {
-                const flashcardElement = document.createElement('div');
-                flashcardElement.className = 'flashcard in-collection';
-                flashcardElement.innerHTML = `
-                    <strong>Q: ${newCard.question}</strong><br>
-                    A: ${newCard.answer}
-                    <button class="remove-btn">Remove</button>
-                `;
-                flashcardElement.querySelector('.remove-btn').addEventListener('click', function () {
-                    flashcardElement.remove();
-                    updateExportButtonVisibility();
-                    updateCollectionCount(-1);
-                });
-                flashcardsContainer.appendChild(flashcardElement);
-                addedCount++;
-            });
-            
+            collectedFlashcards = collectedFlashcards.concat(newFlashcards);
+            updateCollectionCount(newFlashcards.length);
+            clearDisplayedFlashcards();
             updateExportButtonVisibility();
-            updateCollectionCount(addedCount);
-            
-            // Clear existing flashcards that are not in the collection
-            const flashcardsToRemove = document.querySelectorAll('.flashcard:not(.in-collection)');
-            flashcardsToRemove.forEach(flashcard => flashcard.remove());
+        }
+
+        function clearDisplayedFlashcards() {
+            flashcardsContainer.innerHTML = '';
         }
 
         function updateCollectionCount(change) {
             collectionCount += change;
             const addToCollectionBtn = document.getElementById('add-to-collection-btn');
             addToCollectionBtn.textContent = `Add to Collection (${collectionCount})`;
-            // Update the collection count in localStorage
             localStorage.setItem('collectionCount', collectionCount);
+            localStorage.setItem('collectedFlashcards', JSON.stringify(collectedFlashcards));
         }
 
-        // Initialize collection count from localStorage
+        // Initialize collection count and flashcards from localStorage
         collectionCount = parseInt(localStorage.getItem('collectionCount')) || 0;
+        collectedFlashcards = JSON.parse(localStorage.getItem('collectedFlashcards')) || [];
         document.getElementById('add-to-collection-btn').textContent = `Add to Collection (${collectionCount})`;
 
         document.getElementById('add-to-collection-btn').addEventListener('click', addToCollection);
 
         function updateExportButtonVisibility() {
             const exportButton = document.getElementById('export-csv-btn');
-            exportButton.style.display = flashcardsContainer.children.length > 0 ? 'block' : 'none';
+            exportButton.style.display = collectedFlashcards.length > 0 ? 'block' : 'none';
         }
 
         function exportToCSV() {
-            const flashcards = document.querySelectorAll('.flashcard');
-            <!-- let csvContent = "data:text/csv;charset=utf-8,Question,Answer\n"; -->
-            let csvContent = "data:text/csv;charset=utf-8,";
+            let csvContent = "data:text/csv;charset=utf-8,Question,Answer\n";
 
-            flashcards.forEach(flashcard => {
-                const question = flashcard.querySelector('strong').textContent.slice(3);
-                const answer = flashcard.innerHTML.split('<br>')[1].split('<button')[0].trim().slice(3);
-                csvContent += `"${question}","${answer}"\n`;
+            collectedFlashcards.forEach(flashcard => {
+                csvContent += `"${flashcard.question}","${flashcard.answer}"\n`;
             });
 
             const encodedUri = encodeURI(csvContent);
@@ -530,6 +512,9 @@ Now generate flashcards for this text:</textarea>
         }
 
         document.getElementById('export-csv-btn').addEventListener('click', exportToCSV);
+
+        // Initialize export button visibility
+        updateExportButtonVisibility();
 
         function addRecentPDF(filename) {
             let recentPDFs = JSON.parse(localStorage.getItem('recentPDFs')) || [];
