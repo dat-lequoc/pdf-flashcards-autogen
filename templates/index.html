@@ -394,7 +394,7 @@ Now generate flashcards for this text:</textarea>
             }
 
             const selection = window.getSelection();
-            if (selection.rangeCount > 0) {
+            if (selection.rangeCount > 0 && selection.toString().trim() !== '') {
                 const selectedText = selection.toString();
                 const prompt = `${systemPrompt.value}\n\n${selectedText}`;
 
