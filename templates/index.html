@@ -422,9 +422,18 @@ Now generate a flashcard for this text:</textarea>
             recentPDFs.forEach(pdf => {
                 const li = document.createElement('li');
                 const a = document.createElement('a');
-                a.href = `/open_pdf/${pdf.filename}`;
+                a.href = '#';
                 a.textContent = `${pdf.filename} (${new Date(pdf.date).toLocaleDateString()})`;
-                a.target = '_blank'; // Open in a new tab
+                a.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    fetch(`/open_pdf/${pdf.filename}`)
+                        .then(response => response.blob())
+                        .then(blob => {
+                            const file = new File([blob], pdf.filename, { type: 'application/pdf' });
+                            loadPDF(file);
+                        })
+                        .catch(error => console.error('Error:', error));
+                });
                 li.appendChild(a);
                 pdfList.appendChild(li);
             });
