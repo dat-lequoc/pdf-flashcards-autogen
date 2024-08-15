@@ -155,7 +155,6 @@
     </div>
     <div id="left-panel">
         <div id="pdf-viewer"></div>
-        <button id="export-csv-btn">Export Flashcards to CSV</button>
     </div>
     <div id="right-panel">
         <input type="password" id="api-key-input" placeholder="Enter Claude API Key">
@@ -164,7 +163,7 @@
             <option value="highlight">Highlight Mode</option>
         </select>
         <label><input type="checkbox" id="quality-toggle" checked> High Quality</label>
-        <textarea id="system-prompt" placeholder="Enter system prompt for flashcard generation">Generate 1-3 concise flashcards based on the following text. Each flashcard should have a question (Q:) that tests a key concept and an answer (A:) that is brief but complete. Ensure that the flashcards cover different aspects of the text when possible.
+        <textarea id="system-prompt" placeholder="Enter system prompt for flashcard generation">Generate concise flashcards based on the following text. The number of flashcards should be proportional to the length of the text, with a minimum of 1 and a maximum of 10. Each flashcard should have a question (Q:) that tests a key concept and an answer (A:) that is brief but complete. Ensure that the flashcards cover different aspects of the text when possible.
 
 Example:
 Text: "The mitochondrion is often described as the powerhouse of the cell because it generates most of the cell's supply of adenosine triphosphate (ATP), used as a source of chemical energy. Mitochondria are found in nearly all eukaryotic organisms and vary in number and location according to cell type."
@@ -181,6 +180,7 @@ A: They vary in number and location according to the cell type.
 Now generate flashcards for this text:</textarea>
         <button id="submit-btn">Generate Flashcard</button>
         <div id="flashcards"></div>
+        <button id="export-csv-btn" style="display: none;">Export Flashcards to CSV</button>
         <div id="recent-pdfs">
             <h3>Recent PDFs</h3>
             <ul id="pdf-list"></ul>
@@ -417,6 +417,7 @@ Now generate flashcards for this text:</textarea>
         }
 
         function displayFlashcards(flashcards) {
+            flashcardsContainer.innerHTML = ''; // Clear existing flashcards
             flashcards.forEach(flashcard => {
                 const flashcardElement = document.createElement('div');
                 flashcardElement.className = 'flashcard';
@@ -427,9 +428,16 @@ Now generate flashcards for this text:</textarea>
                 `;
                 flashcardElement.querySelector('.remove-btn').addEventListener('click', function () {
                     flashcardElement.remove();
+                    updateExportButtonVisibility();
                 });
                 flashcardsContainer.appendChild(flashcardElement);
             });
+            updateExportButtonVisibility();
+        }
+
+        function updateExportButtonVisibility() {
+            const exportButton = document.getElementById('export-csv-btn');
+            exportButton.style.display = flashcardsContainer.children.length > 0 ? 'block' : 'none';
         }
 
         function exportToCSV() {
