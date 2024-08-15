@@ -1,15 +1,16 @@
-# PDF Flashcard Generator: Your AI Study Companion
+# PDF Flashcard Generator: Your AI Study Companion for **ANKI**
 
-Unlock the power of your PDFs with AI-driven learning! This web application transforms your documents into interactive flashcards and explanations using Claude AI. Perfect for students, researchers, and lifelong learners looking to supercharge their study sessions.
+Unlock the power of your PDFs with AI-driven learning! This web application transforms your documents into interactive flashcards and explanations using Claude AI, perfect for importing into **ANKI**. Ideal for students, researchers, and lifelong learners looking to supercharge their study sessions and spaced repetition practice.
 
 ## Key Features:
 - 📚 Upload and view PDFs directly in your browser
 - 🤖 Generate flashcards and explanations with Claude AI
 - 🖍️ Highlight important text for focused learning
-- 💾 Save and export your flashcard collections
+- 💾 Save and export your flashcard collections to **ANKI**-compatible format
 - 📱 Responsive design for desktop and mobile use
+- 🔄 Seamless integration with **ANKI** for optimized spaced repetition
 
-Dive into your documents and emerge with knowledge at your fingertips!
+Dive into your documents, emerge with knowledge at your fingertips, and supercharge your **ANKI** decks!
 
 ## Getting Started
 
