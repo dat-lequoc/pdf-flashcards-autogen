@@ -183,8 +183,7 @@ Now generate flashcards for this text:</textarea>
         <button id="submit-btn">Generate Flashcard</button>
         <div id="flashcards"></div>
         <div id="collection">
-            <button id="add-to-collection-btn">Add to Collection (<span id="collection-count">0</span>)</button>
-            <button id="clear-collection-btn">Clear Collection</button>
+            <button id="add-to-collection-btn">Add to Collection</button>
         </div>
         <button id="export-csv-btn" style="display: none;">Export Flashcards to CSV</button>
         <div id="recent-pdfs">
@@ -435,8 +434,6 @@ Now generate flashcards for this text:</textarea>
             selectedModel = this.value;
         });
 
-        let collection = [];
-
         function displayFlashcards(flashcards, append = false) {
             if (!append) {
                 flashcardsContainer.innerHTML = ''; // Clear existing flashcards only if not appending
@@ -459,26 +456,36 @@ Now generate flashcards for this text:</textarea>
         }
 
         function addToCollection() {
-            const flashcards = document.querySelectorAll('.flashcard');
-            flashcards.forEach(flashcard => {
+            const newFlashcards = Array.from(document.querySelectorAll('.flashcard')).map(flashcard => {
                 const question = flashcard.querySelector('strong').textContent.slice(3);
                 const answer = flashcard.innerHTML.split('<br>')[1].split('<button')[0].trim().slice(3);
-                collection.push({ question, answer });
+                return { question, answer };
             });
-            updateCollectionCount();
-        }
-
-        function clearCollection() {
-            collection = [];
-            updateCollectionCount();
-        }
-
-        function updateCollectionCount() {
-            document.getElementById('collection-count').textContent = collection.length;
+            
+            const existingFlashcards = Array.from(flashcardsContainer.children);
+            newFlashcards.forEach(newCard => {
+                if (!existingFlashcards.some(existingCard => 
+                    existingCard.querySelector('strong').textContent.slice(3) === newCard.question &&
+                    existingCard.innerHTML.split('<br>')[1].split('<button')[0].trim().slice(3) === newCard.answer
+                )) {
+                    const flashcardElement = document.createElement('div');
+                    flashcardElement.className = 'flashcard';
+                    flashcardElement.innerHTML = `
+                        <strong>Q: ${newCard.question}</strong><br>
+                        A: ${newCard.answer}
+                        <button class="remove-btn">Remove</button>
+                    `;
+                    flashcardElement.querySelector('.remove-btn').addEventListener('click', function () {
+                        flashcardElement.remove();
+                        updateExportButtonVisibility();
+                    });
+                    flashcardsContainer.appendChild(flashcardElement);
+                }
+            });
+            updateExportButtonVisibility();
         }
 
         document.getElementById('add-to-collection-btn').addEventListener('click', addToCollection);
-        document.getElementById('clear-collection-btn').addEventListener('click', clearCollection);
 
         function updateExportButtonVisibility() {
             const exportButton = document.getElementById('export-csv-btn');
