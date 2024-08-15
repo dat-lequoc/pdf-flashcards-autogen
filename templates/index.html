@@ -476,11 +476,11 @@ Now explain this text:</textarea>
 
 
         </div>
-        <select id="mode-toggle">
-            <option value="flashcard">Flashcard Mode</option>
-            <option value="highlight">Highlight Mode</option>
-            <option value="explain">Explain Mode</option>
-        </select>
+        <div id="mode-toggle">
+            <button class="mode-btn selected" data-mode="flashcard">Flashcard</button>
+            <button class="mode-btn" data-mode="explain">Explain</button>
+            <button class="mode-btn" data-mode="highlight">Highlight</button>
+        </div>
         <button id="submit-btn">Generate</button>
         <div id="flashcards"></div>
         <div id="collection">
@@ -932,12 +932,17 @@ Now explain this text:</textarea>
             goToPage(pageNumber);
         });
 
-        modeToggle.addEventListener('change', function () {
-            mode = this.value;
-            pdfViewer.style.cursor = mode === 'highlight' ? 'crosshair' : 'default';
-            systemPrompt.style.display = mode === 'flashcard' ? 'block' : 'none';
-            document.getElementById('explain-prompt').style.display = mode === 'explain' ? 'block' : 'none';
-            submitBtn.textContent = mode === 'flashcard' ? 'Generate Flashcards' : 'Generate Explanation';
+        const modeButtons = document.querySelectorAll('.mode-btn');
+        modeButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                modeButtons.forEach(btn => btn.classList.remove('selected'));
+                this.classList.add('selected');
+                mode = this.dataset.mode;
+                pdfViewer.style.cursor = mode === 'highlight' ? 'crosshair' : 'default';
+                systemPrompt.style.display = mode === 'flashcard' ? 'block' : 'none';
+                document.getElementById('explain-prompt').style.display = mode === 'explain' ? 'block' : 'none';
+                submitBtn.textContent = mode === 'flashcard' ? 'Generate Flashcards' : 'Generate Explanation';
+            });
         });
 
         pdfViewer.addEventListener('mouseup', highlight);
