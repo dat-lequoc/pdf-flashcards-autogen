@@ -737,6 +737,20 @@ Now explain this text:</textarea>
                     return;
                 }
 
+                // Disable the button and show notification
+                submitBtn.disabled = true;
+                const notification = document.createElement('div');
+                notification.textContent = 'Generating...';
+                notification.style.position = 'fixed';
+                notification.style.top = '20px';
+                notification.style.right = '20px';
+                notification.style.padding = '10px';
+                notification.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+                notification.style.color = 'white';
+                notification.style.borderRadius = '5px';
+                notification.style.zIndex = '1000';
+                document.body.appendChild(notification);
+
                 try {
                     const response = await callClaudeAPI(prompt);
                     if (mode === 'flashcard' && response.flashcards) {
@@ -749,6 +763,12 @@ Now explain this text:</textarea>
                 } catch (error) {
                     console.error('Error calling Claude API:', error);
                     alert(`Failed to generate ${mode === 'flashcard' ? 'flashcards' : 'explanation'}. Please check your API key and try again.`);
+                } finally {
+                    // Remove notification and re-enable button after 3 seconds
+                    setTimeout(() => {
+                        document.body.removeChild(notification);
+                        submitBtn.disabled = false;
+                    }, 3000);
                 }
             } else {
                 alert(`Please select some text from the PDF to generate ${mode === 'flashcard' ? 'flashcards' : 'an explanation'}.`);
