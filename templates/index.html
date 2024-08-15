@@ -7,23 +7,34 @@
     <title>PDF Viewer with Flashcard Generation</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.9.359/pdf.min.js"></script>
     <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2c3e50;
+            --background-color: #ecf0f1;
+            --text-color: #34495e;
+            --highlight-color: #e74c3c;
+        }
+
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Roboto', Arial, sans-serif;
             margin: 0;
             padding: 0;
             display: flex;
             flex-direction: column;
             height: 100vh;
             overflow: hidden;
+            background-color: var(--background-color);
+            color: var(--text-color);
         }
 
         #top-bar {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 10px;
-            background-color: #f0f0f0;
-            border-bottom: 1px solid #ccc;
+            padding: 15px;
+            background-color: var(--primary-color);
+            color: white;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
 
         #page-navigation {
@@ -32,50 +43,74 @@
         }
 
         #current-page {
-            margin-right: 10px;
+            margin-right: 15px;
+            font-weight: bold;
         }
 
         #page-input {
             width: 60px;
-            margin-right: 5px;
+            margin-right: 10px;
+            padding: 5px;
+            border: none;
+            border-radius: 3px;
+        }
+
+        #go-to-page-btn {
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        #go-to-page-btn:hover {
+            background-color: #34495e;
         }
 
         #left-panel {
             flex-grow: 1;
-            width: 80%;
+            width: 75%;
             overflow-y: auto;
             padding: 20px;
             box-sizing: border-box;
         }
 
         #right-panel {
-            width: 20%;
-            height: calc(100vh - 50px);
+            width: 25%;
+            height: calc(100vh - 60px);
             position: fixed;
             right: 0;
-            top: 50px;
+            top: 60px;
             padding: 20px;
             box-sizing: border-box;
             overflow-y: auto;
-            background-color: #f0f0f0;
-            font-size: 1.1em;
+            background-color: white;
+            box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
         }
 
         #file-input,
         #mode-toggle,
         #api-key-input,
-        #quality-toggle {
-            margin-bottom: 10px;
+        #quality-toggle,
+        #model-select {
+            margin-bottom: 15px;
             width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
         }
 
         #pdf-viewer {
-            border: 1px solid #ccc;
+            border: 1px solid #ddd;
+            background-color: white;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
 
         .page {
             position: relative;
-            margin-bottom: 10px;
+            margin-bottom: 20px;
         }
 
         .text-layer {
@@ -89,7 +124,7 @@
             line-height: 1.0;
         }
 
-        .text-layer>span {
+        .text-layer > span {
             color: transparent;
             position: absolute;
             white-space: pre;
@@ -98,49 +133,123 @@
         }
 
         ::selection {
-            background: rgba(0, 0, 255, 0.3);
+            background: rgba(52, 152, 219, 0.3);
         }
 
         .highlight {
-            background-color: #ffff00;
+            background-color: var(--highlight-color);
             mix-blend-mode: multiply;
         }
 
         #system-prompt {
             width: 100%;
             height: 150px;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            resize: vertical;
         }
 
         #submit-btn {
             width: 100%;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        #submit-btn:hover {
+            background-color: #2980b9;
         }
 
         #flashcards {
-            border: 1px solid #ccc;
-            padding: 10px;
-            margin-top: 10px;
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-top: 15px;
             background-color: white;
+            border-radius: 3px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
 
         .flashcard {
-            margin-bottom: 10px;
-            padding: 5px;
+            margin-bottom: 15px;
+            padding: 10px;
             border: 1px solid #ddd;
             background-color: white;
+            border-radius: 3px;
+            transition: box-shadow 0.3s ease;
+        }
+
+        .flashcard:hover {
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
 
         .remove-btn {
             float: right;
+            background-color: var(--highlight-color);
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .remove-btn:hover {
+            background-color: #c0392b;
         }
 
         #recent-pdfs {
-            margin-top: 10px;
+            margin-top: 20px;
+        }
+
+        #recent-pdfs h3 {
+            margin-bottom: 10px;
+            color: var(--secondary-color);
         }
 
         #recent-pdfs ul {
             padding-left: 20px;
+            list-style-type: none;
+        }
+
+        #recent-pdfs li {
+            margin-bottom: 5px;
+        }
+
+        #recent-pdfs a {
+            color: var(--primary-color);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        #recent-pdfs a:hover {
+            color: #2980b9;
+        }
+
+        #add-to-collection-btn,
+        #clear-collection-btn,
+        #export-csv-btn {
+            width: 100%;
+            margin-bottom: 10px;
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        #add-to-collection-btn:hover,
+        #clear-collection-btn:hover,
+        #export-csv-btn:hover {
+            background-color: #34495e;
         }
     </style>
 </head>
