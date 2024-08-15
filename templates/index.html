@@ -416,15 +416,14 @@ Now generate a flashcard for this text:</textarea>
         });
 
         function loadRecentPDFs() {
-            // This is a placeholder. In a real application, you'd fetch this data from the server.
-            const recentPDFs = ['document1.pdf', 'document2.pdf', 'document3.pdf'];
+            const recentPDFs = {{ recent_pdfs|tojson }};
             const pdfList = document.getElementById('pdf-list');
             pdfList.innerHTML = '';
             recentPDFs.forEach(pdf => {
                 const li = document.createElement('li');
                 const a = document.createElement('a');
-                a.href = `/open_pdf/${pdf}`;
-                a.textContent = pdf;
+                a.href = `/open_pdf/${pdf.filename}`;
+                a.textContent = `${pdf.filename} (${new Date(pdf.date).toLocaleDateString()})`;
                 a.target = '_blank'; // Open in a new tab
                 li.appendChild(a);
                 pdfList.appendChild(li);
@@ -432,8 +431,39 @@ Now generate a flashcard for this text:</textarea>
         }
 
         // Initialize recent PDFs list
-        <!-- updateRecentPDFsList(); -->
         window.onload = loadRecentPDFs;
+
+        fileInput.addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (file.type !== 'application/pdf') {
+                console.error('Error: Not a PDF file');
+                return;
+            }
+            uploadPDF(file);
+        });
+
+        function uploadPDF(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            fetch('/upload_pdf', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message) {
+                    console.log(data.message);
+                    loadPDF(file);
+                    loadRecentPDFs();
+                } else {
+                    console.error(data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
     </script>
 </body>
 

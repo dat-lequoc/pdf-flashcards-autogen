@@ -1,12 +1,41 @@
-from flask import Flask, request, jsonify, render_template, make_response
+from flask import Flask, request, jsonify, render_template, make_response, send_from_directory
 import anthropic
 import os
+import json
+from datetime import datetime
 
 app = Flask(__name__)
+app.config['UPLOAD_FOLDER'] = 'uploads'
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    recent_pdfs = get_recent_pdfs()
+    return render_template('index.html', recent_pdfs=recent_pdfs)
+
+def get_recent_pdfs():
+    if not os.path.exists(app.config['UPLOAD_FOLDER']):
+        os.makedirs(app.config['UPLOAD_FOLDER'])
+    files = os.listdir(app.config['UPLOAD_FOLDER'])
+    pdf_files = [f for f in files if f.endswith('.pdf')]
+    pdf_files.sort(key=lambda x: os.path.getmtime(os.path.join(app.config['UPLOAD_FOLDER'], x)), reverse=True)
+    return [{'filename': pdf, 'date': datetime.fromtimestamp(os.path.getmtime(os.path.join(app.config['UPLOAD_FOLDER'], pdf))).isoformat()} for pdf in pdf_files[:5]]
+
+@app.route('/upload_pdf', methods=['POST'])
+def upload_pdf():
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file part'}), 400
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'No selected file'}), 400
+    if file and file.filename.endswith('.pdf'):
+        filename = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
+        file.save(filename)
+        return jsonify({'message': 'File uploaded successfully'}), 200
+    return jsonify({'error': 'Invalid file type'}), 400
+
+@app.route('/open_pdf/<path:filename>')
+def open_pdf(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 @app.route('/generate_flashcard', methods=['POST'])
 def generate_flashcard():
