@@ -182,6 +182,10 @@ A: They vary in <b>number and location</b> according to the <b>cell type</b>.
 Now generate flashcards for this text:</textarea>
         <button id="submit-btn">Generate Flashcard</button>
         <div id="flashcards"></div>
+        <div id="tampon">
+            <button id="add-to-tampon-btn">Add to Tampon (<span id="tampon-count">0</span>)</button>
+            <button id="clear-tampon-btn">Clear Tampon</button>
+        </div>
         <button id="export-csv-btn" style="display: none;">Export Flashcards to CSV</button>
         <div id="recent-pdfs">
             <h3>Recent PDFs</h3>
@@ -397,7 +401,7 @@ Now generate flashcards for this text:</textarea>
 
                 try {
                     const response = await callClaudeAPI(prompt);
-                    displayFlashcards(response.flashcards);
+                    displayFlashcards(response.flashcards, true); // Append new flashcards
                 } catch (error) {
                     console.error('Error calling Claude API:', error);
                     alert('Failed to generate flashcards. Please check your API key and try again.');
