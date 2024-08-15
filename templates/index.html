@@ -367,8 +367,8 @@
         /* Markdown styles */
         #explanationModalContent {
             font-family: -apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif,Apple Color Emoji,Segoe UI Emoji;
-            font-size: 16px;
-            line-height: 1.5;
+            font-size: 18px;
+            line-height: 1.6;
             word-wrap: break-word;
         }
 
@@ -735,6 +735,20 @@ Now explain this text:</textarea>
         }
 
         function displayExplanation(explanation) {
+            // Display in right panel
+            const explanationElement = document.createElement('div');
+            explanationElement.className = 'explanation';
+            explanationElement.innerHTML = `
+                <h3>Explanation</h3>
+                <div class="explanation-content">${explanation}</div>
+                <button class="remove-btn">Remove</button>
+            `;
+            explanationElement.querySelector('.remove-btn').addEventListener('click', function () {
+                explanationElement.remove();
+            });
+            flashcardsContainer.appendChild(explanationElement);
+
+            // Display in modal
             const modal = document.getElementById('explanationModal');
             const modalContent = document.getElementById('explanationModalContent');
             const closeBtn = document.getElementsByClassName('close')[0];
