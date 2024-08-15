@@ -166,7 +166,6 @@
             <option value="flashcard">Flashcard Mode</option>
             <option value="highlight">Highlight Mode</option>
         </select>
-        <label><input type="checkbox" id="quality-toggle" checked> High Quality</label>
         <textarea id="system-prompt" placeholder="Enter system prompt for flashcard generation">Generate concise flashcards based on the following text. The number of flashcards should be proportional to the text's length and complexity, with a minimum of 1 and a maximum of 10. Each flashcard should have a question (Q:) that tests a key concept and an answer (A:) that is brief but complete. Ensure that the flashcards cover different aspects of the text when possible. Use <b> tags to emphasize important words or phrases in both questions and answers.
 
 Example:
@@ -198,7 +197,6 @@ Now generate flashcards for this text:</textarea>
 
         const fileInput = document.getElementById('file-input');
         const pdfViewer = document.getElementById('pdf-viewer');
-        const qualityToggle = document.getElementById('quality-toggle');
         const modeToggle = document.getElementById('mode-toggle');
         const systemPrompt = document.getElementById('system-prompt');
         const submitBtn = document.getElementById('submit-btn');
@@ -211,25 +209,19 @@ Now generate flashcards for this text:</textarea>
         let pageNum = 1;
         let pageRendering = false;
         let pageNumPending = null;
-        let scale = 1.5;
-        let isHighQuality = true;
+        let scale = 3; // Increased scale for high quality
         let mode = 'flashcard';
         let apiKey = '';
         let currentFileName = '';
         let currentPage = 1;
         let selectedModel = 'claude-3-haiku-20240307';
 
-        function getScale() {
-            return isHighQuality ? scale * 2 : scale;
-        }
-
         function renderPage(num) {
             pageRendering = true;
             pdfDoc.getPage(num).then(function (page) {
-                const viewport = page.getViewport({ scale: getScale() });
+                const viewport = page.getViewport({ scale: scale });
                 const pixelRatio = window.devicePixelRatio || 1;
-                const adjustedScale = isHighQuality ? getScale() : getScale() * pixelRatio;
-                const adjustedViewport = page.getViewport({ scale: adjustedScale });
+                const adjustedViewport = page.getViewport({ scale: scale * pixelRatio });
 
                 const pageDiv = document.createElement('div');
                 pageDiv.className = 'page';
@@ -564,15 +556,6 @@ Now generate flashcards for this text:</textarea>
             const pageInput = document.getElementById('page-input');
             const pageNumber = parseInt(pageInput.value);
             goToPage(pageNumber);
-        });
-
-        qualityToggle.addEventListener('change', function () {
-            isHighQuality = this.checked;
-            if (pdfDoc) {
-                pdfViewer.innerHTML = '';
-                pageNum = 1;
-                renderPage(pageNum);
-            }
         });
 
         modeToggle.addEventListener('change', function () {
