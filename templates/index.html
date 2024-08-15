@@ -354,7 +354,7 @@ A: They vary in <b>number and location</b> according to the <b>cell type</b>.
 Now generate flashcards for this text:</textarea>
             <textarea id="explain-prompt" placeholder="Enter system prompt for explanation" style="display: none;">Explain the following text in simple terms, focusing on the main concepts and their relationships. Use clear and concise language, and break down complex ideas into easily understandable parts. If there are any technical terms, provide brief explanations for them.
 
-Explanation:</textarea>
+Now explain this text:</textarea>
         </div>
         <select id="mode-toggle">
             <option value="flashcard">Flashcard Mode</option>
@@ -581,7 +581,8 @@ Explanation:</textarea>
                 if (mode === 'flashcard') {
                     prompt = `${systemPrompt.value}\n\n${selectedText}`;
                 } else if (mode === 'explain') {
-                    prompt = `${document.getElementById('explain-prompt').value}\n\n${selectedText}`;
+                    const explainPromptValue = document.getElementById('explain-prompt').value;
+                    prompt = `${explainPromptValue}\n\n${selectedText}`;
                 } else {
                     return;
                 }
@@ -784,7 +785,7 @@ Explanation:</textarea>
             mode = this.value;
             pdfViewer.style.cursor = mode === 'highlight' ? 'crosshair' : 'default';
             systemPrompt.style.display = mode === 'flashcard' ? 'block' : 'none';
-            explainPrompt.style.display = mode === 'explain' ? 'block' : 'none';
+            document.getElementById('explain-prompt').style.display = mode === 'explain' ? 'block' : 'none';
             submitBtn.textContent = mode === 'flashcard' ? 'Generate Flashcards' : 'Generate Explanation';
         });
 
