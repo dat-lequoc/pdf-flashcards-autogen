@@ -477,22 +477,20 @@
         <div id="settings-panel" style="display: none;">
             <input type="password" id="api-key-input" placeholder="Enter Claude API Key">
             <select id="model-select">
+                <option value="claude-3-5-sonnet-20240620">Claude 3.5 Sonnet</option>
                 <option value="claude-3-haiku-20240307">Claude 3 Haiku</option>
-                <option value="claude-3-5-sonnet-20240620">Claude 3 Sonnet</option>
             </select>
-            <textarea id="system-prompt" placeholder="Enter system prompt for flashcard generation">Generate concise flashcards based on the following text. The number of flashcards should be proportional to the text's length and complexity, with a minimum of 1 and a maximum of 10. Each flashcard should have a question (Q:) that tests a key concept and an answer (A:) that is brief but complete. Ensure that the flashcards cover different aspects of the text when possible. Use <b> tags to emphasize important words or phrases in both questions and answers.
+            <textarea id="system-prompt" placeholder="Enter system prompt for flashcard generation">Generate concise flashcards based on the following text. The number of flashcards should be proportional to the text's length and complexity, with a minimum of 1 and a maximum of 10. Each flashcard should have a question (Q:) that tests a key concept and an answer (A:) that is brief but complete. Ensure that the flashcards cover different aspects of the text when possible. Use <b> tags to emphasize important words or phrases in both questions and answers. Cite the short code or example to the question if needed. 
 
 Example:
-Text: "The mitochondrion is often described as the powerhouse of the cell because it generates most of the cell's supply of adenosine triphosphate (ATP), used as a source of chemical energy. Mitochondria are found in nearly all eukaryotic organisms and vary in number and location according to cell type."
+Text: "In parallel computing, load balancing refers to the practice of distributing computational work evenly across multiple processing units. This is crucial for maximizing efficiency and minimizing idle time. Dynamic load balancing adjusts the distribution of work during runtime, while static load balancing determines the distribution before execution begins."
+Q: What is the primary goal of <b>load balancing</b> in parallel computing?
+A: To <b>distribute work evenly</b> across processing units, maximizing efficiency and minimizing idle time.
+Q: How does <b>dynamic load balancing</b> differ from <b>static load balancing</b>?
+A: Dynamic balancing <b>adjusts work distribution during runtime</b>, while static balancing <b>determines distribution before execution</b>.
 
-Q: What is the <b>primary function</b> of mitochondria in cells?
-A: To generate <b>ATP</b>, the main source of <b>cellular energy</b>.
-Q: In which <b>types of organisms</b> are mitochondria typically found?
-A: In nearly all <b>eukaryotic organisms</b>.
-Q: How do mitochondria <b>vary</b> among different cell types?
-A: They vary in <b>number and location</b> according to the <b>cell type</b>.
-
-Now generate flashcards for this text:</textarea>
+That was example, now generate flashcards for this text:
+            </textarea>
             <textarea id="explain-prompt" placeholder="Enter system prompt for explanation" style="display: none;">Explain the following text in simple terms, focusing on the main concepts and their relationships. Use clear and concise language, and break down complex ideas into easily understandable parts. If there are any technical terms, provide brief explanations for them. Return your explanation in markdown format.
 
 Now explain this text:</textarea>

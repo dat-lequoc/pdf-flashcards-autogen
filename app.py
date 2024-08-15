@@ -46,7 +46,7 @@ def generate_flashcard():
     client = anthropic.Anthropic(api_key=api_key)
 
     try:
-        model = data.get('model', 'claude-3-haiku-20240307')
+        model = data.get('model', "claude-3-5-sonnet-20240620")
         message = client.messages.create(
             model=model,
             max_tokens=1024,
