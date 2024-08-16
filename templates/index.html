@@ -1071,7 +1071,8 @@ A: (1) Short translation of the word in Vietnamese.
 
         const languageButtons = document.querySelectorAll('#language-buttons .mode-btn');
         languageButtons.forEach(button => {
-            button.addEventListener('click', function() {
+            button.addEventListener('click', function(event) {
+                event.preventDefault();
                 const targetLanguage = this.dataset.language;
                 handleLanguageMode(event, targetLanguage);
             });
