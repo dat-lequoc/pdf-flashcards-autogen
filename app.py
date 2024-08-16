@@ -65,19 +65,18 @@ def generate_flashcard():
             lines = content.split('\n')
             word = ''
             translation = ''
-            question = ''
             answer = ''
             for line in lines:
                 if line.startswith('T:'):
                     translation = line[2:].strip()
                 elif line.startswith('Q:'):
-                    question = line[2:].strip()
+                    word = line[2:].split('<b>')[1].split('</b>')[0].strip()
                 elif line.startswith('A:'):
                     answer = line[2:].strip()
             
             flashcard = {
+                'word': word,
                 'translation': translation,
-                'question': question,
                 'answer': answer
             }
             response = make_response(jsonify({'flashcard': flashcard}))

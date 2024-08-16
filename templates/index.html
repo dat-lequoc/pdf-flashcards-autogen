@@ -807,10 +807,10 @@ Phrase: "{phrase}"</textarea>
                 if (response.flashcard) {
                     const flashcard = response.flashcard;
                     const formattedFlashcard = {
-                        question: `<b>${flashcard.word}</b> : ${flashcard.translation}<br>${flashcard.question}`,
+                        question: `<b>${flashcard.word}</b> : ${flashcard.translation}`,
                         answer: flashcard.answer
                     };
-                    displayFlashcards([formattedFlashcard], true);
+                    displayLanguageFlashcard(formattedFlashcard);
                 } else {
                     throw new Error('Invalid response from API');
                 }
@@ -963,16 +963,41 @@ Phrase: "{phrase}"</textarea>
             updateExportButtonVisibility();
         }
 
+        function displayLanguageFlashcard(flashcard) {
+            const flashcardElement = document.createElement('div');
+            flashcardElement.className = 'flashcard language-flashcard';
+            flashcardElement.innerHTML = `
+                <div>${flashcard.question}</div>
+                <div>A: ${flashcard.answer}</div>
+                <button class="remove-btn">Remove</button>
+            `;
+            flashcardElement.querySelector('.remove-btn').addEventListener('click', function () {
+                flashcardElement.remove();
+                updateExportButtonVisibility();
+            });
+            flashcardsContainer.appendChild(flashcardElement);
+            updateExportButtonVisibility();
+        }
+
         let collectionCount = 0;
         let collectedFlashcards = [];
 
         function addToCollection() {
             const newFlashcards = Array.from(document.querySelectorAll('.flashcard:not(.in-collection)')).map(flashcard => {
-                const question = flashcard.querySelector('strong').textContent.slice(3);
-                const answer = flashcard.innerHTML.split('<br>')[1].split('<button')[0].trim().slice(3);
-                return { question, answer };
+                if (flashcard.classList.contains('language-flashcard')) {
+                    const [word, translation] = flashcard.querySelector('div').textContent.split(':');
+                    const answer = flashcard.querySelector('div:nth-child(2)').textContent.slice(3);
+                    return {
+                        question: `Q: ${word.trim()} : ${translation.trim()}`,
+                        answer: `A: ${translation.trim()}, ${answer.trim()}`
+                    };
+                } else {
+                    const question = flashcard.querySelector('strong').textContent.slice(3);
+                    const answer = flashcard.innerHTML.split('<br>')[1].split('<button')[0].trim().slice(3);
+                    return { question, answer };
+                }
             });
-            
+    
             collectedFlashcards = collectedFlashcards.concat(newFlashcards);
             updateCollectionCount(newFlashcards.length);
             clearDisplayedFlashcards();
