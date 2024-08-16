@@ -57,6 +57,7 @@ def generate_flashcard():
         )
         
         content = message.content[0].text
+        print(prompt)
         print(content)
 
         if mode == 'language':
