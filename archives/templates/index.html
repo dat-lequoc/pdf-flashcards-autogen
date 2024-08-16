@@ -6,7 +6,456 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PDF Viewer with Flashcard Generation</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.9.359/pdf.min.js"></script>
-    <link rel="stylesheet" href="/static/css/styles.css">
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2c3e50;
+            --background-color: #ecf0f1;
+            --text-color: #34495e;
+            --highlight-color: #e74c3c;
+        }
+
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+            background-color: var(--background-color);
+            color: var(--text-color);
+        }
+
+        #top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background-color: rgba(52, 152, 219, 0.4); /* More transparent background */
+            color: white;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(5px); /* Add blur effect for better readability */
+        }
+
+        #file-input {
+            color: transparent;
+        }
+
+        #file-input::before {
+            content: 'Choose PDF';
+            display: inline-block;
+            background: var(--secondary-color);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        #page-navigation {
+            display: flex;
+            align-items: center;
+        }
+
+        #current-page {
+            margin-right: 15px;
+            font-weight: bold;
+        }
+
+        #page-input {
+            width: 60px;
+            margin-right: 10px;
+            padding: 5px;
+            border: none;
+            border-radius: 3px;
+        }
+
+        #go-to-page-btn {
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        #go-to-page-btn:hover {
+            background-color: #34495e;
+        }
+
+        #left-panel {
+            flex-grow: 1;
+            width: 70%;
+            overflow-y: auto;
+            padding: 20px;
+            box-sizing: border-box;
+            height: 100vh;
+        }
+
+        #right-panel {
+            width: 30%;
+            height: 100vh;
+            position: fixed;
+            right: 0;
+            top: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            overflow-y: auto;
+            background-color: white;
+            box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
+        }
+
+        #file-input,
+        #mode-toggle,
+        #top-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        #settings-icon {
+            cursor: pointer;
+            font-size: 24px;
+        }
+
+        .mode-btn {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid var(--secondary-color);
+            background-color: white;
+            color: var(--secondary-color);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .mode-btn:not(:last-child) {
+            margin-right: 10px;
+        }
+
+        .mode-btn.selected {
+            background-color: var(--secondary-color);
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .mode-btn:hover:not(.selected) {
+            background-color: var(--background-color);
+        }
+
+        #page-navigation {
+            display: flex;
+            align-items: center;
+        }
+
+        #page-input {
+            width: 60px;
+            margin-right: 10px;
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+        }
+
+        #go-to-page-btn {
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        #go-to-page-btn:hover {
+            background-color: #34495e;
+        }
+
+        #settings-panel {
+            margin-top: 15px;
+        }
+
+        #api-key-input,
+        #model-select {
+            margin-bottom: 15px;
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+        }
+
+        #pdf-viewer {
+            border: 1px solid #ddd;
+            background-color: white;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .page {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .text-layer {
+            position: absolute;
+            left: 0;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            overflow: hidden;
+            opacity: 0.7;
+            line-height: 1.0;
+        }
+
+        .text-layer > span {
+            color: transparent;
+            position: absolute;
+            white-space: pre;
+            cursor: text;
+            transform-origin: 0% 0%;
+        }
+
+        ::selection {
+            background: rgba(52, 152, 219, 0.3);
+        }
+
+        .highlight {
+            background-color: rgba(255, 255, 0, 0.4);  /* Yellow with 0.5 opacity */
+        }
+
+        #system-prompt, #explain-prompt, #language-prompt {
+            width: 100%;
+            height: 150px;
+            margin-bottom: 15px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            resize: vertical;
+        }
+
+        #explain-prompt, #language-prompt {
+            display: none;
+        }
+
+        #submit-btn {
+            width: 100%;
+            margin-bottom: 15px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        #submit-btn:hover {
+            background-color: #2980b9;
+        }
+
+        #flashcards {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-top: 15px;
+            background-color: white;
+            border-radius: 3px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .flashcard {
+            margin-bottom: 15px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            background-color: white;
+            border-radius: 3px;
+            transition: box-shadow 0.3s ease;
+            font-size: 1.1em; /* Increase font size for flashcards */
+        }
+
+        .flashcard:hover {
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .explanation-content {
+            white-space: pre-wrap;
+            text-align: left;
+            margin-bottom: 15px;
+        }
+
+        .explanation-content br {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .remove-btn {
+            float: right;
+            background-color: var(--highlight-color);
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .remove-btn:hover {
+            background-color: #c0392b;
+        }
+
+        #recent-pdfs {
+            margin-top: 20px;
+        }
+
+        #recent-pdfs h3 {
+            margin-bottom: 10px;
+            color: var(--secondary-color);
+        }
+
+        #recent-pdfs ul {
+            padding-left: 20px;
+            list-style-type: none;
+        }
+
+        #recent-pdfs li {
+            margin-bottom: 5px;
+        }
+
+        #recent-pdfs a {
+            color: var(--primary-color);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        #recent-pdfs a:hover {
+            color: #2980b9;
+        }
+
+        #add-to-collection-btn,
+        #clear-collection-btn,
+        #export-csv-btn {
+            width: 100%;
+            margin-bottom: 10px;
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        #add-to-collection-btn:hover,
+        #clear-collection-btn:hover,
+        #export-csv-btn:hover {
+            background-color: #34495e;
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        /* Markdown styles */
+        #explanationModalContent {
+            font-family: -apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif,Apple Color Emoji,Segoe UI Emoji;
+            font-size: 20px;
+            line-height: 1.8;
+            word-wrap: break-word;
+        }
+
+        #explanationModalContent h1,
+        #explanationModalContent h2,
+        #explanationModalContent h3,
+        #explanationModalContent h4,
+        #explanationModalContent h5,
+        #explanationModalContent h6 {
+            margin-top: 24px;
+            margin-bottom: 16px;
+            font-weight: 600;
+            line-height: 1.25;
+        }
+
+        #explanationModalContent h1 { font-size: 2em; }
+        #explanationModalContent h2 { font-size: 1.5em; }
+        #explanationModalContent h3 { font-size: 1.25em; }
+        #explanationModalContent h4 { font-size: 1em; }
+        #explanationModalContent h5 { font-size: 0.875em; }
+        #explanationModalContent h6 { font-size: 0.85em; }
+
+        #explanationModalContent p {
+            margin-top: 0;
+            margin-bottom: 16px;
+        }
+
+        #explanationModalContent code {
+            padding: 0.2em 0.4em;
+            margin: 0;
+            font-size: 85%;
+            background-color: rgba(27,31,35,0.05);
+            border-radius: 3px;
+        }
+
+        #explanationModalContent pre {
+            padding: 16px;
+            overflow: auto;
+            font-size: 85%;
+            line-height: 1.45;
+            background-color: #f6f8fa;
+            border-radius: 3px;
+        }
+
+        #explanationModalContent ul,
+        #explanationModalContent ol {
+            padding-left: 2em;
+            margin-top: 0;
+            margin-bottom: 16px;
+        }
+
+        #explanationModalContent img {
+            max-width: 100%;
+            box-sizing: content-box;
+            background-color: #fff;
+        }
+
+        #explanationModalContent blockquote {
+            padding: 0 1em;
+            color: #6a737d;
+            border-left: 0.25em solid #dfe2e5;
+            margin: 0 0 16px 0;
+        }
+    </style>
 </head>
 
 <body>
@@ -45,7 +494,7 @@ That was example, now generate flashcards for this text:
             <textarea id="explain-prompt" placeholder="Enter system prompt for explanation" style="display: none;">Explain the following text in simple terms, focusing on the main concepts and their relationships. Use clear and concise language, and break down complex ideas into easily understandable parts. If there are any technical terms, provide brief explanations for them. Return your explanation in markdown format.
 
 Now explain this text:</textarea>
-            <textarea id="language-prompt" placeholder="Enter system prompt for language mode">Explain the word in the phrase in the {targetLanguage} using this format:
+            <textarea id="language-prompt" placeholder="Enter system prompt for language mode">Explain the word shortly in the phrase in the {targetLanguage} using this format:
 Example:
 Word: "refused"
 Phrase: "Hamas refused to join a new round of peace negotiations."
@@ -54,7 +503,7 @@ T: từ chối
 Q: "Hamas <b>refused</b> to join a new round of peace negotiations."
 A: Declined to accept or comply with a request or proposal.
 
-That was an example. Now explain shortly the word in the phrase below:
+That was an example. Now explain the word in the phrase below:
 Word:"{word}" 
 Phrase: "{phrase}"</textarea>
         </div>
@@ -363,7 +812,6 @@ Phrase: "{phrase}"</textarea>
                         word: flashcard.word,
                         translation: flashcard.translation
                     };
-                    console.log(formattedFlashcard);
                     displayLanguageFlashcard(formattedFlashcard);
                 } else {
                     throw new Error('Invalid response from API');
@@ -525,7 +973,7 @@ Phrase: "{phrase}"</textarea>
             flashcardElement.dataset.translation = flashcard.translation;
             flashcardElement.dataset.answer = flashcard.answer;
             flashcardElement.innerHTML = `
-                <div style="font-size: 1.2em; margin-bottom: 10px;"><b>${flashcard.word}</b>: ${flashcard.translation}</div>
+                <div style="font-size: 1.2em; margin-bottom: 10px;">${flashcard.question}</div>
                 <div>- ${flashcard.answer}</div>
                 <button class="remove-btn">Remove</button>
             `;
@@ -547,7 +995,7 @@ Phrase: "{phrase}"</textarea>
                     const translation = flashcard.dataset.translation;
                     const answer = flashcard.dataset.answer;
                     const question = flashcard.dataset.question;
-                    <!-- console.log(word, translation, question, answer); -->
+                    console.log(word, translation, question, answer);
                     return {
                         phrase: question,
                         translationAnswer: `${translation.trim()}\n${answer.trim()}`

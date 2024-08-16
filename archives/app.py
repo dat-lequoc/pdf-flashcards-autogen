@@ -71,13 +71,12 @@ def generate_flashcard():
                     translation = line[2:].strip()
                 elif line.startswith('Q:'):
                     word = line[2:].split('<b>')[1].split('</b>')[0].strip()
-                    question = line[2:].strip()
                 elif line.startswith('A:'):
                     answer = line[2:].strip()
             
             flashcard = {
                 'word': word,
-                'question': question,
+                'question': lines[1][2:].strip(),  # Get the full question
                 'translation': translation,
                 'answer': answer
             }
