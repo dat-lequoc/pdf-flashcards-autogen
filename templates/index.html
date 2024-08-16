@@ -1144,38 +1144,20 @@ That was an example. Now generate a flashcard for this word and phrase:</textare
         function getPhrase(range, word) {
             let startNode = range.startContainer;
             let endNode = range.endContainer;
-            let startOffset = 0;
-            let endOffset = endNode.length;
-
-            // Expand to full paragraph or a maximum of 3 sentences
-            const paragraphStart = findParagraphStart(startNode);
-            const paragraphEnd = findParagraphEnd(endNode);
+            let startOffset = Math.max(0, range.startOffset - 50);
+            let endOffset = Math.min(endNode.length, range.endOffset + 50);
 
             // Extract the phrase
             let phrase = '';
-            let currentNode = paragraphStart.node;
-            let sentenceCount = 0;
-            const maxSentences = 3;
-
-            while (currentNode && sentenceCount < maxSentences) {
+            let currentNode = startNode;
+            while (currentNode) {
                 if (currentNode.nodeType === Node.TEXT_NODE) {
                     const text = currentNode.textContent;
-                    const start = currentNode === paragraphStart.node ? paragraphStart.offset : 0;
-                    const end = currentNode === paragraphEnd.node ? paragraphEnd.offset : text.length;
-                    
-                    let textPart = text.slice(start, end);
-                    const sentences = textPart.match(/[^.!?]+[.!?]+/g) || [textPart];
-                    
-                    for (let sentence of sentences) {
-                        if (sentenceCount < maxSentences) {
-                            phrase += sentence;
-                            sentenceCount++;
-                        } else {
-                            break;
-                        }
-                    }
+                    const start = currentNode === startNode ? startOffset : 0;
+                    const end = currentNode === endNode ? endOffset : text.length;
+                    phrase += text.slice(start, end);
                 }
-                if (currentNode === paragraphEnd.node) break;
+                if (currentNode === endNode) break;
                 currentNode = currentNode.nextSibling;
             }
 
@@ -1184,26 +1166,6 @@ That was an example. Now generate a flashcard for this word and phrase:</textare
             phrase = phrase.replace(wordRegex, `<b>$&</b>`);
 
             return phrase.trim();
-        }
-
-        function findParagraphStart(node) {
-            while (node && node.previousSibling) {
-                if (node.nodeType === Node.ELEMENT_NODE && node.tagName === 'P') {
-                    break;
-                }
-                node = node.previousSibling;
-            }
-            return { node: node, offset: 0 };
-        }
-
-        function findParagraphEnd(node) {
-            while (node && node.nextSibling) {
-                if (node.nodeType === Node.ELEMENT_NODE && node.tagName === 'P') {
-                    break;
-                }
-                node = node.nextSibling;
-            }
-            return { node: node, offset: node.length };
         }
 
         submitBtn.addEventListener('click', generateContent);
