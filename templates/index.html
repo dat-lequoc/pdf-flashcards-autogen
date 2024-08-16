@@ -29,9 +29,31 @@
                 <option value="claude-3-5-sonnet-20240620">Claude 3.5 Sonnet</option>
                 <option value="claude-3-haiku-20240307">Claude 3 Haiku</option>
             </select>
-            <textarea id="system-prompt" placeholder="Enter system prompt for flashcard generation"></textarea>
-            <textarea id="explain-prompt" placeholder="Enter system prompt for explanation" style="display: none;"></textarea>
-            <textarea id="language-prompt" placeholder="Enter system prompt for language mode" style="display: none;"></textarea>
+            <textarea id="system-prompt" placeholder="Enter system prompt for flashcard generation">Generate concise flashcards based on the following text. The number of flashcards should be proportional to the text's length and complexity, with a minimum of 1 and a maximum of 10. Each flashcard should have a question (Q:) that tests a key concept and an answer (A:) that is brief but complete. Ensure that the flashcards cover different aspects of the text when possible. Use <b> tags to emphasize important words or phrases in both questions and answers. Cite the short code or example to the question if needed.
+
+Example:
+Text: "In parallel computing, load balancing refers to the practice of distributing computational work evenly across multiple processing units. This is crucial for maximizing efficiency and minimizing idle time. Dynamic load balancing adjusts the distribution of work during runtime, while static load balancing determines the distribution before execution begins."
+Q: What is the primary goal of <b>load balancing</b> in parallel computing?
+A: To <b>distribute work evenly</b> across processing units, maximizing efficiency and minimizing idle time.
+Q: How does <b>dynamic load balancing</b> differ from <b>static load balancing</b>?
+A: Dynamic balancing <b>adjusts work distribution during runtime</b>, while static balancing <b>determines distribution before execution</b>.
+
+That was example, now generate flashcards for this text:</textarea>
+            <textarea id="explain-prompt" placeholder="Enter system prompt for explanation" style="display: none;">Explain the following text in simple terms, focusing on the main concepts and their relationships. Use clear and concise language, and break down complex ideas into easily understandable parts. If there are any technical terms, provide brief explanations for them. Return your explanation in markdown format.
+
+Now explain this text:</textarea>
+            <textarea id="language-prompt" placeholder="Enter system prompt for language mode" style="display: none;">Explain the word shortly in the phrase in the {targetLanguage} using this format:
+Example:
+Word: "refused"
+Phrase: "Hamas refused to join a new round of peace negotiations."
+
+T: từ chối 
+Q: "Hamas <b>refused</b> to join a new round of peace negotiations."
+A: Declined to accept or comply with a request or proposal.
+
+That was an example. Now explain the word in the phrase below:
+Word:"{word}" 
+Phrase: "{phrase}"</textarea>
         </div>
         <div id="mode-toggle">
             <button class="mode-btn selected" data-mode="flashcard">Flashcard</button>
@@ -64,5 +86,39 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/1.9.1/showdown.min.js"></script>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        function loadRecentPDFs() {
+            const recentPDFs = {{ recent_pdfs|tojson }};
+            const pdfList = document.getElementById('pdf-list');
+            pdfList.innerHTML = '';
+            recentPDFs.forEach(pdf => {
+                const li = document.createElement('li');
+                const a = document.createElement('a');
+                a.href = '#';
+                a.textContent = `${pdf.filename} (${new Date(pdf.date).toLocaleDateString()})`;
+                a.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    fetch(`/open_pdf/${pdf.filename}`)
+                        .then(response => response.blob())
+                        .then(blob => {
+                            const file = new File([blob], pdf.filename, { type: 'application/pdf' });
+                            loadPDF(file);
+                        })
+                        .catch(error => console.error('Error:', error));
+                });
+                li.appendChild(a);
+                pdfList.appendChild(li);
+            });
+        }
+
+        window.onload = function() {
+            loadRecentPDFs();
+            
+            document.getElementById('settings-icon').addEventListener('click', function() {
+                const settingsPanel = document.getElementById('settings-panel');
+                settingsPanel.style.display = settingsPanel.style.display === 'none' ? 'block' : 'none';
+            });
+        };
+    </script>
 </body>
 </html>
