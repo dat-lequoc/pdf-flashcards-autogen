@@ -1073,6 +1073,8 @@ A: (1) Short translation of the word in Vietnamese.
         languageButtons.forEach(button => {
             button.addEventListener('click', function(event) {
                 event.preventDefault();
+                languageButtons.forEach(btn => btn.classList.remove('selected'));
+                this.classList.add('selected');
                 const targetLanguage = this.dataset.language;
                 handleLanguageMode(event, targetLanguage);
             });
