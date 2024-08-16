@@ -4,6 +4,9 @@
   --background-color: #ecf0f1;
   --text-color: #34495e;
   --highlight-color: #e74c3c;
+  --button-min-width: 100px;
+  --button-height: 36px;
+  --button-font-size: 14px;
 }
 
 body {
@@ -23,10 +26,10 @@ body {
   justify-content: space-between;
   align-items: center;
   padding: 15px;
-  background-color: rgba(52, 152, 219, 0.4); /* More transparent background */
+  background-color: rgba(52, 152, 219, 0.4);
   color: white;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  backdrop-filter: blur(5px); /* Add blur effect for better readability */
+  backdrop-filter: blur(5px);
 }
 
 #file-input {
@@ -36,12 +39,17 @@ body {
 #file-input::before {
   content: 'Choose PDF';
   display: inline-block;
+  min-width: var(--button-min-width);
+  height: var(--button-height);
+  padding: 0 15px;
+  font-size: var(--button-font-size);
   background: var(--secondary-color);
   color: white;
-  padding: 5px 10px;
   border-radius: 3px;
   cursor: pointer;
-  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 #page-navigation {
@@ -62,20 +70,6 @@ body {
   border-radius: 3px;
 }
 
-#go-to-page-btn {
-  background-color: var(--secondary-color);
-  color: white;
-  border: none;
-  padding: 5px 10px;
-  border-radius: 3px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-#go-to-page-btn:hover {
-  background-color: #34495e;
-}
-
 #left-panel {
   flex-grow: 1;
   width: 70%;
@@ -86,8 +80,8 @@ body {
 }
 
 #right-panel {
-  transform: scale(1); /* Maintain original scale */
-  transform-origin: top right; /* Anchor point for scaling */
+  transform: scale(1);
+  transform-origin: top right;
   width: 30%;
   height: 100vh;
   position: fixed;
@@ -152,20 +146,6 @@ body {
   border-radius: 3px;
 }
 
-#go-to-page-btn {
-  background-color: var(--secondary-color);
-  color: white;
-  border: none;
-  padding: 5px 10px;
-  border-radius: 3px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-#go-to-page-btn:hover {
-  background-color: #34495e;
-}
-
 #settings-panel {
   margin-top: 15px;
 }
@@ -214,7 +194,7 @@ body {
 }
 
 .highlight {
-  background-color: rgba(255, 255, 0, 0.4);  /* Yellow with 0.5 opacity */
+  background-color: rgba(255, 255, 0, 0.4);
 }
 
 #system-prompt, #explain-prompt, #language-prompt {
@@ -229,22 +209,6 @@ body {
 
 #explain-prompt, #language-prompt {
   display: none;
-}
-
-#submit-btn {
-  width: 100%;
-  margin-bottom: 15px;
-  background-color: var(--primary-color);
-  color: white;
-  border: none;
-  padding: 10px;
-  border-radius: 3px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-#submit-btn:hover {
-  background-color: #2980b9;
 }
 
 #flashcards {
@@ -263,7 +227,7 @@ body {
   background-color: white;
   border-radius: 3px;
   transition: box-shadow 0.3s ease;
-  font-size: 16px; /* Static font size for flashcards */
+  font-size: 16px;
 }
 
 .flashcard:hover {
@@ -322,26 +286,6 @@ body {
 
 #recent-pdfs a:hover {
   color: #2980b9;
-}
-
-#add-to-collection-btn,
-#clear-collection-btn,
-#export-csv-btn {
-  width: 100%;
-  margin-bottom: 10px;
-  background-color: var(--secondary-color);
-  color: white;
-  border: none;
-  padding: 10px;
-  border-radius: 3px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-#add-to-collection-btn:hover,
-#clear-collection-btn:hover,
-#export-csv-btn:hover {
-  background-color: #34495e;
 }
 
 /* Modal styles */
@@ -451,3 +395,92 @@ body {
   margin: 0 0 16px 0;
 }
 
+/* Button styles */
+.mode-btn,
+#go-to-page-btn,
+#submit-btn,
+#add-to-collection-btn,
+#clear-collection-btn,
+#export-csv-btn {
+  min-width: var(--button-min-width);
+  height: var(--button-height);
+  padding: 0 15px;
+  font-size: var(--button-font-size);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#go-to-page-btn {
+  background-color: var(--secondary-color);
+  color: white;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+#go-to-page-btn:hover {
+  background-color: #34495e;
+}
+
+#submit-btn {
+  width: 100%;
+  margin-bottom: 15px;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+#submit-btn:hover {
+  background-color: #2980b9;
+}
+
+#add-to-collection-btn,
+#clear-collection-btn,
+#export-csv-btn {
+  width: 100%;
+  margin-bottom: 10px;
+  background-color: var(--secondary-color);
+  color: white;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+#add-to-collection-btn:hover,
+#clear-collection-btn:hover,
+#export-csv-btn:hover {
+  background-color: #34495e;
+}
+
+/* Media query for small screens and high zoom levels */
+@media screen and (max-width: 768px), screen and (min-resolution: 2dppx) {
+  #top-bar {
+    flex-wrap: wrap;
+  }
+
+  #file-input,
+  #mode-toggle,
+  #page-navigation {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+
+  #right-panel {
+    width: 100%;
+    position: static;
+    height: auto;
+  }
+
+  #left-panel {
+    width: 100%;
+  }
+}
