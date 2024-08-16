@@ -805,11 +805,13 @@ Phrase: "{phrase}"</textarea>
             try {
                 const response = await callClaudeAPI(prompt);
                 if (response.flashcard) {
-                            console.log(response.flashcard);
+                    console.log(response.flashcard);
                     const flashcard = response.flashcard;
                     const formattedFlashcard = {
-                        question: `<b>${flashcard.word}</b> : ${flashcard.translation}`,
-                        answer: flashcard.answer
+                        question: flashcard.question,
+                        answer: flashcard.answer,
+                        word: flashcard.word,
+                        translation: flashcard.translation
                     };
                     displayLanguageFlashcard(formattedFlashcard);
                 } else {
@@ -968,6 +970,9 @@ Phrase: "{phrase}"</textarea>
             const flashcardElement = document.createElement('div');
             flashcardElement.className = 'flashcard language-flashcard';
             flashcardElement.dataset.question = flashcard.question;
+            flashcardElement.dataset.word = flashcard.word;
+            flashcardElement.dataset.translation = flashcard.translation;
+            flashcardElement.dataset.answer = flashcard.answer;
             flashcardElement.innerHTML = `
                 <div style="font-size: 1.2em; margin-bottom: 10px;">${flashcard.question}</div>
                 <div>- ${flashcard.answer}</div>
@@ -987,10 +992,11 @@ Phrase: "{phrase}"</textarea>
         function addToCollection() {
             const newFlashcards = Array.from(document.querySelectorAll('.flashcard:not(.in-collection)')).map(flashcard => {
                 if (flashcard.classList.contains('language-flashcard')) {
-                    const [word, translation] = flashcard.querySelector('div').textContent.split(':');
-                    const answer = flashcard.querySelector('div:nth-child(2)').textContent.slice(2);
+                    const word = flashcard.dataset.word;
+                    const translation = flashcard.dataset.translation;
+                    const answer = flashcard.dataset.answer;
                     const question = flashcard.dataset.question;
-                            console.log(word, translation, question);
+                    console.log(word, translation, question, answer);
                     return {
                         phrase: question,
                         translationAnswer: `${translation.trim()}\n${answer.trim()}`
@@ -1004,7 +1010,7 @@ Phrase: "{phrase}"</textarea>
                     };
                 }
             });
-    
+
             collectedFlashcards = collectedFlashcards.concat(newFlashcards);
             updateCollectionCount(newFlashcards.length);
             clearDisplayedFlashcards();
