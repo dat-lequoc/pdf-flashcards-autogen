@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Viewer with Flashcard Generation</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.9.359/pdf.min.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div id="top-bar">
+        <input type="file" id="file-input">
+        <span id="current-page">Page: 1</span>
+    </div>
+    <div id="left-panel">
+        <div id="pdf-viewer"></div>
+    </div>
+    <div id="right-panel">
+        <!-- Add your right panel content here -->
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
