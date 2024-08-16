@@ -805,6 +805,7 @@ Phrase: "{phrase}"</textarea>
             try {
                 const response = await callClaudeAPI(prompt);
                 if (response.flashcard) {
+                            console.log(response.flashcard);
                     const flashcard = response.flashcard;
                     const formattedFlashcard = {
                         question: `<b>${flashcard.word}</b> : ${flashcard.translation}`,
@@ -968,7 +969,7 @@ Phrase: "{phrase}"</textarea>
             flashcardElement.className = 'flashcard language-flashcard';
             flashcardElement.dataset.question = flashcard.question;
             flashcardElement.innerHTML = `
-                <div style="font-size: 1.2em; margin-bottom: 10px;"><b>${flashcard.word}</b>: ${flashcard.translation}</div>
+                <div style="font-size: 1.2em; margin-bottom: 10px;">${flashcard.question}</div>
                 <div>- ${flashcard.answer}</div>
                 <button class="remove-btn">Remove</button>
             `;
@@ -989,6 +990,7 @@ Phrase: "{phrase}"</textarea>
                     const [word, translation] = flashcard.querySelector('div').textContent.split(':');
                     const answer = flashcard.querySelector('div:nth-child(2)').textContent.slice(2);
                     const question = flashcard.dataset.question;
+                            console.log(word, translation, question);
                     return {
                         phrase: question,
                         translationAnswer: `${translation.trim()}\n${answer.trim()}`
