@@ -707,19 +707,19 @@ Now explain this text:</textarea>
             let endOffset = range.endOffset;
 
             // Expand to sentence boundaries
-            while (startNode && !sentenceStart.test(startNode.textContent.slice(0, startOffset))) {
+            while (startNode && startNode.textContent && !sentenceStart.test(startNode.textContent.slice(0, startOffset))) {
                 if (startNode.previousSibling) {
                     startNode = startNode.previousSibling;
-                    startOffset = startNode.textContent.length;
+                    startOffset = startNode.textContent ? startNode.textContent.length : 0;
                 } else if (startNode.parentNode && startNode.parentNode.previousSibling) {
                     startNode = startNode.parentNode.previousSibling.lastChild;
-                    startOffset = startNode.textContent.length;
+                    startOffset = startNode.textContent ? startNode.textContent.length : 0;
                 } else {
                     break;
                 }
             }
 
-            while (endNode && !sentenceEnd.test(endNode.textContent.slice(endOffset))) {
+            while (endNode && endNode.textContent && !sentenceEnd.test(endNode.textContent.slice(endOffset))) {
                 if (endNode.nextSibling) {
                     endNode = endNode.nextSibling;
                     endOffset = 0;
@@ -1052,7 +1052,7 @@ Now explain this text:</textarea>
         });
 
         pdfViewer.addEventListener('mouseup', handleLanguageMode);
-        pdfViewer.addEventListener('click', handleLanguageMode);
+        pdfViewer.addEventListener('dblclick', handleLanguageMode);
 
         submitBtn.addEventListener('click', generateContent);
 
