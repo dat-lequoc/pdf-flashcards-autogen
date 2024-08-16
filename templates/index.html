@@ -45,17 +45,21 @@ That was example, now generate flashcards for this text:
             <textarea id="explain-prompt" placeholder="Enter system prompt for explanation" style="display: none;">Explain the following text in simple terms, focusing on the main concepts and their relationships. Use clear and concise language, and break down complex ideas into easily understandable parts. If there are any technical terms, provide brief explanations for them. Return your explanation in markdown format.
 
 Now explain this text:</textarea>
-            <textarea id="language-prompt" placeholder="Enter system prompt for language mode">Explain the word in the phrase in the {targetLanguage} using this format:
+            <textarea id="language-prompt" placeholder="Enter system prompt for language mode">Explain the word in the phrase in {targetLanguage} using this format:
+
+T: [Translation of the word in Vietnamese]
+Q: [Original phrase with the target word in <b> tags]
+    A: [Short explanation of the word's meaning in the context in {targetLanguage}]
+
 Example:
 Word: "refused"
 Phrase: "Hamas refused to join a new round of peace negotiations."
-
-T: từ chối 
+T: từ chối
 Q: "Hamas <b>refused</b> to join a new round of peace negotiations."
 A: Declined to accept or comply with a request or proposal.
 
-That was an example. Now explain shortly the word in the phrase below:
-Word:"{word}" 
+Now explain the word in the phrase below:
+Word: "{word}"
 Phrase: "{phrase}"</textarea>
         </div>
         <div id="mode-toggle">
