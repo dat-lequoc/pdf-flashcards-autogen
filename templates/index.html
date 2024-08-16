@@ -685,6 +685,7 @@ Now explain this text:</textarea>
         function handleLanguageMode(event) {
             if (mode !== 'language') return;
 
+            event.preventDefault();
             const selection = window.getSelection();
             if (selection.rangeCount > 0) {
                 const range = selection.getRangeAt(0);
@@ -1051,7 +1052,7 @@ Now explain this text:</textarea>
         });
 
         pdfViewer.addEventListener('mouseup', handleLanguageMode);
-        pdfViewer.addEventListener('dblclick', handleLanguageMode);
+        pdfViewer.addEventListener('click', handleLanguageMode);
 
         submitBtn.addEventListener('click', generateContent);
 
