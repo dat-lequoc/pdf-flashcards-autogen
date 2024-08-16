@@ -268,9 +268,24 @@ Phrase: "{phrase}"</textarea>
                         lastProcessedQuery = phrase;
                         lastRequestTime = currentTime;
                         generateLanguageFlashcard(selectedText, phrase, targetLanguage);
+                        speakWord(selectedText);
                     }
                 }
             }
+        }
+
+        function speakWord(word) {
+            const utterance = new SpeechSynthesisUtterance(word);
+            utterance.rate = 0.8; // Slightly slower rate for clarity
+            
+            // Speak the word twice with a pause in between
+            speechSynthesis.speak(utterance);
+            
+            utterance.onend = () => {
+                setTimeout(() => {
+                    speechSynthesis.speak(utterance);
+                }, 500); // 500ms pause between repetitions
+            };
         }
 
         function getPhrase(range) {
