@@ -791,10 +791,9 @@ That was an example. Now generate a flashcard for this word and phrase:</textare
                 return;
             }
 
-            const fullSentence = getFullSentence(phrase, word);
             const prompt = document.getElementById('language-prompt').value
                 .replace('{word}', word)
-                .replace('{phrase}', fullSentence)
+                .replace('{phrase}', phrase)
                 .replace('{targetLanguage}', targetLanguage);
 
             try {
@@ -808,7 +807,7 @@ That was an example. Now generate a flashcard for this word and phrase:</textare
                 } else if (response.explanation) {
                     // If the API returns an explanation instead of flashcards
                     const flashcard = {
-                        question: fullSentence.replace(word, `<b>${word}</b>`),
+                        question: phrase,
                         answer: response.explanation.replace(/^(Q:|A:)\s*/g, '')
                     };
                     displayFlashcards([flashcard], true);
@@ -1125,17 +1124,71 @@ That was an example. Now generate a flashcard for this word and phrase:</textare
             pageDiv.addEventListener('dblclick', function(event) {
                 if (mode === 'language') {
                     const selection = window.getSelection();
-                    if (selection.toString().trim() !== '') {
+                    const range = selection.getRangeAt(0);
+                    const word = selection.toString().trim();
+                    
+                    if (word !== '') {
                         const selectedLanguageButton = document.querySelector('#language-buttons .mode-btn.selected');
                         if (selectedLanguageButton) {
                             const targetLanguage = selectedLanguageButton.dataset.language;
-                            handleLanguageMode(event, targetLanguage);
+                            const phrase = getPhrase(range, word);
+                            generateLanguageFlashcard(word, phrase, targetLanguage);
                         } else {
                             console.error('No language selected');
                         }
                     }
                 }
             });
+        }
+
+        function getPhrase(range, word) {
+            let startNode = range.startContainer;
+            let endNode = range.endContainer;
+            let startOffset = Math.max(0, range.startOffset - 20);
+            let endOffset = Math.min(endNode.length, range.endOffset + 20);
+
+            // Expand to sentence boundaries if possible
+            while (startNode && startNode.textContent && startOffset > 0) {
+                const text = startNode.textContent;
+                const sentenceStart = text.lastIndexOf('.', startOffset - 1);
+                if (sentenceStart !== -1 && sentenceStart >= startOffset - 20) {
+                    startOffset = sentenceStart + 1;
+                    break;
+                }
+                startOffset = 0;
+                startNode = startNode.previousSibling;
+            }
+
+            while (endNode && endNode.textContent && endOffset < endNode.textContent.length) {
+                const text = endNode.textContent;
+                const sentenceEnd = text.indexOf('.', endOffset);
+                if (sentenceEnd !== -1 && sentenceEnd <= endOffset + 20) {
+                    endOffset = sentenceEnd + 1;
+                    break;
+                }
+                endOffset = endNode.textContent.length;
+                endNode = endNode.nextSibling;
+            }
+
+            // Extract the phrase
+            let phrase = '';
+            let currentNode = startNode;
+            while (currentNode) {
+                if (currentNode.nodeType === Node.TEXT_NODE) {
+                    const text = currentNode.textContent;
+                    const start = currentNode === startNode ? startOffset : 0;
+                    const end = currentNode === endNode ? endOffset : text.length;
+                    phrase += text.slice(start, end);
+                }
+                if (currentNode === endNode) break;
+                currentNode = currentNode.nextSibling;
+            }
+
+            // Ensure the word is bolded in the phrase
+            const wordRegex = new RegExp(`\\b${word}\\b`, 'gi');
+            phrase = phrase.replace(wordRegex, `<b>$&</b>`);
+
+            return phrase.trim();
         }
 
         submitBtn.addEventListener('click', generateContent);
