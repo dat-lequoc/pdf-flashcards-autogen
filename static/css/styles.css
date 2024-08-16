@@ -41,6 +41,7 @@ body {
   padding: 5px 10px;
   border-radius: 3px;
   cursor: pointer;
+  font-size: 14px;
 }
 
 #page-navigation {
@@ -111,6 +112,7 @@ body {
 #settings-icon {
   cursor: pointer;
   font-size: 24px;
+  line-height: 1;
 }
 
 .mode-btn {
@@ -261,7 +263,7 @@ body {
   background-color: white;
   border-radius: 3px;
   transition: box-shadow 0.3s ease;
-  font-size: 1.1em; /* Increase font size for flashcards */
+  font-size: 16px; /* Static font size for flashcards */
 }
 
 .flashcard:hover {
@@ -383,7 +385,7 @@ body {
 /* Markdown styles */
 #explanationModalContent {
   font-family: -apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif,Apple Color Emoji,Segoe UI Emoji;
-  font-size: 20px;
+  font-size: 16px;
   line-height: 1.8;
   word-wrap: break-word;
 }
@@ -400,12 +402,12 @@ body {
   line-height: 1.25;
 }
 
-#explanationModalContent h1 { font-size: 2em; }
-#explanationModalContent h2 { font-size: 1.5em; }
-#explanationModalContent h3 { font-size: 1.25em; }
-#explanationModalContent h4 { font-size: 1em; }
-#explanationModalContent h5 { font-size: 0.875em; }
-#explanationModalContent h6 { font-size: 0.85em; }
+#explanationModalContent h1 { font-size: 32px; }
+#explanationModalContent h2 { font-size: 24px; }
+#explanationModalContent h3 { font-size: 20px; }
+#explanationModalContent h4 { font-size: 16px; }
+#explanationModalContent h5 { font-size: 14px; }
+#explanationModalContent h6 { font-size: 13px; }
 
 #explanationModalContent p {
   margin-top: 0;
@@ -415,7 +417,7 @@ body {
 #explanationModalContent code {
   padding: 0.2em 0.4em;
   margin: 0;
-  font-size: 85%;
+  font-size: 14px;
   background-color: rgba(27,31,35,0.05);
   border-radius: 3px;
 }
