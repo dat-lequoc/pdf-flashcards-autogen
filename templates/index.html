@@ -1079,6 +1079,9 @@ That was an example. Now generate a flashcard for this word and phrase:</textare
                 this.classList.add('selected');
                 const targetLanguage = this.dataset.language;
                 handleLanguageMode(event, targetLanguage);
+                // Keep language buttons visible and Generate button hidden
+                document.getElementById('language-buttons').style.display = 'flex';
+                submitBtn.style.display = 'none';
             });
         });
 
