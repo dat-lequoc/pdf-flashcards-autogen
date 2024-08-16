@@ -713,7 +713,7 @@ Now explain this text:</textarea>
                     startOffset = startNode.textContent ? startNode.textContent.length : 0;
                 } else if (startNode.parentNode && startNode.parentNode.previousSibling) {
                     startNode = startNode.parentNode.previousSibling.lastChild;
-                    startOffset = startNode.textContent ? startNode.textContent.length : 0;
+                    startOffset = startNode && startNode.textContent ? startNode.textContent.length : 0;
                 } else {
                     break;
                 }
@@ -733,7 +733,8 @@ Now explain this text:</textarea>
 
             // Check if we have valid start and end nodes
             if (startNode && startNode.nodeType === Node.TEXT_NODE &&
-                endNode && endNode.nodeType === Node.TEXT_NODE) {
+                endNode && endNode.nodeType === Node.TEXT_NODE &&
+                startNode.textContent && endNode.textContent) {
                 const phraseRange = document.createRange();
                 phraseRange.setStart(startNode, startOffset);
                 phraseRange.setEnd(endNode, endOffset);
