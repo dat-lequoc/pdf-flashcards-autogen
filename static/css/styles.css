@@ -85,6 +85,8 @@ body {
 }
 
 #right-panel {
+  transform: scale(1); /* Maintain original scale */
+  transform-origin: top right; /* Anchor point for scaling */
   width: 30%;
   height: 100vh;
   position: fixed;
