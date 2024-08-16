@@ -494,19 +494,21 @@ That was example, now generate flashcards for this text:
             <textarea id="explain-prompt" placeholder="Enter system prompt for explanation" style="display: none;">Explain the following text in simple terms, focusing on the main concepts and their relationships. Use clear and concise language, and break down complex ideas into easily understandable parts. If there are any technical terms, provide brief explanations for them. Return your explanation in markdown format.
 
 Now explain this text:</textarea>
-
-
+            <textarea id="language-prompt" placeholder="Enter system prompt for language mode">Generate a flashcard for the word "{word}" found in the following phrase: "{phrase}".
+Q: The phrase with the word in bold.
+A: (1) Short translation of the word in Vietnamese.
+   (2) A short explanation of the word in {targetLanguage}.</textarea>
         </div>
         <div id="mode-toggle">
             <button class="mode-btn selected" data-mode="flashcard">Flashcard</button>
             <button class="mode-btn" data-mode="explain">Explain</button>
             <button class="mode-btn" data-mode="language">Language</button>
         </div>
-        <select id="language-select" style="display: none; margin-top: 10px;">
-            <option value="English">English</option>
-            <option value="French">French</option>
-        </select>
-        <button id="submit-btn">Generate</button>
+        <div id="language-buttons" style="display: none; margin-top: 10px;">
+            <button class="mode-btn" data-language="English">English</button>
+            <button class="mode-btn" data-language="French">French</button>
+        </div>
+        <button id="submit-btn" style="display: block;">Generate</button>
         <div id="flashcards"></div>
         <div id="collection">
             <button id="add-to-collection-btn">Add to Collection (0)</button>
@@ -685,7 +687,7 @@ Now explain this text:</textarea>
             }
         });
 
-        function handleLanguageMode(event) {
+        function handleLanguageMode(event, targetLanguage) {
             if (mode !== 'language') return;
 
             event.preventDefault();
@@ -699,7 +701,7 @@ Now explain this text:</textarea>
                     if (phrase !== lastProcessedQuery && currentTime - lastRequestTime >= cooldownTime) {
                         lastProcessedQuery = phrase;
                         lastRequestTime = currentTime;
-                        generateLanguageFlashcard(selectedText, phrase);
+                        generateLanguageFlashcard(selectedText, phrase, targetLanguage);
                     }
                 }
             }
@@ -753,17 +755,16 @@ Now explain this text:</textarea>
             }
         }
 
-        async function generateLanguageFlashcard(word, phrase) {
+        async function generateLanguageFlashcard(word, phrase, targetLanguage) {
             if (!apiKey) {
                 alert('Please enter your Claude API key first.');
                 return;
             }
 
-            const targetLanguage = document.getElementById('language-select').value;
-            const prompt = `Generate a flashcard for the word "${word}" found in the following phrase: "${phrase}".
-            Q: The phrase with the word in bold.
-            A: (1) Short translation of the word in Vietnamese.
-               (2) A short explanation of the word in ${targetLanguage}.`;
+            const prompt = document.getElementById('language-prompt').value
+                .replace('{word}', word)
+                .replace('{phrase}', phrase)
+                .replace('{targetLanguage}', targetLanguage);
 
             try {
                 const response = await callClaudeAPI(prompt);
@@ -1059,15 +1060,28 @@ Now explain this text:</textarea>
                 this.classList.add('selected');
                 mode = this.dataset.mode;
                 pdfViewer.style.cursor = mode === 'language' ? 'text' : 'default';
-                document.getElementById('language-select').style.display = mode === 'language' ? 'inline-block' : 'none';
+                document.getElementById('language-buttons').style.display = mode === 'language' ? 'flex' : 'none';
                 systemPrompt.style.display = mode === 'flashcard' ? 'block' : 'none';
                 document.getElementById('explain-prompt').style.display = mode === 'explain' ? 'block' : 'none';
+                document.getElementById('language-prompt').style.display = mode === 'language' ? 'block' : 'none';
+                submitBtn.style.display = mode === 'language' ? 'none' : 'block';
                 submitBtn.textContent = mode === 'flashcard' ? 'Generate Flashcards' : 'Generate Explanation';
             });
         });
 
-        pdfViewer.addEventListener('mouseup', handleLanguageMode);
-        pdfViewer.addEventListener('dblclick', handleLanguageMode);
+        const languageButtons = document.querySelectorAll('#language-buttons .mode-btn');
+        languageButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const targetLanguage = this.dataset.language;
+                handleLanguageMode(event, targetLanguage);
+            });
+        });
+
+        pdfViewer.addEventListener('mouseup', function(event) {
+            if (mode === 'language') {
+                event.preventDefault();
+            }
+        });
 
         submitBtn.addEventListener('click', generateContent);
 
