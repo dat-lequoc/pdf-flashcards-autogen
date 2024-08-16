@@ -76,6 +76,7 @@ def generate_flashcard():
             
             flashcard = {
                 'word': word,
+                'question': lines[1][2:].strip(),  # Get the full question
                 'translation': translation,
                 'answer': answer
             }

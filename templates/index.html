@@ -966,8 +966,9 @@ Phrase: "{phrase}"</textarea>
         function displayLanguageFlashcard(flashcard) {
             const flashcardElement = document.createElement('div');
             flashcardElement.className = 'flashcard language-flashcard';
+            flashcardElement.dataset.question = flashcard.question;
             flashcardElement.innerHTML = `
-                <div style="font-size: 1.2em; margin-bottom: 10px;">${flashcard.question}</div>
+                <div style="font-size: 1.2em; margin-bottom: 10px;"><b>${flashcard.word}</b>: ${flashcard.translation}</div>
                 <div>- ${flashcard.answer}</div>
                 <button class="remove-btn">Remove</button>
             `;
@@ -987,8 +988,9 @@ Phrase: "{phrase}"</textarea>
                 if (flashcard.classList.contains('language-flashcard')) {
                     const [word, translation] = flashcard.querySelector('div').textContent.split(':');
                     const answer = flashcard.querySelector('div:nth-child(2)').textContent.slice(2);
+                    const question = flashcard.dataset.question;
                     return {
-                        phrase: `<b>${word.trim()}</b>:${translation.trim()}`,
+                        phrase: question,
                         translationAnswer: `${translation.trim()}\n${answer.trim()}`
                     };
                 } else {
