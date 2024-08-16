@@ -500,8 +500,12 @@ Now explain this text:</textarea>
         <div id="mode-toggle">
             <button class="mode-btn selected" data-mode="flashcard">Flashcard</button>
             <button class="mode-btn" data-mode="explain">Explain</button>
-            <button class="mode-btn" data-mode="highlight">Highlight</button>
+            <button class="mode-btn" data-mode="language">Language</button>
         </div>
+        <select id="language-select" style="display: none; margin-top: 10px;">
+            <option value="English">English</option>
+            <option value="French">French</option>
+        </select>
         <button id="submit-btn">Generate</button>
         <div id="flashcards"></div>
         <div id="collection">
@@ -678,43 +682,84 @@ Now explain this text:</textarea>
             }
         });
 
-        function highlight(event) {
-            if (mode !== 'highlight') return;
+        function handleLanguageMode(event) {
+            if (mode !== 'language') return;
 
             const selection = window.getSelection();
             if (selection.rangeCount > 0) {
                 const range = selection.getRangeAt(0);
-                const highlightSpan = document.createElement('span');
-                highlightSpan.className = 'highlight';
-
-                if (range.commonAncestorContainer.closest('.text-layer')) {
-                    try {
-                        range.surroundContents(highlightSpan);
-                    } catch (e) {
-                        console.error("Highlighting failed:", e);
-                        const textNodes = getTextNodesInRange(range);
-                        textNodes.forEach(node => {
-                            const nodeRange = document.createRange();
-                            nodeRange.selectNodeContents(node);
-                            nodeRange.surroundContents(highlightSpan.cloneNode(true));
-                        });
-                    }
+                const selectedText = selection.toString().trim();
+                if (selectedText) {
+                    const phrase = getPhrase(range);
+                    generateLanguageFlashcard(selectedText, phrase);
                 }
             }
-            selection.removeAllRanges();
         }
 
-        function getTextNodesInRange(range) {
-            const textNodes = [];
-            const treeWalker = document.createTreeWalker(
-                range.commonAncestorContainer,
-                NodeFilter.SHOW_TEXT,
-                { acceptNode: node => range.intersectsNode(node) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT }
-            );
-            while (treeWalker.nextNode()) {
-                textNodes.push(treeWalker.currentNode);
+        function getPhrase(range) {
+            const sentenceStart = /[.!?]\s+[A-Z]|^[A-Z]/;
+            const sentenceEnd = /[.!?](?=\s|$)/;
+
+            let startNode = range.startContainer;
+            let endNode = range.endContainer;
+            let startOffset = range.startOffset;
+            let endOffset = range.endOffset;
+
+            // Expand to sentence boundaries
+            while (startNode && !sentenceStart.test(startNode.textContent.slice(0, startOffset))) {
+                if (startNode.previousSibling) {
+                    startNode = startNode.previousSibling;
+                    startOffset = startNode.textContent.length;
+                } else if (startNode.parentNode && startNode.parentNode.previousSibling) {
+                    startNode = startNode.parentNode.previousSibling.lastChild;
+                    startOffset = startNode.textContent.length;
+                } else {
+                    break;
+                }
             }
-            return textNodes;
+
+            while (endNode && !sentenceEnd.test(endNode.textContent.slice(endOffset))) {
+                if (endNode.nextSibling) {
+                    endNode = endNode.nextSibling;
+                    endOffset = 0;
+                } else if (endNode.parentNode && endNode.parentNode.nextSibling) {
+                    endNode = endNode.parentNode.nextSibling.firstChild;
+                    endOffset = 0;
+                } else {
+                    break;
+                }
+            }
+
+            const phraseRange = document.createRange();
+            phraseRange.setStart(startNode, startOffset);
+            phraseRange.setEnd(endNode, endOffset);
+
+            return phraseRange.toString().trim();
+        }
+
+        async function generateLanguageFlashcard(word, phrase) {
+            if (!apiKey) {
+                alert('Please enter your Claude API key first.');
+                return;
+            }
+
+            const targetLanguage = document.getElementById('language-select').value;
+            const prompt = `Generate a flashcard for the word "${word}" found in the following phrase: "${phrase}".
+            Q: The phrase with the word in bold.
+            A: (1) Short translation of the word in Vietnamese.
+               (2) A short explanation of the word in ${targetLanguage}.`;
+
+            try {
+                const response = await callClaudeAPI(prompt);
+                if (response.flashcards && response.flashcards.length > 0) {
+                    displayFlashcards(response.flashcards, true);
+                } else {
+                    throw new Error('Invalid response from API');
+                }
+            } catch (error) {
+                console.error('Error calling Claude API:', error);
+                alert('Failed to generate language flashcard. Please check your API key and try again.');
+            }
         }
 
         async function generateContent() {
@@ -989,14 +1034,16 @@ Now explain this text:</textarea>
                 modeButtons.forEach(btn => btn.classList.remove('selected'));
                 this.classList.add('selected');
                 mode = this.dataset.mode;
-                pdfViewer.style.cursor = mode === 'highlight' ? 'crosshair' : 'default';
+                pdfViewer.style.cursor = mode === 'language' ? 'text' : 'default';
+                document.getElementById('language-select').style.display = mode === 'language' ? 'inline-block' : 'none';
                 systemPrompt.style.display = mode === 'flashcard' ? 'block' : 'none';
                 document.getElementById('explain-prompt').style.display = mode === 'explain' ? 'block' : 'none';
                 submitBtn.textContent = mode === 'flashcard' ? 'Generate Flashcards' : 'Generate Explanation';
             });
         });
 
-        pdfViewer.addEventListener('mouseup', highlight);
+        pdfViewer.addEventListener('mouseup', handleLanguageMode);
+        pdfViewer.addEventListener('dblclick', handleLanguageMode);
 
         submitBtn.addEventListener('click', generateContent);
 
