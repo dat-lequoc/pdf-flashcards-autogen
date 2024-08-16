@@ -42,6 +42,7 @@ def generate_flashcard():
     data = request.json
     prompt = data['prompt']
     api_key = request.headers.get('X-API-Key')
+    mode = data.get('mode', 'flashcard')
 
     client = anthropic.Anthropic(api_key=api_key)
 
@@ -58,7 +59,10 @@ def generate_flashcard():
         content = message.content[0].text
         print(content)
 
-        if 'flashcard' in prompt.lower():
+        if mode == 'language':
+            # For Language mode, return the entire content as the explanation
+            response = make_response(jsonify({'explanation': content}))
+        elif mode == 'flashcard' or 'flashcard' in prompt.lower():
             flashcards = []
             current_question = ''
             current_answer = ''
@@ -76,7 +80,7 @@ def generate_flashcard():
                 flashcards.append({'question': current_question, 'answer': current_answer})
 
             response = make_response(jsonify({'flashcards': flashcards}))
-        elif 'explain' in prompt.lower():
+        elif mode == 'explain' or 'explain' in prompt.lower():
             # For Explain mode, return the entire content as the explanation
             response = make_response(jsonify({'explanation': content}))
         else:

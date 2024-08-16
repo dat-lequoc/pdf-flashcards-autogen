@@ -753,6 +753,13 @@ Now explain this text:</textarea>
                 const response = await callClaudeAPI(prompt);
                 if (response.flashcards && response.flashcards.length > 0) {
                     displayFlashcards(response.flashcards, true);
+                } else if (response.explanation) {
+                    // If the API returns an explanation instead of flashcards
+                    const flashcard = {
+                        question: `Q: ${phrase.replace(word, `<b>${word}</b>`)}`,
+                        answer: response.explanation
+                    };
+                    displayFlashcards([flashcard], true);
                 } else {
                     throw new Error('Invalid response from API');
                 }
@@ -868,7 +875,8 @@ Now explain this text:</textarea>
                 },
                 body: JSON.stringify({ 
                     prompt: prompt,
-                    model: selectedModel
+                    model: selectedModel,
+                    mode: mode // Add the current mode to the request
                 })
             });
 
