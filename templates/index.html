@@ -702,6 +702,7 @@ Phrase: "{phrase}"</textarea>
                 languageButtons.forEach(btn => btn.classList.remove('selected'));
                 this.classList.add('selected');
                 const targetLanguage = this.dataset.language;
+                saveLanguageChoice(targetLanguage);
                 // Ensure the Language mode button remains selected
                 document.querySelector('.mode-btn[data-mode="language"]').classList.add('selected');
                 // Keep language buttons visible and Generate button hidden
@@ -722,7 +723,7 @@ Phrase: "{phrase}"</textarea>
                     if (word !== '') {
                         // Highlight the selected word
                         const span = document.createElement('span');
-                        span.style.backgroundColor = 'yellow';
+                        span.style.backgroundColor = 'rgba(255, 255, 0, 0.5)';
                         span.textContent = word;
                         range.deleteContents();
                         range.insertNode(span);
@@ -765,6 +766,14 @@ Phrase: "{phrase}"</textarea>
             phrase = phrase.replace(wordRegex, `<b>$&</b>`);
 
             return phrase.trim();
+        }
+
+        function saveLanguageChoice(language) {
+            localStorage.setItem('selectedLanguage', language);
+        }
+
+        function loadLanguageChoice() {
+            return localStorage.getItem('selectedLanguage') || 'English';
         }
 
         submitBtn.addEventListener('click', generateContent);
@@ -831,6 +840,13 @@ Phrase: "{phrase}"</textarea>
                 const settingsPanel = document.getElementById('settings-panel');
                 settingsPanel.style.display = settingsPanel.style.display === 'none' ? 'block' : 'none';
             });
+
+            // Load and set the saved language choice
+            const savedLanguage = loadLanguageChoice();
+            const languageButton = document.querySelector(`#language-buttons .mode-btn[data-language="${savedLanguage}"]`);
+            if (languageButton) {
+                languageButton.click();
+            }
         };
 
         fileInput.addEventListener('change', function (e) {
