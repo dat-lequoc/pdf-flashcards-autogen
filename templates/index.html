@@ -551,6 +551,9 @@ Now explain this text:</textarea>
         let currentFileName = '';
         let currentPage = 1;
         let selectedModel = 'claude-3-haiku-20240307';
+        let lastProcessedQuery = '';
+        let lastRequestTime = 0;
+        const cooldownTime = 1000; // 1 second cooldown
 
         function renderPage(num) {
             pageRendering = true;
@@ -692,7 +695,12 @@ Now explain this text:</textarea>
                 const selectedText = selection.toString().trim();
                 if (selectedText) {
                     const phrase = getPhrase(range);
-                    generateLanguageFlashcard(selectedText, phrase);
+                    const currentTime = Date.now();
+                    if (phrase !== lastProcessedQuery && currentTime - lastRequestTime >= cooldownTime) {
+                        lastProcessedQuery = phrase;
+                        lastRequestTime = currentTime;
+                        generateLanguageFlashcard(selectedText, phrase);
+                    }
                 }
             }
         }
