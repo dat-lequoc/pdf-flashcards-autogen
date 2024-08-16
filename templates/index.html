@@ -988,13 +988,16 @@ Phrase: "{phrase}"</textarea>
                     const [word, translation] = flashcard.querySelector('div').textContent.split(':');
                     const answer = flashcard.querySelector('div:nth-child(2)').textContent.slice(2);
                     return {
-                        question: `${word.trim()} : ${translation.trim()}`,
-                        answer: `${translation.trim()}, ${answer.trim()}`
+                        phrase: `<b>${word.trim()}</b>:${translation.trim()}`,
+                        translationAnswer: `${translation.trim()}\n${answer.trim()}`
                     };
                 } else {
                     const question = flashcard.querySelector('strong').textContent.slice(3);
                     const answer = flashcard.innerHTML.split('<br>')[1].split('<button')[0].trim().slice(3);
-                    return { question, answer };
+                    return {
+                        phrase: question,
+                        translationAnswer: answer
+                    };
                 }
             });
     
@@ -1029,11 +1032,10 @@ Phrase: "{phrase}"</textarea>
         }
 
         function exportToCSV() {
-            <!-- No header needed for csv -->
             let csvContent = "data:text/csv;charset=utf-8,";
 
             collectedFlashcards.forEach(flashcard => {
-                csvContent += `"${flashcard.question}","${flashcard.answer}"\n`;
+                csvContent += `"${flashcard.phrase}";"${flashcard.translationAnswer}"\n`;
             });
 
             const encodedUri = encodeURI(csvContent);
