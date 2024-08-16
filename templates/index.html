@@ -274,18 +274,56 @@ Phrase: "{phrase}"</textarea>
             }
         }
 
+        let voices = [];
+
+        function populateVoiceList() {
+            voices = speechSynthesis.getVoices();
+            console.log('Available voices:', voices);
+        }
+
+        populateVoiceList();
+        if (speechSynthesis.onvoiceschanged !== undefined) {
+            speechSynthesis.onvoiceschanged = populateVoiceList;
+        }
+
         function speakWord(word) {
+            console.log('Attempting to speak word:', word);
+            
             const utterance = new SpeechSynthesisUtterance(word);
             utterance.rate = 0.8; // Slightly slower rate for clarity
             
-            // Speak the word twice with a pause in between
-            speechSynthesis.speak(utterance);
+            // Try to find an English voice, preferably Zira
+            const englishVoice = voices.find(voice => voice.name === "Microsoft Zira Desktop - English (United States)") ||
+                                 voices.find(voice => /en/i.test(voice.lang));
             
-            utterance.onend = () => {
-                setTimeout(() => {
-                    speechSynthesis.speak(utterance);
-                }, 500); // 500ms pause between repetitions
-            };
+            if (englishVoice) {
+                console.log('Using voice:', englishVoice.name);
+                utterance.voice = englishVoice;
+            } else {
+                console.log('No suitable English voice found. Using default voice.');
+            }
+            
+            // Speak the word twice with a pause in between
+            try {
+                speechSynthesis.speak(utterance);
+                
+                utterance.onend = () => {
+                    console.log('First utterance ended');
+                    setTimeout(() => {
+                        try {
+                            speechSynthesis.speak(utterance);
+                        } catch (error) {
+                            console.error('Error on second speak:', error);
+                        }
+                    }, 500); // 500ms pause between repetitions
+                };
+                
+                utterance.onerror = (event) => {
+                    console.error('Speech synthesis error:', event.error);
+                };
+            } catch (error) {
+                console.error('Error initiating speech:', error);
+            }
         }
 
         function getPhrase(range) {
