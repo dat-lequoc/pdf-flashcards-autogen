@@ -1144,43 +1144,38 @@ That was an example. Now generate a flashcard for this word and phrase:</textare
         function getPhrase(range, word) {
             let startNode = range.startContainer;
             let endNode = range.endContainer;
-            let startOffset = Math.max(0, range.startOffset - 20);
-            let endOffset = Math.min(endNode.length, range.endOffset + 20);
+            let startOffset = 0;
+            let endOffset = endNode.length;
 
-            // Expand to sentence boundaries if possible
-            while (startNode && startNode.textContent && startOffset > 0) {
-                const text = startNode.textContent;
-                const sentenceStart = text.lastIndexOf('.', startOffset - 1);
-                if (sentenceStart !== -1 && sentenceStart >= startOffset - 20) {
-                    startOffset = sentenceStart + 1;
-                    break;
-                }
-                startOffset = 0;
-                startNode = startNode.previousSibling;
-            }
-
-            while (endNode && endNode.textContent && endOffset < endNode.textContent.length) {
-                const text = endNode.textContent;
-                const sentenceEnd = text.indexOf('.', endOffset);
-                if (sentenceEnd !== -1 && sentenceEnd <= endOffset + 20) {
-                    endOffset = sentenceEnd + 1;
-                    break;
-                }
-                endOffset = endNode.textContent.length;
-                endNode = endNode.nextSibling;
-            }
+            // Expand to full paragraph or a maximum of 3 sentences
+            const paragraphStart = findParagraphStart(startNode);
+            const paragraphEnd = findParagraphEnd(endNode);
 
             // Extract the phrase
             let phrase = '';
-            let currentNode = startNode;
-            while (currentNode) {
+            let currentNode = paragraphStart.node;
+            let sentenceCount = 0;
+            const maxSentences = 3;
+
+            while (currentNode && sentenceCount < maxSentences) {
                 if (currentNode.nodeType === Node.TEXT_NODE) {
                     const text = currentNode.textContent;
-                    const start = currentNode === startNode ? startOffset : 0;
-                    const end = currentNode === endNode ? endOffset : text.length;
-                    phrase += text.slice(start, end);
+                    const start = currentNode === paragraphStart.node ? paragraphStart.offset : 0;
+                    const end = currentNode === paragraphEnd.node ? paragraphEnd.offset : text.length;
+                    
+                    let textPart = text.slice(start, end);
+                    const sentences = textPart.match(/[^.!?]+[.!?]+/g) || [textPart];
+                    
+                    for (let sentence of sentences) {
+                        if (sentenceCount < maxSentences) {
+                            phrase += sentence;
+                            sentenceCount++;
+                        } else {
+                            break;
+                        }
+                    }
                 }
-                if (currentNode === endNode) break;
+                if (currentNode === paragraphEnd.node) break;
                 currentNode = currentNode.nextSibling;
             }
 
@@ -1189,6 +1184,26 @@ That was an example. Now generate a flashcard for this word and phrase:</textare
             phrase = phrase.replace(wordRegex, `<b>$&</b>`);
 
             return phrase.trim();
+        }
+
+        function findParagraphStart(node) {
+            while (node && node.previousSibling) {
+                if (node.nodeType === Node.ELEMENT_NODE && node.tagName === 'P') {
+                    break;
+                }
+                node = node.previousSibling;
+            }
+            return { node: node, offset: 0 };
+        }
+
+        function findParagraphEnd(node) {
+            while (node && node.nextSibling) {
+                if (node.nodeType === Node.ELEMENT_NODE && node.tagName === 'P') {
+                    break;
+                }
+                node = node.nextSibling;
+            }
+            return { node: node, offset: node.length };
         }
 
         submitBtn.addEventListener('click', generateContent);
