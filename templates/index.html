@@ -1086,6 +1086,8 @@ That was an example. Now generate a flashcard for this word and phrase:</textare
                 // Keep language buttons visible and Generate button hidden
                 document.getElementById('language-buttons').style.display = 'flex';
                 submitBtn.style.display = 'none';
+                // Set the mode to 'language'
+                mode = 'language';
             });
         });
 
@@ -1094,8 +1096,13 @@ That was an example. Now generate a flashcard for this word and phrase:</textare
                 if (mode === 'language') {
                     const selection = window.getSelection();
                     if (selection.toString().trim() !== '') {
-                        const targetLanguage = document.querySelector('#language-buttons .mode-btn.selected').dataset.language;
-                        handleLanguageMode(event, targetLanguage);
+                        const selectedLanguageButton = document.querySelector('#language-buttons .mode-btn.selected');
+                        if (selectedLanguageButton) {
+                            const targetLanguage = selectedLanguageButton.dataset.language;
+                            handleLanguageMode(event, targetLanguage);
+                        } else {
+                            console.error('No language selected');
+                        }
                     }
                 }
             });
