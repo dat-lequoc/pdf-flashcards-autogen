@@ -68,16 +68,14 @@ def generate_flashcard():
             question = ''
             answer = ''
             for line in lines:
-                if line.startswith('- <b>'):
-                    word = line.split('<b>')[1].split('</b>')[0]
-                    translation = line.split(':')[1].strip()
+                if line.startswith('T:'):
+                    translation = line[2:].strip()
                 elif line.startswith('Q:'):
                     question = line[2:].strip()
                 elif line.startswith('A:'):
                     answer = line[2:].strip()
             
             flashcard = {
-                'word': word,
                 'translation': translation,
                 'question': question,
                 'answer': answer
