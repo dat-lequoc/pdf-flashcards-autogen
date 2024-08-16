@@ -967,8 +967,8 @@ Phrase: "{phrase}"</textarea>
             const flashcardElement = document.createElement('div');
             flashcardElement.className = 'flashcard language-flashcard';
             flashcardElement.innerHTML = `
-                <div>${flashcard.question}</div>
-                <div>A: ${flashcard.answer}</div>
+                <div style="font-size: 1.2em; margin-bottom: 10px;">${flashcard.question}</div>
+                <div>- ${flashcard.answer}</div>
                 <button class="remove-btn">Remove</button>
             `;
             flashcardElement.querySelector('.remove-btn').addEventListener('click', function () {
@@ -986,10 +986,10 @@ Phrase: "{phrase}"</textarea>
             const newFlashcards = Array.from(document.querySelectorAll('.flashcard:not(.in-collection)')).map(flashcard => {
                 if (flashcard.classList.contains('language-flashcard')) {
                     const [word, translation] = flashcard.querySelector('div').textContent.split(':');
-                    const answer = flashcard.querySelector('div:nth-child(2)').textContent.slice(3);
+                    const answer = flashcard.querySelector('div:nth-child(2)').textContent.slice(2);
                     return {
-                        question: `Q: ${word.trim()} : ${translation.trim()}`,
-                        answer: `A: ${translation.trim()}, ${answer.trim()}`
+                        question: `${word.trim()} : ${translation.trim()}`,
+                        answer: `${translation.trim()}, ${answer.trim()}`
                     };
                 } else {
                     const question = flashcard.querySelector('strong').textContent.slice(3);
