@@ -731,11 +731,17 @@ Now explain this text:</textarea>
                 }
             }
 
-            const phraseRange = document.createRange();
-            phraseRange.setStart(startNode, startOffset);
-            phraseRange.setEnd(endNode, endOffset);
-
-            return phraseRange.toString().trim();
+            // Check if we have valid start and end nodes
+            if (startNode && startNode.nodeType === Node.TEXT_NODE &&
+                endNode && endNode.nodeType === Node.TEXT_NODE) {
+                const phraseRange = document.createRange();
+                phraseRange.setStart(startNode, startOffset);
+                phraseRange.setEnd(endNode, endOffset);
+                return phraseRange.toString().trim();
+            } else {
+                // If we don't have valid nodes, return the original selection
+                return range.toString().trim();
+            }
         }
 
         async function generateLanguageFlashcard(word, phrase) {
