@@ -61,8 +61,28 @@ def generate_flashcard():
         print(content)
 
         if mode == 'language':
-            # For Language mode, return the entire content as the explanation
-            response = make_response(jsonify({'explanation': content}))
+            # For Language mode, parse the content and return in the custom format
+            lines = content.split('\n')
+            word = ''
+            translation = ''
+            question = ''
+            answer = ''
+            for line in lines:
+                if line.startswith('- <b>'):
+                    word = line.split('<b>')[1].split('</b>')[0]
+                    translation = line.split(':')[1].strip()
+                elif line.startswith('Q:'):
+                    question = line[2:].strip()
+                elif line.startswith('A:'):
+                    answer = line[2:].strip()
+            
+            flashcard = {
+                'word': word,
+                'translation': translation,
+                'question': question,
+                'answer': answer
+            }
+            response = make_response(jsonify({'flashcard': flashcard}))
         elif mode == 'flashcard' or 'flashcard' in prompt.lower():
             flashcards = []
             current_question = ''

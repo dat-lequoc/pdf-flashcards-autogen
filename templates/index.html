@@ -804,19 +804,13 @@ Phrase: "{phrase}"</textarea>
 
             try {
                 const response = await callClaudeAPI(prompt);
-                if (response.flashcards && response.flashcards.length > 0) {
-                    const formattedFlashcards = response.flashcards.map(flashcard => ({
-                        question: flashcard.question.replace(/^Q:\s*/, ''),
-                        answer: flashcard.answer.replace(/^A:\s*/, '')
-                    }));
-                    displayFlashcards(formattedFlashcards, true);
-                } else if (response.explanation) {
-                    // If the API returns an explanation instead of flashcards
-                    const flashcard = {
-                        question: phrase,
-                        answer: response.explanation.replace(/^(Q:|A:)\s*/g, '')
+                if (response.flashcard) {
+                    const flashcard = response.flashcard;
+                    const formattedFlashcard = {
+                        question: `<b>${flashcard.word}</b> : ${flashcard.translation}<br>${flashcard.question}`,
+                        answer: flashcard.answer
                     };
-                    displayFlashcards([flashcard], true);
+                    displayFlashcards([formattedFlashcard], true);
                 } else {
                     throw new Error('Invalid response from API');
                 }
