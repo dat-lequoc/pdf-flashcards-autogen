@@ -692,6 +692,11 @@ Phrase: "{phrase}"</textarea>
                 document.getElementById('language-prompt').style.display = mode === 'language' ? 'block' : 'none';
                 submitBtn.style.display = mode === 'language' ? 'none' : 'block';
                 submitBtn.textContent = mode === 'flashcard' ? 'Generate Flashcards' : 'Generate Explanation';
+                
+                if (mode === 'language') {
+                    const savedLanguage = loadLanguageChoice();
+                    setLanguageButton(savedLanguage);
+                }
             });
         });
 
@@ -776,6 +781,14 @@ Phrase: "{phrase}"</textarea>
             return localStorage.getItem('selectedLanguage') || 'English';
         }
 
+        function setLanguageButton(language) {
+            const languageButton = document.querySelector(`#language-buttons .mode-btn[data-language="${language}"]`);
+            if (languageButton) {
+                languageButtons.forEach(btn => btn.classList.remove('selected'));
+                languageButton.classList.add('selected');
+            }
+        }
+
         submitBtn.addEventListener('click', generateContent);
 
         apiKeyInput.addEventListener('change', function () {
@@ -841,12 +854,14 @@ Phrase: "{phrase}"</textarea>
                 settingsPanel.style.display = settingsPanel.style.display === 'none' ? 'block' : 'none';
             });
 
+            // Set default language to English if not already set
+            if (!localStorage.getItem('selectedLanguage')) {
+                saveLanguageChoice('English');
+            }
+
             // Load and set the saved language choice
             const savedLanguage = loadLanguageChoice();
-            const languageButton = document.querySelector(`#language-buttons .mode-btn[data-language="${savedLanguage}"]`);
-            if (languageButton) {
-                languageButton.click();
-            }
+            setLanguageButton(savedLanguage);
         };
 
         fileInput.addEventListener('change', function (e) {
