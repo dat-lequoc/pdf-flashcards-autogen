@@ -26,8 +26,8 @@ Dive into your documents, emerge with knowledge at your fingertips, and supercha
 
 1. Clone the repository:
    ```
-   git clone https://github.com/quocdat-le-insacvl/pdf-anki-autogen.git
-   cd pdf-anki-autogen
+   git clone https://github.com/quocdat-le-insacvl/pdf-flashcards-autogen.git
+   cd pdf-flashcards-autogen
    ```
 
 2. Install the required packages:
