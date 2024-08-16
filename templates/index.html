@@ -720,6 +720,13 @@ Phrase: "{phrase}"</textarea>
                     const word = selection.toString().trim();
                     
                     if (word !== '') {
+                        // Highlight the selected word
+                        const span = document.createElement('span');
+                        span.style.backgroundColor = 'yellow';
+                        span.textContent = word;
+                        range.deleteContents();
+                        range.insertNode(span);
+
                         const selectedLanguageButton = document.querySelector('#language-buttons .mode-btn.selected');
                         if (selectedLanguageButton) {
                             const targetLanguage = selectedLanguageButton.dataset.language;
