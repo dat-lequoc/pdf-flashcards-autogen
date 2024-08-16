@@ -16,9 +16,53 @@
         <div id="pdf-viewer"></div>
     </div>
     <div id="right-panel">
-        <!-- Add your right panel content here -->
+        <div id="top-controls">
+            <div id="settings-icon">⚙️</div>
+            <div id="page-navigation">
+                <input type="number" id="page-input" min="1" placeholder="Go to page">
+                <button id="go-to-page-btn">Go</button>
+            </div>
+        </div>
+        <div id="settings-panel" style="display: none;">
+            <input type="password" id="api-key-input" placeholder="Enter Claude API Key">
+            <select id="model-select">
+                <option value="claude-3-5-sonnet-20240620">Claude 3.5 Sonnet</option>
+                <option value="claude-3-haiku-20240307">Claude 3 Haiku</option>
+            </select>
+            <textarea id="system-prompt" placeholder="Enter system prompt for flashcard generation"></textarea>
+            <textarea id="explain-prompt" placeholder="Enter system prompt for explanation" style="display: none;"></textarea>
+            <textarea id="language-prompt" placeholder="Enter system prompt for language mode" style="display: none;"></textarea>
+        </div>
+        <div id="mode-toggle">
+            <button class="mode-btn selected" data-mode="flashcard">Flashcard</button>
+            <button class="mode-btn" data-mode="explain">Explain</button>
+            <button class="mode-btn" data-mode="language">Language</button>
+        </div>
+        <div id="language-buttons" style="display: none; margin-top: 10px;">
+            <button class="mode-btn" data-language="English">English</button>
+            <button class="mode-btn" data-language="French">French</button>
+        </div>
+        <button id="submit-btn" style="display: block;">Generate</button>
+        <div id="flashcards"></div>
+        <div id="collection">
+            <button id="add-to-collection-btn">Add to Collection (0)</button>
+            <button id="clear-collection-btn">Clear Collection</button>
+        </div>
+        <button id="export-csv-btn" style="display: none;">Export Flashcards to CSV</button>
+        <div id="recent-pdfs">
+            <h3>Recent PDFs</h3>
+            <ul id="pdf-list"></ul>
+        </div>
     </div>
 
+    <div id="explanationModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div id="explanationModalContent"></div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/1.9.1/showdown.min.js"></script>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
 </html>
