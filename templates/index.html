@@ -48,8 +48,8 @@ Now explain this text:</textarea>
             <textarea id="language-prompt" placeholder="Enter system prompt for language mode">Explain the word in the phrase in {targetLanguage} using this format:
 
 T: [Translation of the word in Vietnamese]
-Q: [Original phrase with the target word in <b> tags]
-    A: [Short explanation of the word's meaning in the context in {targetLanguage}]
+Q: [Original phrase with the target word in <b> tags, or craft an example with ONLY the target word in <b> tags if no phrase is provided]
+    A: [Short explanation of the word's meaning in the context]
 
 Example:
 Word: "refused"
@@ -57,6 +57,13 @@ Phrase: "Hamas refused to join a new round of peace negotiations."
 T: từ chối
 Q: "Hamas <b>refused</b> to join a new round of peace negotiations."
 A: Declined to accept or comply with a request or proposal.
+
+Example when no phrase is provided or it's unclear:
+Word: "analogues"
+Phrase: ""
+T: tương tự
+Q: "Scientists often use animal <b>analogues</b> to study human diseases."
+A: Things or concepts that are similar or comparable to something else, often used in scientific contexts.
 
 Now explain the word in the phrase below:
 Word: "{word}"
@@ -267,9 +274,10 @@ Phrase: "{phrase}"</textarea>
                     if (phrase !== lastProcessedQuery && currentTime - lastRequestTime >= cooldownTime) {
                         lastProcessedQuery = phrase;
                         lastRequestTime = currentTime;
-                        generateLanguageFlashcard(selectedText, phrase, targetLanguage);
                         speakWord(selectedText);
+                        generateLanguageFlashcard(selectedText, phrase, targetLanguage);
                     }
+
                 }
             }
         }
@@ -278,7 +286,6 @@ Phrase: "{phrase}"</textarea>
 
         function populateVoiceList() {
             voices = speechSynthesis.getVoices();
-            console.log('Available voices:', voices);
         }
 
         populateVoiceList();
@@ -288,39 +295,30 @@ Phrase: "{phrase}"</textarea>
 
         function speakWord(word) {
             console.log('Attempting to speak word:', word);
-            
+
             const utterance = new SpeechSynthesisUtterance(word);
             utterance.rate = 0.8; // Slightly slower rate for clarity
-            
-            // Try to find an English voice, preferably Zira
-            const englishVoice = voices.find(voice => voice.name === "Microsoft Zira Desktop - English (United States)") ||
-                                 voices.find(voice => /en/i.test(voice.lang));
-            
-            if (englishVoice) {
-                console.log('Using voice:', englishVoice.name);
-                utterance.voice = englishVoice;
+
+            let englishVoice;
+            if (voices.length > 1) {
+                englishVoice = voices[2];
+                console.log('Using second voice in the list:', englishVoice.name);
             } else {
-                console.log('No suitable English voice found. Using default voice.');
+                englishVoice = voices.find(voice => voice.name === "Microsoft Zira Desktop - English (United States)") ||
+                    voices.find(voice => /en/i.test(voice.lang));
+                if (englishVoice) {
+                    console.log('Using voice:', englishVoice.name);
+                } else {
+                    console.log('No suitable English voice found. Using default voice.');
+                }
             }
-            
-            // Speak the word twice with a pause in between
+
+            if (englishVoice) {
+                utterance.voice = englishVoice;
+            }
+
             try {
                 speechSynthesis.speak(utterance);
-                
-                utterance.onend = () => {
-                    console.log('First utterance ended');
-                    setTimeout(() => {
-                        try {
-                            speechSynthesis.speak(utterance);
-                        } catch (error) {
-                            console.error('Error on second speak:', error);
-                        }
-                    }, 500); // 500ms pause between repetitions
-                };
-                
-                utterance.onerror = (event) => {
-                    console.error('Speech synthesis error:', event.error);
-                };
             } catch (error) {
                 console.error('Error initiating speech:', error);
             }
@@ -372,32 +370,32 @@ Phrase: "{phrase}"</textarea>
                 // If we don't have valid nodes, return the original selection
                 return range.toString().trim();
             }
-                }
+        }
 
         function getFullSentence(text, word) {
-                    const sentenceRegex = /[^.!?]+[.!?]+\s*/g;
-                    const sentences = text.match(sentenceRegex) || [text];
+            const sentenceRegex = /[^.!?]+[.!?]+\s*/g;
+            const sentences = text.match(sentenceRegex) || [text];
 
-                    const matchingSentences = sentences.filter(sentence =>
-                                new RegExp(`\\b${word}\\b`, 'i').test(sentence)
-                            );
+            const matchingSentences = sentences.filter(sentence =>
+                new RegExp(`\\b${word}\\b`, 'i').test(sentence)
+            );
 
-                    if (matchingSentences.length === 0) {
-                                const wordIndex = text.indexOf(word);
-                                if (wordIndex !== -1) {
-                                            const start = Math.max(0, wordIndex - 30);
-                                            const end = Math.min(text.length, wordIndex + word.length + 30);
-                                            return text.slice(start, end);
-                                        }
-                                return text;
-                            } else if (matchingSentences.length === 1) {
-                                        // If only one matching sentence, return it
-                                        return matchingSentences[0].trim();
-                                    } else {
-                                                // If multiple matching sentences, return them joined
-                                                return matchingSentences.join(' ').trim();
-                                            }
+            if (matchingSentences.length === 0) {
+                const wordIndex = text.indexOf(word);
+                if (wordIndex !== -1) {
+                    const start = Math.max(0, wordIndex - 30);
+                    const end = Math.min(text.length, wordIndex + word.length + 30);
+                    return text.slice(start, end);
                 }
+                return text;
+            } else if (matchingSentences.length === 1) {
+                // If only one matching sentence, return it
+                return matchingSentences[0].trim();
+            } else {
+                // If multiple matching sentences, return them joined
+                return matchingSentences.join(' ').trim();
+            }
+        }
 
         async function generateLanguageFlashcard(word, phrase, targetLanguage) {
             if (!apiKey) {
@@ -441,7 +439,7 @@ Phrase: "{phrase}"</textarea>
             if (selection.rangeCount > 0 && selection.toString().trim() !== '') {
                 const selectedText = selection.toString();
                 let prompt;
-                
+
                 if (mode === 'flashcard') {
                     prompt = `${systemPrompt.value}\n\n${selectedText}`;
                 } else if (mode === 'explain') {
@@ -517,11 +515,11 @@ Phrase: "{phrase}"</textarea>
             modalContent.innerHTML = htmlContent;
             modal.style.display = 'block';
 
-            closeBtn.onclick = function() {
+            closeBtn.onclick = function () {
                 modal.style.display = 'none';
             }
 
-            window.onclick = function(event) {
+            window.onclick = function (event) {
                 if (event.target == modal) {
                     modal.style.display = 'none';
                 }
@@ -535,7 +533,7 @@ Phrase: "{phrase}"</textarea>
                     'Content-Type': 'application/json',
                     'X-API-Key': apiKey
                 },
-                body: JSON.stringify({ 
+                body: JSON.stringify({
                     prompt: prompt,
                     model: selectedModel,
                     mode: mode // Add the current mode to the request
@@ -726,7 +724,7 @@ Phrase: "{phrase}"</textarea>
 
         document.getElementById('go-to-page-btn').addEventListener('click', handleGoToPage);
 
-        document.getElementById('page-input').addEventListener('keyup', function(event) {
+        document.getElementById('page-input').addEventListener('keyup', function (event) {
             if (event.key === 'Enter') {
                 handleGoToPage();
             }
@@ -734,7 +732,7 @@ Phrase: "{phrase}"</textarea>
 
         const modeButtons = document.querySelectorAll('.mode-btn');
         modeButtons.forEach(button => {
-            button.addEventListener('click', function() {
+            button.addEventListener('click', function () {
                 modeButtons.forEach(btn => btn.classList.remove('selected'));
                 this.classList.add('selected');
                 mode = this.dataset.mode;
@@ -745,7 +743,7 @@ Phrase: "{phrase}"</textarea>
                 document.getElementById('language-prompt').style.display = mode === 'language' ? 'block' : 'none';
                 submitBtn.style.display = mode === 'language' ? 'none' : 'block';
                 submitBtn.textContent = mode === 'flashcard' ? 'Generate Flashcards' : 'Generate Explanation';
-                
+
                 if (mode === 'language') {
                     const savedLanguage = loadLanguageChoice();
                     setLanguageButton(savedLanguage);
@@ -755,7 +753,7 @@ Phrase: "{phrase}"</textarea>
 
         const languageButtons = document.querySelectorAll('#language-buttons .mode-btn');
         languageButtons.forEach(button => {
-            button.addEventListener('click', function(event) {
+            button.addEventListener('click', function (event) {
                 event.preventDefault();
                 languageButtons.forEach(btn => btn.classList.remove('selected'));
                 this.classList.add('selected');
@@ -772,13 +770,13 @@ Phrase: "{phrase}"</textarea>
         });
 
         function attachLanguageModeListener(pageDiv) {
-            pageDiv.addEventListener('dblclick', function(event) {
+            pageDiv.addEventListener('dblclick', function (event) {
                 if (mode === 'language') {
                     const selection = window.getSelection();
                     const range = selection.getRangeAt(0);
                     const word = selection.toString().trim();
-                    
-                    if (word !== '') {
+
+                    if (word !== '' && word.length < 20) {
                         // Highlight the selected word
                         const span = document.createElement('span');
                         span.style.backgroundColor = 'rgba(255, 255, 0, 0.5)';
@@ -791,6 +789,7 @@ Phrase: "{phrase}"</textarea>
                             const targetLanguage = selectedLanguageButton.dataset.language;
                             const phrase = getPhrase(range, word);
                             generateLanguageFlashcard(word, phrase, targetLanguage);
+                            speakWord(word);
                         } else {
                             console.error('No language selected');
                         }
@@ -867,42 +866,43 @@ Phrase: "{phrase}"</textarea>
         });
 
         function loadRecentPDFs() {
-            const recentPDFs = {{ recent_pdfs|tojson }};
-            const pdfList = document.getElementById('pdf-list');
-            pdfList.innerHTML = '';
-            recentPDFs.forEach(pdf => {
-                const li = document.createElement('li');
-                const a = document.createElement('a');
-                a.href = '#';
-                a.textContent = `${pdf.filename} (${new Date(pdf.date).toLocaleDateString()})`;
-                a.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    fetch(`/open_pdf/${pdf.filename}`)
-                        .then(response => response.blob())
-                        .then(blob => {
-                            const file = new File([blob], pdf.filename, { type: 'application/pdf' });
-                            loadPDF(file);
-                        })
-                        .catch(error => console.error('Error:', error));
-                });
-                li.appendChild(a);
-                pdfList.appendChild(li);
+            const recentPDFs = {{ recent_pdfs| tojson
+        }};
+        const pdfList = document.getElementById('pdf-list');
+        pdfList.innerHTML = '';
+        recentPDFs.forEach(pdf => {
+            const li = document.createElement('li');
+            const a = document.createElement('a');
+            a.href = '#';
+            a.textContent = `${pdf.filename} (${new Date(pdf.date).toLocaleDateString()})`;
+            a.addEventListener('click', function (e) {
+                e.preventDefault();
+                fetch(`/open_pdf/${pdf.filename}`)
+                    .then(response => response.blob())
+                    .then(blob => {
+                        const file = new File([blob], pdf.filename, { type: 'application/pdf' });
+                        loadPDF(file);
+                    })
+                    .catch(error => console.error('Error:', error));
             });
+            li.appendChild(a);
+            pdfList.appendChild(li);
+        });
         }
 
         // Save current page before unloading
-        window.addEventListener('beforeunload', function() {
+        window.addEventListener('beforeunload', function () {
             if (currentFileName) {
                 localStorage.setItem(`lastPage_${currentFileName}`, pageNum);
             }
         });
 
         // Initialize recent PDFs list
-        window.onload = function() {
+        window.onload = function () {
             loadRecentPDFs();
-            
+
             // Add event listener for settings icon
-            document.getElementById('settings-icon').addEventListener('click', function() {
+            document.getElementById('settings-icon').addEventListener('click', function () {
                 const settingsPanel = document.getElementById('settings-panel');
                 settingsPanel.style.display = settingsPanel.style.display === 'none' ? 'block' : 'none';
             });
@@ -934,19 +934,19 @@ Phrase: "{phrase}"</textarea>
                 method: 'POST',
                 body: formData
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.message) {
-                    console.log(data.message);
-                    loadPDF(file);
-                    loadRecentPDFs();
-                } else {
-                    console.error(data.error);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-            });
+                .then(response => response.json())
+                .then(data => {
+                    if (data.message) {
+                        console.log(data.message);
+                        loadPDF(file);
+                        loadRecentPDFs();
+                    } else {
+                        console.error(data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
         }
     </script>
 </body>
