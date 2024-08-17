@@ -736,14 +736,16 @@ Phrase: "{phrase}"</textarea>
 
         document.getElementById('zoom-in-btn').addEventListener('click', function() {
             if (scale < maxScale) {
-                scale += 0.5;
+                scale += 0.25;
+                console.log(scale);
                 reRenderPDF();
             }
         });
 
         document.getElementById('zoom-out-btn').addEventListener('click', function() {
             if (scale > minScale) {
-                scale -= 0.5;
+                scale -= 0.25;
+                console.log(scale);
                 reRenderPDF();
             }
         });
