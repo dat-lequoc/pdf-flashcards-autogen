@@ -870,37 +870,25 @@ Phrase: "{phrase}"</textarea>
             highlight.style.backgroundColor = 'rgba(255, 255, 0, 0.3)';
             highlight.style.pointerEvents = 'none';
 
+            const rect = range.getBoundingClientRect();
             const pageBounds = pageDiv.getBoundingClientRect();
-            const scale = parseFloat(pageDiv.style.width) / pageBounds.width;
 
-            const rects = range.getClientRects();
-            const highlightRects = [];
-
-            for (let i = 0; i < rects.length; i++) {
-                const rect = rects[i];
-                const highlightRect = document.createElement('div');
-                highlightRect.style.position = 'absolute';
-                const left = (rect.left - pageBounds.left) * scale;
-                const top = (rect.top - pageBounds.top) * scale;
-                const width = rect.width * scale;
-                const height = rect.height * scale;
-
-                highlightRect.style.left = `${left}px`;
-                highlightRect.style.top = `${top}px`;
-                highlightRect.style.width = `${width}px`;
-                highlightRect.style.height = `${height}px`;
-                highlightRect.style.backgroundColor = 'inherit';
-                highlight.appendChild(highlightRect);
-
-                highlightRects.push({ left, top, width, height });
-            }
+            highlight.style.left = (rect.left - pageBounds.left) + 'px';
+            highlight.style.top = (rect.top - pageBounds.top) + 'px';
+            highlight.style.width = rect.width + 'px';
+            highlight.style.height = rect.height + 'px';
 
             pageDiv.appendChild(highlight);
 
             return {
                 element: highlight,
                 pageNumber: parseInt(pageDiv.dataset.pageNumber),
-                rects: highlightRects
+                rect: {
+                    left: rect.left - pageBounds.left,
+                    top: rect.top - pageBounds.top,
+                    width: rect.width,
+                    height: rect.height
+                }
             };
         }
 
