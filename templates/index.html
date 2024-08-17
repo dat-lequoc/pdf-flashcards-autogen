@@ -607,7 +607,6 @@ Phrase: "{phrase}"</textarea>
                     const translation = flashcard.dataset.translation;
                     const answer = flashcard.dataset.answer;
                     const question = flashcard.dataset.question;
-                    <!-- console.log(word, translation, question, answer); -->
                     return {
                         phrase: question,
                         translationAnswer: `${translation.trim()}\n${answer.trim()}`
@@ -743,7 +742,6 @@ Phrase: "{phrase}"</textarea>
             if (scale < maxScale) {
                 const step = calculateZoomStep(scale);
                 scale = Math.min(maxScale, scale + step);
-                console.log(scale);
                 reRenderPDF();
                 saveScaleForCurrentFile();
             }
@@ -753,7 +751,6 @@ Phrase: "{phrase}"</textarea>
             if (scale > minScale) {
                 const step = calculateZoomStep(scale);
                 scale = Math.max(minScale, scale - step);
-                console.log(scale);
                 reRenderPDF();
                 saveScaleForCurrentFile();
             }
