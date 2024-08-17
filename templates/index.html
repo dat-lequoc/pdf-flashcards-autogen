@@ -60,7 +60,7 @@ A: Declined to accept or comply with a request or proposal.
 
 Example when no phrase is provided or it's unclear:
 Word: "analogues"
-Phrase: ""
+Phrase: "focusing on the"
 T: tương tự
 Q: "Scientists often use animal <b>analogues</b> to study human diseases."
 A: Things or concepts that are similar or comparable to something else, often used in scientific contexts.
@@ -127,91 +127,160 @@ Phrase: "{phrase}"</textarea>
         let lastRequestTime = 0;
         const cooldownTime = 1000; // 1 second cooldown
 
-        function renderPage(num) {
-            pageRendering = true;
-            pdfDoc.getPage(num).then(function (page) {
-                const viewport = page.getViewport({ scale: scale });
-                const pixelRatio = window.devicePixelRatio || 1;
-                const adjustedViewport = page.getViewport({ scale: scale * pixelRatio });
 
-                const pageDiv = document.createElement('div');
-                pageDiv.className = 'page';
-                pageDiv.dataset.pageNumber = num;
-                pageDiv.style.width = `${viewport.width}px`;
-                pageDiv.style.height = `${viewport.height}px`;
-
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                canvas.height = adjustedViewport.height;
-                canvas.width = adjustedViewport.width;
-                canvas.style.width = `${viewport.width}px`;
-                canvas.style.height = `${viewport.height}px`;
-
-                const renderContext = {
-                    canvasContext: ctx,
-                    viewport: adjustedViewport,
-                    enableWebGL: true,
-                    renderInteractiveForms: true,
-                };
-
-                const renderTask = page.render(renderContext);
-
-                renderTask.promise.then(function () {
-                    pageRendering = false;
-                    if (pageNumPending !== null) {
-                        renderPage(pageNumPending);
-                        pageNumPending = null;
-                    }
-                });
-
-                pageDiv.appendChild(canvas);
-
-                // Text layer
-                const textLayerDiv = document.createElement('div');
-                textLayerDiv.className = 'text-layer';
-                textLayerDiv.style.width = `${viewport.width}px`;
-                textLayerDiv.style.height = `${viewport.height}px`;
-                pageDiv.appendChild(textLayerDiv);
-
-                page.getTextContent().then(function (textContent) {
-                    pdfjsLib.renderTextLayer({
-                        textContent: textContent,
-                        container: textLayerDiv,
-                        viewport: viewport,
-                        textDivs: []
-                    });
-                });
-
-                pdfViewer.appendChild(pageDiv);
-
-                // Attach language mode listener to the new page
-                attachLanguageModeListener(pageDiv);
-
-                // Check if we need to load more pages
-                if (num < pdfDoc.numPages && pdfViewer.scrollHeight <= window.innerHeight * 2) {
-                    renderPage(num + 1);
+        function saveHighlights(filename, highlights) {
+                    localStorage.setItem(`highlights_${filename}`, JSON.stringify(highlights));
                 }
+
+        function getHighlights(filename) {
+                    const highlights = localStorage.getItem(`highlights_${filename}`);
+                    return highlights ? JSON.parse(highlights) : [];
+                }
+
+        function applyHighlights(pageDiv, highlights) {
+                    const textLayer = pageDiv.querySelector('.text-layer');
+                    if (!textLayer) return;
+
+                    highlights.forEach(highlight => {
+                                const range = document.createRange();
+                                const startNode = findTextNode(textLayer, highlight.startOffset);
+                                const endNode = findTextNode(textLayer, highlight.endOffset);
+
+                                if (startNode && endNode) {
+                                            range.setStart(startNode, highlight.startOffset - getNodeOffset(startNode));
+                                            range.setEnd(endNode, highlight.endOffset - getNodeOffset(endNode));
+
+                                            const span = document.createElement('span');
+                                            span.style.backgroundColor = 'rgba(255, 255, 0, 0.5)';
+                                            range.surroundContents(span);
+                                        }
+                            });
+                }
+
+        function findTextNode(element, targetOffset) {
+                    let currentOffset = 0;
+                    const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, null, false);
+
+                    while (walker.nextNode()) {
+                                const nodeLength = walker.currentNode.length;
+                                if (currentOffset + nodeLength >= targetOffset) {
+                                            return walker.currentNode;
+                                        }
+                                currentOffset += nodeLength;
+                            }
+                    return null;
+                }
+
+        function getNodeOffset(node) {
+                    let offset = 0;
+                    while (node.previousSibling) {
+                                node = node.previousSibling;
+                                offset += node.textContent.length;
+                            }
+                    return offset;
+                }
+
+
+
+function renderPage(num) {
+    pageRendering = true;
+    pdfDoc.getPage(num).then(function (page) {
+        const viewport = page.getViewport({ scale: scale });
+        const pixelRatio = window.devicePixelRatio || 1;
+        const adjustedViewport = page.getViewport({ scale: scale * pixelRatio });
+
+        const pageDiv = document.createElement('div');
+        pageDiv.className = 'page';
+        pageDiv.dataset.pageNumber = num;
+        pageDiv.style.width = `${viewport.width}px`;
+        pageDiv.style.height = `${viewport.height}px`;
+
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.height = adjustedViewport.height;
+        canvas.width = adjustedViewport.width;
+        canvas.style.width = `${viewport.width}px`;
+        canvas.style.height = `${viewport.height}px`;
+
+        const renderContext = {
+            canvasContext: ctx,
+            viewport: adjustedViewport,
+            enableWebGL: true,
+            renderInteractiveForms: true,
+        };
+
+        const renderTask = page.render(renderContext);
+
+        renderTask.promise.then(function () {
+            pageRendering = false;
+            if (pageNumPending !== null) {
+                renderPage(pageNumPending);
+                pageNumPending = null;
+            }
+
+            // Apply highlights after rendering
+            const highlights = getHighlights(currentFileName);
+            const pageHighlights = highlights.filter(h => h.page === num);
+            applyHighlights(pageDiv, pageHighlights);
+        });
+
+        pageDiv.appendChild(canvas);
+
+        // Text layer
+        const textLayerDiv = document.createElement('div');
+        textLayerDiv.className = 'text-layer';
+        textLayerDiv.style.width = `${viewport.width}px`;
+        textLayerDiv.style.height = `${viewport.height}px`;
+        pageDiv.appendChild(textLayerDiv);
+
+        page.getTextContent().then(function (textContent) {
+            pdfjsLib.renderTextLayer({
+                textContent: textContent,
+                container: textLayerDiv,
+                viewport: viewport,
+                textDivs: []
             });
-        }
+        });
 
-        function loadPDF(file) {
-            const fileReader = new FileReader();
-            fileReader.onload = function () {
-                const typedarray = new Uint8Array(this.result);
+        pdfViewer.appendChild(pageDiv);
 
-                pdfjsLib.getDocument(typedarray).promise.then(function (pdf) {
-                    pdfDoc = pdf;
-                    pdfViewer.innerHTML = '';
-                    currentFileName = file.name;
-                    const lastPage = localStorage.getItem(`lastPage_${currentFileName}`);
-                    pageNum = lastPage ? Math.max(parseInt(lastPage) - 2, 1) : 1;
-                    renderPage(pageNum);
-                    updateCurrentPage(pageNum);
-                    hideHeaderPanel();
-                });
-            };
-            fileReader.readAsArrayBuffer(file);
+        // Attach language mode listener to the new page
+        attachLanguageModeListener(pageDiv);
+
+        // Check if we need to load more pages
+        if (num < pdfDoc.numPages && pdfViewer.scrollHeight <= window.innerHeight * 2) {
+            renderPage(num + 1);
         }
+    });
+}
+
+
+function loadPDF(file) {
+    const fileReader = new FileReader();
+    fileReader.onload = function () {
+        const typedarray = new Uint8Array(this.result);
+
+        pdfjsLib.getDocument(typedarray).promise.then(function (pdf) {
+            pdfDoc = pdf;
+            pdfViewer.innerHTML = '';
+            currentFileName = file.name;
+            const lastPage = localStorage.getItem(`lastPage_${currentFileName}`);
+            pageNum = lastPage ? Math.max(parseInt(lastPage) - 2, 1) : 1;
+            renderPage(pageNum);
+            updateCurrentPage(pageNum);
+            hideHeaderPanel();
+
+            // Apply highlights to all rendered pages
+            const highlights = getHighlights(currentFileName);
+            document.querySelectorAll('.page').forEach(pageDiv => {
+                const pageNumber = parseInt(pageDiv.dataset.pageNumber);
+                const pageHighlights = highlights.filter(h => h.page === pageNumber);
+                applyHighlights(pageDiv, pageHighlights);
+            });
+        });
+    };
+    fileReader.readAsArrayBuffer(file);
+}
 
         function hideHeaderPanel() {
             document.getElementById('top-bar').style.display = 'none';
@@ -769,34 +838,45 @@ Phrase: "{phrase}"</textarea>
             });
         });
 
-        function attachLanguageModeListener(pageDiv) {
-            pageDiv.addEventListener('dblclick', function (event) {
-                if (mode === 'language') {
-                    const selection = window.getSelection();
-                    const range = selection.getRangeAt(0);
-                    const word = selection.toString().trim();
 
-                    if (word !== '' && word.length < 20) {
-                        // Highlight the selected word
-                        const span = document.createElement('span');
-                        span.style.backgroundColor = 'rgba(255, 255, 0, 0.5)';
-                        span.textContent = word;
-                        range.deleteContents();
-                        range.insertNode(span);
+function attachLanguageModeListener(pageDiv) {
+    pageDiv.addEventListener('dblclick', function (event) {
+        if (mode === 'language') {
+            const selection = window.getSelection();
+            const range = selection.getRangeAt(0);
+            const word = selection.toString().trim();
 
-                        const selectedLanguageButton = document.querySelector('#language-buttons .mode-btn.selected');
-                        if (selectedLanguageButton) {
-                            const targetLanguage = selectedLanguageButton.dataset.language;
-                            const phrase = getPhrase(range, word);
-                            generateLanguageFlashcard(word, phrase, targetLanguage);
-                            speakWord(word);
-                        } else {
-                            console.error('No language selected');
-                        }
-                    }
+            if (word !== '' && word.length < 20) {
+                // Highlight the selected word
+                const span = document.createElement('span');
+                span.style.backgroundColor = 'rgba(255, 255, 0, 0.5)';
+                span.textContent = word;
+                range.deleteContents();
+                range.insertNode(span);
+
+                // Save the highlight
+                const highlights = getHighlights(currentFileName);
+                highlights.push({
+                    page: parseInt(pageDiv.dataset.pageNumber),
+                    word: word,
+                    startOffset: range.startOffset,
+                    endOffset: range.endOffset
+                });
+                saveHighlights(currentFileName, highlights);
+
+                const selectedLanguageButton = document.querySelector('#language-buttons .mode-btn.selected');
+                if (selectedLanguageButton) {
+                    const targetLanguage = selectedLanguageButton.dataset.language;
+                    const phrase = getPhrase(range, word);
+                    generateLanguageFlashcard(word, phrase, targetLanguage);
+                    speakWord(word);
+                } else {
+                    console.error('No language selected');
                 }
-            });
+            }
         }
+    });
+}
 
         function getPhrase(range, word) {
             let startNode = range.startContainer;
