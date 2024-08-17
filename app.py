@@ -6,6 +6,7 @@ from datetime import datetime
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'
+app.config['HIGHLIGHTS_FOLDER'] = 'highlights'
 
 @app.route('/')
 def index():
@@ -19,6 +20,31 @@ def get_recent_pdfs():
     pdf_files = [f for f in files if f.endswith('.pdf')]
     pdf_files.sort(key=lambda x: os.path.getmtime(os.path.join(app.config['UPLOAD_FOLDER'], x)), reverse=True)
     return [{'filename': pdf, 'date': datetime.fromtimestamp(os.path.getmtime(os.path.join(app.config['UPLOAD_FOLDER'], pdf))).isoformat()} for pdf in pdf_files[:5]]
+
+@app.route('/save_highlights', methods=['POST'])
+def save_highlights():
+    data = request.json
+    filename = data['filename']
+    highlights = data['highlights']
+    
+    if not os.path.exists(app.config['HIGHLIGHTS_FOLDER']):
+        os.makedirs(app.config['HIGHLIGHTS_FOLDER'])
+    
+    highlights_file = os.path.join(app.config['HIGHLIGHTS_FOLDER'], f"{filename}.json")
+    with open(highlights_file, 'w') as f:
+        json.dump(highlights, f)
+    
+    return jsonify({'message': 'Highlights saved successfully'}), 200
+
+@app.route('/get_highlights/<path:filename>')
+def get_highlights(filename):
+    highlights_file = os.path.join(app.config['HIGHLIGHTS_FOLDER'], f"{filename}.json")
+    if os.path.exists(highlights_file):
+        with open(highlights_file, 'r') as f:
+            highlights = json.load(f)
+        return jsonify(highlights), 200
+    else:
+        return jsonify([]), 200
 
 @app.route('/upload_pdf', methods=['POST'])
 def upload_pdf():

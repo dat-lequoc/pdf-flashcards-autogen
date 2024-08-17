@@ -840,8 +840,32 @@ function loadPDF(file) {
 
 
 function attachLanguageModeListener(pageDiv) {
-    pageDiv.addEventListener('dblclick', function (event) {
-        if (mode === 'language') {
+    pageDiv.addEventListener('mouseup', function (event) {
+        if (event.ctrlKey) {
+            const selection = window.getSelection();
+            const range = selection.getRangeAt(0);
+            const selectedText = selection.toString().trim();
+
+            if (selectedText !== '') {
+                // Highlight the selected text
+                const span = document.createElement('span');
+                span.style.backgroundColor = 'rgba(255, 255, 0, 0.5)';
+                span.textContent = selectedText;
+                range.deleteContents();
+                range.insertNode(span);
+
+                // Save the highlight
+                const highlights = getHighlights(currentFileName);
+                highlights.push({
+                    page: parseInt(pageDiv.dataset.pageNumber),
+                    text: selectedText,
+                    startOffset: range.startOffset,
+                    endOffset: range.endOffset
+                });
+                saveHighlights(currentFileName, highlights);
+            }
+        } else if (mode === 'language') {
+            // Existing language mode functionality
             const selection = window.getSelection();
             const range = selection.getRangeAt(0);
             const word = selection.toString().trim();
@@ -876,6 +900,74 @@ function attachLanguageModeListener(pageDiv) {
             }
         }
     });
+}
+
+function saveHighlights(filename, highlights) {
+    fetch('/save_highlights', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            filename: filename,
+            highlights: highlights
+        })
+    })
+    .then(response => response.json())
+    .then(data => console.log(data.message))
+    .catch(error => console.error('Error:', error));
+}
+
+function getHighlights(filename) {
+    return fetch(`/get_highlights/${filename}`)
+        .then(response => response.json())
+        .catch(error => {
+            console.error('Error:', error);
+            return [];
+        });
+}
+
+function applyHighlights(pageDiv, highlights) {
+    const textLayer = pageDiv.querySelector('.text-layer');
+    if (!textLayer) return;
+
+    highlights.forEach(highlight => {
+        const range = document.createRange();
+        const startNode = findTextNode(textLayer, highlight.startOffset);
+        const endNode = findTextNode(textLayer, highlight.endOffset);
+
+        if (startNode && endNode) {
+            range.setStart(startNode, highlight.startOffset - getNodeOffset(startNode));
+            range.setEnd(endNode, highlight.endOffset - getNodeOffset(endNode));
+
+            const span = document.createElement('span');
+            span.style.backgroundColor = 'rgba(255, 255, 0, 0.5)';
+            range.surroundContents(span);
+        }
+    });
+}
+
+function findTextNode(element, targetOffset) {
+    let currentOffset = 0;
+    const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, null, false);
+
+    while (walker.nextNode()) {
+        const nodeLength = walker.currentNode.length;
+        if (currentOffset + nodeLength >= targetOffset) {
+            return walker.currentNode;
+        }
+        currentOffset += nodeLength;
+    }
+    return null;
+}
+
+function getNodeOffset(node) {
+    let offset = 0;
+    while (node.previousSibling) {
+        node = node.previousSibling;
+        offset += node.textContent.length;
+    }
+    return offset;
 }
 
         function getPhrase(range, word) {
