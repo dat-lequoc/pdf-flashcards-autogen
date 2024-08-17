@@ -26,6 +26,7 @@
                 <input type="number" id="page-input" min="1" placeholder="Go to page">
                 <button id="go-to-page-btn">Go</button>
             </div>
+            <div id="highlight-instruction" style="font-size: 0.8em; color: #666;">Use Alt+Select to highlight text</div>
         </div>
         <div id="settings-panel" style="display: none;">
             <input type="password" id="api-key-input" placeholder="Enter Claude API Key">
@@ -823,7 +824,7 @@ Phrase: "{phrase}"</textarea>
 
         function attachLanguageModeListener(pageDiv) {
             pageDiv.addEventListener('mouseup', function (event) {
-                if (event.ctrlKey) {
+                if (event.altKey) {
                     const selection = window.getSelection();
                     const range = selection.getRangeAt(0);
                     const selectedText = selection.toString().trim();
