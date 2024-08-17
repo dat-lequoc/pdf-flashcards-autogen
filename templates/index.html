@@ -209,6 +209,7 @@ Phrase: "{phrase}"</textarea>
                     currentFileName = file.name;
                     const lastPage = localStorage.getItem(`lastPage_${currentFileName}`);
                     pageNum = lastPage ? Math.max(parseInt(lastPage) - 2, 1) : 1;
+                    loadScaleForCurrentFile();
                     renderPage(pageNum);
                     updateCurrentPage(pageNum);
                     hideHeaderPanel();
@@ -734,25 +735,48 @@ Phrase: "{phrase}"</textarea>
             }
         });
 
+        function calculateZoomStep(currentScale) {
+            return Math.max(0.1, Math.min(0.25, currentScale * 0.1));
+        }
+
         document.getElementById('zoom-in-btn').addEventListener('click', function() {
             if (scale < maxScale) {
-                scale += 0.25;
+                const step = calculateZoomStep(scale);
+                scale = Math.min(maxScale, scale + step);
                 console.log(scale);
                 reRenderPDF();
+                saveScaleForCurrentFile();
             }
         });
 
         document.getElementById('zoom-out-btn').addEventListener('click', function() {
             if (scale > minScale) {
-                scale -= 0.25;
+                const step = calculateZoomStep(scale);
+                scale = Math.max(minScale, scale - step);
                 console.log(scale);
                 reRenderPDF();
+                saveScaleForCurrentFile();
             }
         });
 
         function reRenderPDF() {
             pdfViewer.innerHTML = '';
             renderPage(pageNum);
+        }
+
+        function saveScaleForCurrentFile() {
+            if (currentFileName) {
+                localStorage.setItem(`scale_${currentFileName}`, scale);
+            }
+        }
+
+        function loadScaleForCurrentFile() {
+            if (currentFileName) {
+                const savedScale = localStorage.getItem(`scale_${currentFileName}`);
+                if (savedScale) {
+                    scale = parseFloat(savedScale);
+                }
+            }
         }
 
         const modeButtons = document.querySelectorAll('.mode-btn');
