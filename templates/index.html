@@ -826,13 +826,15 @@ Phrase: "{phrase}"</textarea>
             pageDiv.addEventListener('mouseup', function (event) {
                 if (event.altKey) {
                     const selection = window.getSelection();
-                    const range = selection.getRangeAt(0);
-                    const selectedText = selection.toString().trim();
+                    if (selection.rangeCount > 0) {
+                        const range = selection.getRangeAt(0);
+                        const selectedText = selection.toString().trim();
 
-                    if (selectedText !== '') {
-                        const highlight = createHighlight(range, pageDiv);
-                        highlights.push(highlight);
-                        saveHighlights();
+                        if (selectedText !== '') {
+                            const highlight = createHighlight(range, pageDiv);
+                            highlights.push(highlight);
+                            saveHighlights();
+                        }
                     }
                 }
             });
@@ -867,15 +869,16 @@ Phrase: "{phrase}"</textarea>
             highlight.style.pointerEvents = 'none';
 
             const pageBounds = pageDiv.getBoundingClientRect();
+            const scale = parseFloat(pageDiv.style.width) / pageBounds.width;
 
             for (let i = 0; i < rects.length; i++) {
                 const rect = rects[i];
                 const highlightRect = document.createElement('div');
                 highlightRect.style.position = 'absolute';
-                highlightRect.style.left = (rect.left - pageBounds.left) + 'px';
-                highlightRect.style.top = (rect.top - pageBounds.top) + 'px';
-                highlightRect.style.width = rect.width + 'px';
-                highlightRect.style.height = rect.height + 'px';
+                highlightRect.style.left = ((rect.left - pageBounds.left) * scale) + 'px';
+                highlightRect.style.top = ((rect.top - pageBounds.top) * scale) + 'px';
+                highlightRect.style.width = (rect.width * scale) + 'px';
+                highlightRect.style.height = (rect.height * scale) + 'px';
                 highlightRect.style.backgroundColor = 'inherit';
                 highlight.appendChild(highlightRect);
             }
@@ -886,10 +889,10 @@ Phrase: "{phrase}"</textarea>
                 element: highlight,
                 pageNumber: parseInt(pageDiv.dataset.pageNumber),
                 rects: Array.from(rects).map(rect => ({
-                    left: rect.left - pageBounds.left,
-                    top: rect.top - pageBounds.top,
-                    width: rect.width,
-                    height: rect.height
+                    left: (rect.left - pageBounds.left) * scale,
+                    top: (rect.top - pageBounds.top) * scale,
+                    width: rect.width * scale,
+                    height: rect.height * scale
                 }))
             };
         }
@@ -914,13 +917,16 @@ Phrase: "{phrase}"</textarea>
                     newHighlight.style.backgroundColor = 'rgba(255, 255, 0, 0.3)';
                     newHighlight.style.pointerEvents = 'none';
 
+                    const pageBounds = pageDiv.getBoundingClientRect();
+                    const scale = parseFloat(pageDiv.style.width) / pageBounds.width;
+
                     highlight.rects.forEach(rect => {
                         const highlightRect = document.createElement('div');
                         highlightRect.style.position = 'absolute';
-                        highlightRect.style.left = rect.left + 'px';
-                        highlightRect.style.top = rect.top + 'px';
-                        highlightRect.style.width = rect.width + 'px';
-                        highlightRect.style.height = rect.height + 'px';
+                        highlightRect.style.left = (rect.left * scale) + 'px';
+                        highlightRect.style.top = (rect.top * scale) + 'px';
+                        highlightRect.style.width = (rect.width * scale) + 'px';
+                        highlightRect.style.height = (rect.height * scale) + 'px';
                         highlightRect.style.backgroundColor = 'inherit';
                         newHighlight.appendChild(highlightRect);
                     });
