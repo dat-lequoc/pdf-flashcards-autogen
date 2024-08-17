@@ -864,7 +864,6 @@ Phrase: "{phrase}"</textarea>
         }
 
         function createHighlight(range, pageDiv) {
-            const rects = range.getClientRects();
             const highlight = document.createElement('div');
             highlight.className = 'highlight';
             highlight.style.position = 'absolute';
@@ -874,16 +873,26 @@ Phrase: "{phrase}"</textarea>
             const pageBounds = pageDiv.getBoundingClientRect();
             const scale = parseFloat(pageDiv.style.width) / pageBounds.width;
 
+            const rects = range.getClientRects();
+            const highlightRects = [];
+
             for (let i = 0; i < rects.length; i++) {
                 const rect = rects[i];
                 const highlightRect = document.createElement('div');
                 highlightRect.style.position = 'absolute';
-                highlightRect.style.left = ((rect.left - pageBounds.left) * scale) + 'px';
-                highlightRect.style.top = ((rect.top - pageBounds.top) * scale) + 'px';
-                highlightRect.style.width = (rect.width * scale) + 'px';
-                highlightRect.style.height = (rect.height * scale) + 'px';
+                const left = (rect.left - pageBounds.left) * scale;
+                const top = (rect.top - pageBounds.top) * scale;
+                const width = rect.width * scale;
+                const height = rect.height * scale;
+
+                highlightRect.style.left = `${left}px`;
+                highlightRect.style.top = `${top}px`;
+                highlightRect.style.width = `${width}px`;
+                highlightRect.style.height = `${height}px`;
                 highlightRect.style.backgroundColor = 'inherit';
                 highlight.appendChild(highlightRect);
+
+                highlightRects.push({ left, top, width, height });
             }
 
             pageDiv.appendChild(highlight);
@@ -891,12 +900,7 @@ Phrase: "{phrase}"</textarea>
             return {
                 element: highlight,
                 pageNumber: parseInt(pageDiv.dataset.pageNumber),
-                rects: Array.from(rects).map(rect => ({
-                    left: (rect.left - pageBounds.left) * scale,
-                    top: (rect.top - pageBounds.top) * scale,
-                    width: rect.width * scale,
-                    height: rect.height * scale
-                }))
+                rects: highlightRects
             };
         }
 
