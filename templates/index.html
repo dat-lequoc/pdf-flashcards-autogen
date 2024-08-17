@@ -191,6 +191,9 @@ Phrase: "{phrase}"</textarea>
                 // Attach language mode listener to the new page
                 attachLanguageModeListener(pageDiv);
 
+                // Render highlights for this page
+                renderHighlights();
+
                 // Check if we need to load more pages
                 if (num < pdfDoc.numPages && pdfViewer.scrollHeight <= window.innerHeight * 2) {
                     renderPage(num + 1);
@@ -213,6 +216,7 @@ Phrase: "{phrase}"</textarea>
                     renderPage(pageNum);
                     updateCurrentPage(pageNum);
                     hideHeaderPanel();
+                    loadHighlights();
                 });
             };
             fileReader.readAsArrayBuffer(file);
@@ -815,7 +819,23 @@ Phrase: "{phrase}"</textarea>
             });
         });
 
+        let highlights = [];
+
         function attachLanguageModeListener(pageDiv) {
+            pageDiv.addEventListener('mouseup', function (event) {
+                if (event.ctrlKey) {
+                    const selection = window.getSelection();
+                    const range = selection.getRangeAt(0);
+                    const selectedText = selection.toString().trim();
+
+                    if (selectedText !== '') {
+                        const highlight = createHighlight(range, pageDiv);
+                        highlights.push(highlight);
+                        saveHighlights();
+                    }
+                }
+            });
+
             pageDiv.addEventListener('dblclick', function (event) {
                 if (mode === 'language') {
                     const selection = window.getSelection();
@@ -823,13 +843,6 @@ Phrase: "{phrase}"</textarea>
                     const word = selection.toString().trim();
 
                     if (word !== '' && word.length < 20) {
-                        // Highlight the selected word
-                        const span = document.createElement('span');
-                        span.style.backgroundColor = 'rgba(255, 255, 0, 0.5)';
-                        span.textContent = word;
-                        range.deleteContents();
-                        range.insertNode(span);
-
                         const selectedLanguageButton = document.querySelector('#language-buttons .mode-btn.selected');
                         if (selectedLanguageButton) {
                             const targetLanguage = selectedLanguageButton.dataset.language;
@@ -840,6 +853,78 @@ Phrase: "{phrase}"</textarea>
                             console.error('No language selected');
                         }
                     }
+                }
+            });
+        }
+
+        function createHighlight(range, pageDiv) {
+            const rects = range.getClientRects();
+            const highlight = document.createElement('div');
+            highlight.className = 'highlight';
+            highlight.style.position = 'absolute';
+            highlight.style.backgroundColor = 'rgba(255, 255, 0, 0.3)';
+            highlight.style.pointerEvents = 'none';
+
+            const pageBounds = pageDiv.getBoundingClientRect();
+
+            for (let i = 0; i < rects.length; i++) {
+                const rect = rects[i];
+                const highlightRect = document.createElement('div');
+                highlightRect.style.position = 'absolute';
+                highlightRect.style.left = (rect.left - pageBounds.left) + 'px';
+                highlightRect.style.top = (rect.top - pageBounds.top) + 'px';
+                highlightRect.style.width = rect.width + 'px';
+                highlightRect.style.height = rect.height + 'px';
+                highlightRect.style.backgroundColor = 'inherit';
+                highlight.appendChild(highlightRect);
+            }
+
+            pageDiv.appendChild(highlight);
+
+            return {
+                element: highlight,
+                pageNumber: parseInt(pageDiv.dataset.pageNumber),
+                rects: Array.from(rects).map(rect => ({
+                    left: rect.left - pageBounds.left,
+                    top: rect.top - pageBounds.top,
+                    width: rect.width,
+                    height: rect.height
+                }))
+            };
+        }
+
+        function saveHighlights() {
+            localStorage.setItem('pdfHighlights', JSON.stringify(highlights));
+        }
+
+        function loadHighlights() {
+            const savedHighlights = JSON.parse(localStorage.getItem('pdfHighlights')) || [];
+            highlights = savedHighlights;
+            renderHighlights();
+        }
+
+        function renderHighlights() {
+            highlights.forEach(highlight => {
+                const pageDiv = document.querySelector(`.page[data-page-number="${highlight.pageNumber}"]`);
+                if (pageDiv) {
+                    const newHighlight = document.createElement('div');
+                    newHighlight.className = 'highlight';
+                    newHighlight.style.position = 'absolute';
+                    newHighlight.style.backgroundColor = 'rgba(255, 255, 0, 0.3)';
+                    newHighlight.style.pointerEvents = 'none';
+
+                    highlight.rects.forEach(rect => {
+                        const highlightRect = document.createElement('div');
+                        highlightRect.style.position = 'absolute';
+                        highlightRect.style.left = rect.left + 'px';
+                        highlightRect.style.top = rect.top + 'px';
+                        highlightRect.style.width = rect.width + 'px';
+                        highlightRect.style.height = rect.height + 'px';
+                        highlightRect.style.backgroundColor = 'inherit';
+                        newHighlight.appendChild(highlightRect);
+                    });
+
+                    pageDiv.appendChild(newHighlight);
                 }
             });
         }
