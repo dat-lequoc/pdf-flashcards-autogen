@@ -21,6 +21,8 @@
         <div id="top-controls">
             <div id="settings-icon">⚙️</div>
             <div id="page-navigation">
+                <button id="zoom-out-btn">-</button>
+                <button id="zoom-in-btn">+</button>
                 <input type="number" id="page-input" min="1" placeholder="Go to page">
                 <button id="go-to-page-btn">Go</button>
             </div>
@@ -118,6 +120,8 @@ Phrase: "{phrase}"</textarea>
         let pageRendering = false;
         let pageNumPending = null;
         let scale = 3;
+        const minScale = 0.5;
+        const maxScale = 5;
         let mode = 'flashcard';
         let apiKey = '';
         let currentFileName = '';
@@ -729,6 +733,25 @@ Phrase: "{phrase}"</textarea>
                 handleGoToPage();
             }
         });
+
+        document.getElementById('zoom-in-btn').addEventListener('click', function() {
+            if (scale < maxScale) {
+                scale += 0.5;
+                reRenderPDF();
+            }
+        });
+
+        document.getElementById('zoom-out-btn').addEventListener('click', function() {
+            if (scale > minScale) {
+                scale -= 0.5;
+                reRenderPDF();
+            }
+        });
+
+        function reRenderPDF() {
+            pdfViewer.innerHTML = '';
+            renderPage(pageNum);
+        }
 
         const modeButtons = document.querySelectorAll('.mode-btn');
         modeButtons.forEach(button => {

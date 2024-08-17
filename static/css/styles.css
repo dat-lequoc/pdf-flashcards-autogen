@@ -414,17 +414,31 @@ body {
   justify-content: center;
 }
 
-#go-to-page-btn {
+#go-to-page-btn,
+#zoom-in-btn,
+#zoom-out-btn {
   background-color: var(--secondary-color);
   color: white;
   border: none;
   border-radius: 3px;
   cursor: pointer;
   transition: background-color 0.3s ease;
+  margin-right: 5px;
 }
 
-#go-to-page-btn:hover {
+#go-to-page-btn:hover,
+#zoom-in-btn:hover,
+#zoom-out-btn:hover {
   background-color: #34495e;
+}
+
+#zoom-in-btn,
+#zoom-out-btn {
+  width: 30px;
+  height: 30px;
+  font-size: 18px;
+  line-height: 1;
+  padding: 0;
 }
 
 #submit-btn {
