@@ -805,7 +805,7 @@ function loadPDF(file) {
                 modeButtons.forEach(btn => btn.classList.remove('selected'));
                 this.classList.add('selected');
                 mode = this.dataset.mode;
-                pdfViewer.style.cursor = mode === 'language' ? 'text' : 'default';
+                pdfViewer.style.cursor = 'default'; // Always set to default
                 document.getElementById('language-buttons').style.display = mode === 'language' ? 'flex' : 'none';
                 systemPrompt.style.display = mode === 'flashcard' ? 'block' : 'none';
                 document.getElementById('explain-prompt').style.display = mode === 'explain' ? 'block' : 'none';
@@ -847,46 +847,19 @@ function attachLanguageModeListener(pageDiv) {
             const selectedText = selection.toString().trim();
 
             if (selectedText !== '') {
-                // Highlight the selected text
-                const span = document.createElement('span');
-                span.style.backgroundColor = 'rgba(255, 255, 0, 0.5)';
-                span.textContent = selectedText;
-                range.deleteContents();
-                range.insertNode(span);
-
-                // Save the highlight
-                const highlights = getHighlights(currentFileName);
-                highlights.push({
-                    page: parseInt(pageDiv.dataset.pageNumber),
-                    text: selectedText,
-                    startOffset: range.startOffset,
-                    endOffset: range.endOffset
-                });
-                saveHighlights(currentFileName, highlights);
+                highlightText(pageDiv, range, selectedText);
             }
-        } else if (mode === 'language') {
-            // Existing language mode functionality
+        }
+    });
+
+    pageDiv.addEventListener('dblclick', function (event) {
+        if (mode === 'language') {
             const selection = window.getSelection();
             const range = selection.getRangeAt(0);
             const word = selection.toString().trim();
 
             if (word !== '' && word.length < 20) {
-                // Highlight the selected word
-                const span = document.createElement('span');
-                span.style.backgroundColor = 'rgba(255, 255, 0, 0.5)';
-                span.textContent = word;
-                range.deleteContents();
-                range.insertNode(span);
-
-                // Save the highlight
-                const highlights = getHighlights(currentFileName);
-                highlights.push({
-                    page: parseInt(pageDiv.dataset.pageNumber),
-                    word: word,
-                    startOffset: range.startOffset,
-                    endOffset: range.endOffset
-                });
-                saveHighlights(currentFileName, highlights);
+                highlightText(pageDiv, range, word);
 
                 const selectedLanguageButton = document.querySelector('#language-buttons .mode-btn.selected');
                 if (selectedLanguageButton) {
@@ -900,6 +873,24 @@ function attachLanguageModeListener(pageDiv) {
             }
         }
     });
+}
+
+function highlightText(pageDiv, range, text) {
+    const span = document.createElement('span');
+    span.style.backgroundColor = 'rgba(255, 255, 0, 0.5)';
+    span.textContent = text;
+    range.deleteContents();
+    range.insertNode(span);
+
+    // Save the highlight
+    const highlights = getHighlights(currentFileName);
+    highlights.push({
+        page: parseInt(pageDiv.dataset.pageNumber),
+        text: text,
+        startOffset: range.startOffset,
+        endOffset: range.endOffset
+    });
+    saveHighlights(currentFileName, highlights);
 }
 
 function saveHighlights(filename, highlights) {
