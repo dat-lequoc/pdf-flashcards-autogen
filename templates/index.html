@@ -50,8 +50,8 @@ Now explain this text:</textarea>
             <textarea id="language-prompt" placeholder="Enter system prompt for language mode">Explain the word in the phrase in {targetLanguage} using this format:
 
 T: [Translation of the word in Vietnamese]
-Q: [Original phrase with the target word in <b> tags, or craft an example with ONLY the target word in <b> tags if no phrase is provided]
-    A: [Short explanation of the word's meaning in the context]
+Q: [Original phrase with the target word in <b> tags, or craft an example with ONLY the target word in <b> tags if no phrase is provided. The Q must contain the word in <b> tags.]
+A: [Short explanation of the word's meaning in the context]
 
 Example:
 Word: "refused"
@@ -681,17 +681,16 @@ Phrase: "{phrase}"</textarea>
         function exportToCSV() {
             let csvContent = "data:text/csv;charset=utf-8,";
             const currentCollection = mode === 'language' ? collectedLanguageFlashcards : collectedFlashcards;
+            const removeQuotes = str => str.replace(/"/g, '');
 
             if (mode === 'language') {
-                csvContent += "Word,Phrase,Translation,Answer\n";
-                currentCollection.forEach(flashcard => {
-                    const [translation, answer] = flashcard.translationAnswer.split('\n');
-                    csvContent += `"${flashcard.word}","${flashcard.phrase}","${translation}","${answer}"\n`;
+                currentCollection.forEach(({ phrase, translationAnswer }) => {
+                    const [translation, answer] = translationAnswer.split('\n');
+                    csvContent += `${removeQuotes(phrase)};- ${removeQuotes(translation)}<br>- ${removeQuotes(answer)}\n`;
                 });
             } else {
-                csvContent += "Question,Answer\n";
-                currentCollection.forEach(flashcard => {
-                    csvContent += `"${flashcard.phrase}","${flashcard.translationAnswer}"\n`;
+                currentCollection.forEach(({ phrase, translationAnswer }) => {
+                    csvContent += `${removeQuotes(phrase)};${removeQuotes(translationAnswer)}\n`;
                 });
             }
 
@@ -892,6 +891,13 @@ Phrase: "{phrase}"</textarea>
                     const word = selection.toString().trim();
 
                     if (word !== '' && word.length < 20) {
+                         // Highlight the selected word
+                        const span = document.createElement('span');
+                        span.style.backgroundColor = 'rgba(255, 255, 0, 0.5)';
+                        span.textContent = word;
+                        range.deleteContents();
+                        range.insertNode(span);
+
                         const selectedLanguageButton = document.querySelector('#language-buttons .mode-btn.selected');
                         if (selectedLanguageButton) {
                             const targetLanguage = selectedLanguageButton.dataset.language;
