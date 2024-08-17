@@ -830,7 +830,10 @@ Phrase: "{phrase}"</textarea>
                         const range = selection.getRangeAt(0);
                         const selectedText = selection.toString().trim();
 
+                    console.log(selectedText);
+
                         if (selectedText !== '') {
+                                    console.log(range, pageDiv);
                             const highlight = createHighlight(range, pageDiv);
                             highlights.push(highlight);
                             saveHighlights();
