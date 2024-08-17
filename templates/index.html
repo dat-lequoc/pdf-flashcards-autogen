@@ -602,8 +602,10 @@ Phrase: "{phrase}"</textarea>
             updateExportButtonVisibility();
         }
 
-        let collectionCount = 0;
+        let flashcardCollectionCount = 0;
+        let languageCollectionCount = 0;
         let collectedFlashcards = [];
+        let collectedLanguageFlashcards = [];
 
         function addToCollection() {
             const newFlashcards = Array.from(document.querySelectorAll('.flashcard:not(.in-collection)')).map(flashcard => {
@@ -613,6 +615,7 @@ Phrase: "{phrase}"</textarea>
                     const answer = flashcard.dataset.answer;
                     const question = flashcard.dataset.question;
                     return {
+                        word: word,
                         phrase: question,
                         translationAnswer: `${translation.trim()}\n${answer.trim()}`
                     };
@@ -626,8 +629,13 @@ Phrase: "{phrase}"</textarea>
                 }
             });
 
-            collectedFlashcards = collectedFlashcards.concat(newFlashcards);
-            updateCollectionCount(newFlashcards.length);
+            if (mode === 'language') {
+                collectedLanguageFlashcards = collectedLanguageFlashcards.concat(newFlashcards);
+                updateCollectionCount(newFlashcards.length, 'language');
+            } else {
+                collectedFlashcards = collectedFlashcards.concat(newFlashcards);
+                updateCollectionCount(newFlashcards.length, 'flashcard');
+            }
             clearDisplayedFlashcards();
             updateExportButtonVisibility();
         }
@@ -636,37 +644,61 @@ Phrase: "{phrase}"</textarea>
             flashcardsContainer.innerHTML = '';
         }
 
-        function updateCollectionCount(change) {
-            collectionCount += change;
-            const addToCollectionBtn = document.getElementById('add-to-collection-btn');
-            addToCollectionBtn.textContent = `Add to Collection (${collectionCount})`;
-            localStorage.setItem('collectionCount', collectionCount);
-            localStorage.setItem('collectedFlashcards', JSON.stringify(collectedFlashcards));
+        function updateCollectionCount(change, collectionType) {
+            if (collectionType === 'language') {
+                languageCollectionCount += change;
+                localStorage.setItem('languageCollectionCount', languageCollectionCount);
+                localStorage.setItem('collectedLanguageFlashcards', JSON.stringify(collectedLanguageFlashcards));
+            } else {
+                flashcardCollectionCount += change;
+                localStorage.setItem('flashcardCollectionCount', flashcardCollectionCount);
+                localStorage.setItem('collectedFlashcards', JSON.stringify(collectedFlashcards));
+            }
+            updateAddToCollectionButtonText();
         }
 
-        // Initialize collection count and flashcards from localStorage
-        collectionCount = parseInt(localStorage.getItem('collectionCount')) || 0;
+        function updateAddToCollectionButtonText() {
+            const addToCollectionBtn = document.getElementById('add-to-collection-btn');
+            const count = mode === 'language' ? languageCollectionCount : flashcardCollectionCount;
+            addToCollectionBtn.textContent = `Add to Collection (${count})`;
+        }
+
+        // Initialize collection counts and flashcards from localStorage
+        flashcardCollectionCount = parseInt(localStorage.getItem('flashcardCollectionCount')) || 0;
+        languageCollectionCount = parseInt(localStorage.getItem('languageCollectionCount')) || 0;
         collectedFlashcards = JSON.parse(localStorage.getItem('collectedFlashcards')) || [];
-        document.getElementById('add-to-collection-btn').textContent = `Add to Collection (${collectionCount})`;
+        collectedLanguageFlashcards = JSON.parse(localStorage.getItem('collectedLanguageFlashcards')) || [];
+        updateAddToCollectionButtonText();
 
         document.getElementById('add-to-collection-btn').addEventListener('click', addToCollection);
 
         function updateExportButtonVisibility() {
             const exportButton = document.getElementById('export-csv-btn');
-            exportButton.style.display = collectedFlashcards.length > 0 ? 'block' : 'none';
+            const currentCollection = mode === 'language' ? collectedLanguageFlashcards : collectedFlashcards;
+            exportButton.style.display = currentCollection.length > 0 ? 'block' : 'none';
         }
 
         function exportToCSV() {
             let csvContent = "data:text/csv;charset=utf-8,";
+            const currentCollection = mode === 'language' ? collectedLanguageFlashcards : collectedFlashcards;
 
-            collectedFlashcards.forEach(flashcard => {
-                csvContent += `"${flashcard.phrase}";"${flashcard.translationAnswer}"\n`;
-            });
+            if (mode === 'language') {
+                csvContent += "Word,Phrase,Translation,Answer\n";
+                currentCollection.forEach(flashcard => {
+                    const [translation, answer] = flashcard.translationAnswer.split('\n');
+                    csvContent += `"${flashcard.word}","${flashcard.phrase}","${translation}","${answer}"\n`;
+                });
+            } else {
+                csvContent += "Question,Answer\n";
+                currentCollection.forEach(flashcard => {
+                    csvContent += `"${flashcard.phrase}","${flashcard.translationAnswer}"\n`;
+                });
+            }
 
             const encodedUri = encodeURI(csvContent);
             const link = document.createElement("a");
             link.setAttribute("href", encodedUri);
-            link.setAttribute("download", "flashcards.csv");
+            link.setAttribute("download", `${mode}_flashcards.csv`);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -676,12 +708,19 @@ Phrase: "{phrase}"</textarea>
 
         function clearCollection() {
             if (confirm('Are you sure you want to clear the entire collection? This action cannot be undone.')) {
-                collectedFlashcards = [];
-                collectionCount = 0;
-                updateCollectionCount(0);
+                if (mode === 'language') {
+                    collectedLanguageFlashcards = [];
+                    languageCollectionCount = 0;
+                    localStorage.removeItem('collectedLanguageFlashcards');
+                    localStorage.removeItem('languageCollectionCount');
+                } else {
+                    collectedFlashcards = [];
+                    flashcardCollectionCount = 0;
+                    localStorage.removeItem('collectedFlashcards');
+                    localStorage.removeItem('flashcardCollectionCount');
+                }
+                updateCollectionCount(0, mode);
                 updateExportButtonVisibility();
-                localStorage.removeItem('collectedFlashcards');
-                localStorage.removeItem('collectionCount');
             }
         }
 
@@ -799,6 +838,10 @@ Phrase: "{phrase}"</textarea>
                     const savedLanguage = loadLanguageChoice();
                     setLanguageButton(savedLanguage);
                 }
+
+                // Update Add to Collection button and export button visibility
+                updateAddToCollectionButtonText();
+                updateExportButtonVisibility();
             });
         });
 
