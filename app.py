@@ -3,6 +3,7 @@ import anthropic
 import os
 import json
 from datetime import datetime
+import base64
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'
@@ -29,18 +30,27 @@ def get_recent_files():
 def get_recent_files_route():
     return jsonify(get_recent_files())
 
-@app.route('/upload_pdf', methods=['POST'])
-def upload_pdf():
+@app.route('/upload_file', methods=['POST'])
+def upload_file():
     if 'file' not in request.files:
         return jsonify({'error': 'No file part'}), 400
     file = request.files['file']
     if file.filename == '':
         return jsonify({'error': 'No selected file'}), 400
-    if file and (file.filename.endswith('.pdf') or file.filename.endswith('.txt')):
+    if file and (file.filename.endswith('.pdf') or file.filename.endswith('.txt') or file.filename.endswith('.epub')):
         filename = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
         file.save(filename)
         return jsonify({'message': 'File uploaded successfully'}), 200
-    return jsonify({'error': 'Invalid file type. Please upload a PDF or TXT file.'}), 400
+    return jsonify({'error': 'Invalid file type. Please upload a PDF, TXT, or EPUB file.'}), 400
+
+@app.route('/get_epub_content/<path:filename>')
+def get_epub_content(filename):
+    file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    if os.path.exists(file_path) and filename.endswith('.epub'):
+        with open(file_path, 'rb') as file:
+            epub_content = base64.b64encode(file.read()).decode('utf-8')
+        return jsonify({'epub_content': epub_content})
+    return jsonify({'error': 'File not found or not an EPUB'}), 404
 
 @app.route('/open_pdf/<path:filename>')
 def open_pdf(filename):
