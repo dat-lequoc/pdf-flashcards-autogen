@@ -1110,6 +1110,7 @@ Phrase: "{phrase}"</textarea>
                     fileList.innerHTML = '';
                     recentFiles.forEach(file => {
                         const li = document.createElement('li');
+                        li.style.marginBottom = '10px'; // Add spacing between list items
                         const a = document.createElement('a');
                         a.href = '#';
                         a.textContent = `${file.filename} (${new Date(file.date).toLocaleDateString()})`;
