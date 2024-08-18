@@ -895,7 +895,13 @@ Phrase: "{phrase}"</textarea>
                                     console.log(selectedText);
                             translateText(selectedText);
                          }
+
+                        const range = selection.getRangeAt(0);
+                        const span = document.createElement('span');
+                        span.className = 'highlight';
+                        range.surroundContents(span);
                      }
+
                 }
             });
 
