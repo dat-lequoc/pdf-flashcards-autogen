@@ -9,16 +9,16 @@ app.config['UPLOAD_FOLDER'] = 'uploads'
 
 @app.route('/')
 def index():
-    recent_pdfs = get_recent_pdfs()
-    return render_template('index.html', recent_pdfs=recent_pdfs)
+    recent_files = get_recent_files()
+    return render_template('index.html', recent_files=recent_files)
 
-def get_recent_pdfs():
+def get_recent_files():
     if not os.path.exists(app.config['UPLOAD_FOLDER']):
         os.makedirs(app.config['UPLOAD_FOLDER'])
     files = os.listdir(app.config['UPLOAD_FOLDER'])
-    pdf_files = [f for f in files if f.endswith('.pdf')]
-    pdf_files.sort(key=lambda x: os.path.getmtime(os.path.join(app.config['UPLOAD_FOLDER'], x)), reverse=True)
-    return [{'filename': pdf, 'date': datetime.fromtimestamp(os.path.getmtime(os.path.join(app.config['UPLOAD_FOLDER'], pdf))).isoformat()} for pdf in pdf_files[:5]]
+    valid_files = [f for f in files if f.endswith(('.pdf', '.txt'))]
+    valid_files.sort(key=lambda x: os.path.getmtime(os.path.join(app.config['UPLOAD_FOLDER'], x)), reverse=True)
+    return [{'filename': file, 'date': datetime.fromtimestamp(os.path.getmtime(os.path.join(app.config['UPLOAD_FOLDER'], file))).isoformat()} for file in valid_files[:5]]
 
 @app.route('/upload_pdf', methods=['POST'])
 def upload_pdf():
@@ -27,11 +27,11 @@ def upload_pdf():
     file = request.files['file']
     if file.filename == '':
         return jsonify({'error': 'No selected file'}), 400
-    if file and file.filename.endswith('.pdf'):
+    if file and (file.filename.endswith('.pdf') or file.filename.endswith('.txt')):
         filename = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
         file.save(filename)
         return jsonify({'message': 'File uploaded successfully'}), 200
-    return jsonify({'error': 'Invalid file type'}), 400
+    return jsonify({'error': 'Invalid file type. Please upload a PDF or TXT file.'}), 400
 
 @app.route('/open_pdf/<path:filename>')
 def open_pdf(filename):

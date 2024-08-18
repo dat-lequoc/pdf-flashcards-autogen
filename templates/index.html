@@ -11,7 +11,7 @@
 
 <body>
     <div id="top-bar">
-        <input type="file" id="file-input">
+        <input type="file" id="file-input" accept=".pdf,.txt">
         <span id="current-page">Page: 1</span>
     </div>
     <div id="left-panel">
@@ -202,6 +202,14 @@ Phrase: "{phrase}"</textarea>
             });
         }
 
+        function loadFile(file) {
+            if (file.name.endsWith('.pdf')) {
+                loadPDF(file);
+            } else if (file.name.endsWith('.txt')) {
+                loadTXT(file);
+            }
+        }
+
         function loadPDF(file) {
             const fileReader = new FileReader();
             fileReader.onload = function () {
@@ -221,6 +229,21 @@ Phrase: "{phrase}"</textarea>
                 });
             };
             fileReader.readAsArrayBuffer(file);
+        }
+
+        function loadTXT(file) {
+            const fileReader = new FileReader();
+            fileReader.onload = function () {
+                const content = this.result;
+                pdfViewer.innerHTML = '';
+                currentFileName = file.name;
+                const textContainer = document.createElement('div');
+                textContainer.className = 'text-content';
+                textContainer.textContent = content;
+                pdfViewer.appendChild(textContainer);
+                hideHeaderPanel();
+            };
+            fileReader.readAsText(file);
         }
 
         function hideHeaderPanel() {
@@ -749,12 +772,12 @@ Phrase: "{phrase}"</textarea>
 
         fileInput.addEventListener('change', function (e) {
             const file = e.target.files[0];
-            if (file.type !== 'application/pdf') {
-                console.error('Error: Not a PDF file');
+            if (file.type !== 'application/pdf' && file.type !== 'text/plain') {
+                console.error('Error: Not a PDF or TXT file');
                 return;
             }
-            loadPDF(file);
-            addRecentPDF(file.name);
+            loadFile(file);
+            addRecentFile(file.name);
             this.nextElementSibling.textContent = file.name;
         });
 
@@ -1047,29 +1070,29 @@ Phrase: "{phrase}"</textarea>
             }
         });
 
-        function loadRecentPDFs() {
-            const recentPDFs = {{ recent_pdfs| tojson
-        }};
-        const pdfList = document.getElementById('pdf-list');
-        pdfList.innerHTML = '';
-        recentPDFs.forEach(pdf => {
-            const li = document.createElement('li');
-            const a = document.createElement('a');
-            a.href = '#';
-            a.textContent = `${pdf.filename} (${new Date(pdf.date).toLocaleDateString()})`;
-            a.addEventListener('click', function (e) {
-                e.preventDefault();
-                fetch(`/open_pdf/${pdf.filename}`)
-                    .then(response => response.blob())
-                    .then(blob => {
-                        const file = new File([blob], pdf.filename, { type: 'application/pdf' });
-                        loadPDF(file);
-                    })
-                    .catch(error => console.error('Error:', error));
+        function loadRecentFiles() {
+            const recentFiles = {{ recent_files| tojson }};
+            const fileList = document.getElementById('file-list');
+            fileList.innerHTML = '';
+            recentFiles.forEach(file => {
+                const li = document.createElement('li');
+                const a = document.createElement('a');
+                a.href = '#';
+                a.textContent = `${file.filename} (${new Date(file.date).toLocaleDateString()})`;
+                a.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    fetch(`/open_pdf/${file.filename}`)
+                        .then(response => response.blob())
+                        .then(blob => {
+                            const fileType = file.filename.endsWith('.pdf') ? 'application/pdf' : 'text/plain';
+                            const newFile = new File([blob], file.filename, { type: fileType });
+                            loadFile(newFile);
+                        })
+                        .catch(error => console.error('Error:', error));
+                });
+                li.appendChild(a);
+                fileList.appendChild(li);
             });
-            li.appendChild(a);
-            pdfList.appendChild(li);
-        });
         }
 
         // Save current page before unloading
@@ -1081,7 +1104,7 @@ Phrase: "{phrase}"</textarea>
 
         // Initialize recent PDFs list
         window.onload = function () {
-            loadRecentPDFs();
+            loadRecentFiles();
 
             // Add event listener for settings icon
             document.getElementById('settings-icon').addEventListener('click', function () {
@@ -1108,7 +1131,7 @@ Phrase: "{phrase}"</textarea>
             uploadPDF(file);
         });
 
-        function uploadPDF(file) {
+        function uploadFile(file) {
             const formData = new FormData();
             formData.append('file', file);
 
@@ -1120,8 +1143,8 @@ Phrase: "{phrase}"</textarea>
                 .then(data => {
                     if (data.message) {
                         console.log(data.message);
-                        loadPDF(file);
-                        loadRecentPDFs();
+                        loadFile(file);
+                        loadRecentFiles();
                     } else {
                         console.error(data.error);
                     }
