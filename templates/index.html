@@ -598,7 +598,7 @@ Phrase: "{phrase}"</textarea>
                     flashcardElement.remove();
                     updateExportButtonVisibility();
                 });
-                flashcardsContainer.appendChild(flashcardElement);
+                flashcardsContainer.insertBefore(flashcardElement, flashcardsContainer.firstChild);
             });
             updateExportButtonVisibility();
         }
@@ -619,7 +619,7 @@ Phrase: "{phrase}"</textarea>
                 flashcardElement.remove();
                 updateExportButtonVisibility();
             });
-            flashcardsContainer.appendChild(flashcardElement);
+            flashcardsContainer.insertBefore(flashcardElement, flashcardsContainer.firstChild);
             updateExportButtonVisibility();
         }
 
