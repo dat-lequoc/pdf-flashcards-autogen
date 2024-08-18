@@ -19,6 +19,11 @@
     <div id="left-panel">
         <div id="pdf-viewer"></div>
         <div id="epub-viewer"></div>
+        <div id="epub-controls" style="display: none;">
+            <button id="prev-btn">Previous</button>
+            <button id="next-btn">Next</button>
+            <span id="current-location"></span>
+        </div>
     </div>
     <div id="right-panel">
         <div id="top-controls">
@@ -94,7 +99,9 @@ Phrase: "{phrase}"</textarea>
             <h3>Recent Files</h3>
             <ul id="file-list"></ul>
         </div>
-        <div id="highlight-instruction" style="font-size: 0.7em; color: #666; position: absolute; bottom: 5px; right: 5px;">Use Alt+Select to highlight text</div>
+        <div id="highlight-instruction"
+            style="font-size: 0.7em; color: #666; position: absolute; bottom: 5px; right: 5px;">Use Alt+Select to
+            highlight text</div>
     </div>
 
     <!-- Explanation Modal -->
@@ -192,25 +199,12 @@ Phrase: "{phrase}"</textarea>
 
                 pdfViewer.appendChild(pageDiv);
 
-                // Attach language mode listener to the new page
                 attachLanguageModeListener(pageDiv);
-
-                // Render highlights for this page
                 renderHighlights();
-
-                // Check if we need to load more pages
                 if (num < pdfDoc.numPages && pdfViewer.scrollHeight <= window.innerHeight * 2) {
                     renderPage(num + 1);
                 }
             });
-        }
-
-        function loadFile(file) {
-            if (file.name.endsWith('.pdf')) {
-                loadPDF(file);
-            } else if (file.name.endsWith('.txt')) {
-                loadTXT(file);
-            }
         }
 
         function loadPDF(file) {
@@ -245,8 +239,6 @@ Phrase: "{phrase}"</textarea>
                 textContainer.textContent = content;
                 pdfViewer.appendChild(textContainer);
                 hideHeaderPanel();
-        
-                // Add event listeners for language mode
                 attachLanguageModeListener(textContainer);
             };
             fileReader.readAsText(file);
@@ -810,7 +802,7 @@ Phrase: "{phrase}"</textarea>
             return Math.max(0.1, Math.min(0.25, currentScale * 0.1));
         }
 
-        document.getElementById('zoom-in-btn').addEventListener('click', function() {
+        document.getElementById('zoom-in-btn').addEventListener('click', function () {
             if (scale < maxScale) {
                 const step = calculateZoomStep(scale);
                 scale = Math.min(maxScale, scale + step);
@@ -819,7 +811,7 @@ Phrase: "{phrase}"</textarea>
             }
         });
 
-        document.getElementById('zoom-out-btn').addEventListener('click', function() {
+        document.getElementById('zoom-out-btn').addEventListener('click', function () {
             if (scale > minScale) {
                 const step = calculateZoomStep(scale);
                 scale = Math.max(minScale, scale - step);
@@ -1140,84 +1132,57 @@ Phrase: "{phrase}"</textarea>
         function loadFile(file) {
             const pdfViewer = document.getElementById('pdf-viewer');
             const epubViewer = document.getElementById('epub-viewer');
-            
-            // Hide both viewers initially
+            const epubControls = document.getElementById('epub-controls');
+
+            // Hide both viewers and controls initially
             pdfViewer.style.display = 'none';
             epubViewer.style.display = 'none';
+            epubControls.style.display = 'none';
 
-            if (file.name.endsWith('.pdf')) {
+            if (file.name.toLowerCase().endsWith('.pdf')) {
                 pdfViewer.style.display = 'block';
                 loadPDF(file);
-            } else if (file.name.endsWith('.txt')) {
-                pdfViewer.style.display = 'block'; // Assuming TXT files use the PDF viewer
+            } else if (file.name.toLowerCase().endsWith('.txt')) {
+                pdfViewer.style.display = 'block';
                 loadTXT(file);
-            } else if (file.name.endsWith('.epub')) {
+            } else if (file.name.toLowerCase().endsWith('.epub')) {
                 epubViewer.style.display = 'block';
+                epubControls.style.display = 'block';
                 loadEPUB(file);
             }
         }
 
         function loadEPUB(file) {
-            console.log('loadEPUB function called with file:', file.name);
-
-            const epubContainer = document.getElementById('epub-viewer');
-            if (!epubContainer) {
-                console.error('EPUB viewer container not found');
-                return;
-            }
-
-            epubContainer.innerHTML = ''; // Clear previous content
-            epubContainer.style.display = 'block';
-
             const reader = new FileReader();
-
-            reader.onload = function(e) {
-                console.log('FileReader onload event fired');
+            reader.onload = function (e) {
                 const arrayBuffer = e.target.result;
+                book = ePub(arrayBuffer);
 
-                try {
-                    book = ePub(arrayBuffer);
-                    console.log('EPUB book object created:', book);
+                rendition = book.renderTo("epub-viewer", {
+                    width: "100%",
+                    height: "100%",
+                    spread: "always"
+                });
 
-                    book.ready.then(() => {
-                        console.log('EPUB book is ready');
+                rendition.display();
 
-                        rendition = book.renderTo('epub-viewer', {
-                            width: '100%',
-                            height: '100%',
-                            spread: 'always',
-                            sandbox: 'allow-scripts'
-                        });
+                book.ready.then(() => {
+                    const next = document.getElementById("next-btn");
+                    next.addEventListener("click", () => {
+                        rendition.next();
+                    }, false);
 
-                        console.log('Rendition object created:', rendition);
+                    const prev = document.getElementById("prev-btn");
+                    prev.addEventListener("click", () => {
+                        rendition.prev();
+                    }, false);
 
-                        rendition.display().then(() => {
-                            console.log('EPUB content displayed');
-                            setupNavigation();
-                        }).catch(error => {
-                            console.error('Error displaying EPUB content:', error);
-                            epubContainer.innerHTML = 'Error displaying EPUB content. Please check console for details.';
-                        });
-
-                        if (document.getElementById('pdf-viewer')) {
-                            document.getElementById('pdf-viewer').style.display = 'none';
-                        }
-
-                    }).catch(error => {
-                        console.error('Error in book.ready:', error);
-                        epubContainer.innerHTML = 'Error preparing EPUB. Please check console for details.';
+                    rendition.on("relocated", (location) => {
+                        const currentLocation = document.getElementById("current-location");
+                        currentLocation.textContent = `Page ${location.start.displayed.page} of ${book.packaging.metadata.numberOfPages}`;
                     });
-                } catch (error) {
-                    console.error('Error creating EPUB book object:', error);
-                    epubContainer.innerHTML = 'Error loading EPUB. Please check console for details.';
-                }
+                });
             };
-
-            reader.onerror = function(e) {
-                console.error('Error reading file:', e);
-                epubContainer.innerHTML = 'Error reading file. Please try again.';
-            };
-
             reader.readAsArrayBuffer(file);
         }
 
@@ -1266,12 +1231,18 @@ Phrase: "{phrase}"</textarea>
         }
 
         function handleKeyPress(e) {
-            switch(e.key) {
+            switch (e.key) {
                 case "ArrowLeft":
                     prevPage();
                     break;
                 case "ArrowRight":
                     nextPage();
+                    break;
+                case "+":
+                    zoomIn();
+                    break;
+                case "-":
+                    zoomOut();
                     break;
             }
         }
