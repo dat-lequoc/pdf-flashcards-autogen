@@ -1125,13 +1125,20 @@ Phrase: "{phrase}"</textarea>
             apiKey = lastWorkingAPIKey;
         }
 
-        // Infinite scrolling
+        // Infinite scrolling and page number update
         document.getElementById('left-panel').addEventListener('scroll', function () {
             if (this.scrollTop + this.clientHeight >= this.scrollHeight - 500) {
                 if (pageNum < pdfDoc.numPages) {
                     pageNum++;
                     renderPage(pageNum);
                 }
+            }
+            
+            // Update the page number in the "Go to page" box
+            if (PDFViewerApplication && PDFViewerApplication.pdfViewer) {
+                const currentPageNumber = PDFViewerApplication.pdfViewer.currentPageNumber;
+                document.getElementById('page-input').value = currentPageNumber;
+                document.getElementById('current-page').textContent = `Page: ${currentPageNumber}`;
             }
         });
 
