@@ -1185,7 +1185,8 @@ Phrase: "{phrase}"</textarea>
                         rendition = book.renderTo('epub-viewer', {
                             width: '100%',
                             height: '100%',
-                            spread: 'always'
+                            spread: 'always',
+                            sandbox: 'allow-scripts'
                         });
 
                         console.log('Rendition object created:', rendition);
