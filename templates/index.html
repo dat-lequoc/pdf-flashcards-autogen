@@ -1132,13 +1132,32 @@ Phrase: "{phrase}"</textarea>
         }
 
         // Infinite scrolling and page number update
+        let lastScrollTop = 0;
         document.getElementById('left-panel').addEventListener('scroll', function () {
-            if (this.scrollTop + this.clientHeight >= this.scrollHeight - 500) {
-                if (pageNum < pdfDoc.numPages) {
-                    pageNum++;
-                    renderPage(pageNum);
+            const st = this.scrollTop;
+            const threshold = 100; // Adjust this value to change the scroll sensitivity
+
+            if (st > lastScrollTop) {
+                // Scrolling down
+                if (this.scrollTop + this.clientHeight >= this.scrollHeight - 500) {
+                    if (pageNum < pdfDoc.numPages) {
+                        pageNum++;
+                        renderPage(pageNum);
+                    }
+                }
+            } else if (st < lastScrollTop - threshold) {
+                // Scrolling up
+                const pages = document.querySelectorAll('.page');
+                for (let i = 0; i < pages.length; i++) {
+                    const rect = pages[i].getBoundingClientRect();
+                    if (rect.top >= 0) {
+                        pageNum = parseInt(pages[i].dataset.pageNumber);
+                        break;
+                    }
                 }
             }
+
+            lastScrollTop = st <= 0 ? 0 : st;
             
             // Update the page number in the "Go to page" box
             document.getElementById('page-input').value = pageNum;
