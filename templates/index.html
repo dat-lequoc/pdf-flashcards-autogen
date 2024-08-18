@@ -585,6 +585,7 @@ Phrase: "{phrase}"</textarea>
         function displayFlashcards(flashcards, append = false) {
             if (!append) {
                 flashcardsContainer.innerHTML = ''; // Clear existing flashcards only if not appending
+                displayedFlashcards = []; // Clear the displayed flashcards array
             }
             flashcards.forEach(flashcard => {
                 const flashcardElement = document.createElement('div');
@@ -596,10 +597,17 @@ Phrase: "{phrase}"</textarea>
                 `;
                 flashcardElement.querySelector('.remove-btn').addEventListener('click', function () {
                     flashcardElement.remove();
+                    const index = displayedFlashcards.findIndex(f => f.question === flashcard.question && f.answer === flashcard.answer);
+                    if (index > -1) {
+                        displayedFlashcards.splice(index, 1);
+                        localStorage.setItem('displayedFlashcards', JSON.stringify(displayedFlashcards));
+                    }
                     updateExportButtonVisibility();
                 });
                 flashcardsContainer.insertBefore(flashcardElement, flashcardsContainer.firstChild);
+                displayedFlashcards.push(flashcard);
             });
+            localStorage.setItem('displayedFlashcards', JSON.stringify(displayedFlashcards));
             updateExportButtonVisibility();
         }
 
@@ -617,16 +625,25 @@ Phrase: "{phrase}"</textarea>
             `;
             flashcardElement.querySelector('.remove-btn').addEventListener('click', function () {
                 flashcardElement.remove();
+                const index = displayedLanguageFlashcards.findIndex(f => f.word === flashcard.word && f.translation === flashcard.translation);
+                if (index > -1) {
+                    displayedLanguageFlashcards.splice(index, 1);
+                    localStorage.setItem('displayedLanguageFlashcards', JSON.stringify(displayedLanguageFlashcards));
+                }
                 updateExportButtonVisibility();
             });
             flashcardsContainer.insertBefore(flashcardElement, flashcardsContainer.firstChild);
+            displayedLanguageFlashcards.push(flashcard);
+            localStorage.setItem('displayedLanguageFlashcards', JSON.stringify(displayedLanguageFlashcards));
             updateExportButtonVisibility();
         }
 
-        let flashcardCollectionCount = 0;
-        let languageCollectionCount = 0;
-        let collectedFlashcards = [];
-        let collectedLanguageFlashcards = [];
+        let flashcardCollectionCount = parseInt(localStorage.getItem('flashcardCollectionCount')) || 0;
+        let languageCollectionCount = parseInt(localStorage.getItem('languageCollectionCount')) || 0;
+        let collectedFlashcards = JSON.parse(localStorage.getItem('collectedFlashcards')) || [];
+        let collectedLanguageFlashcards = JSON.parse(localStorage.getItem('collectedLanguageFlashcards')) || [];
+        let displayedFlashcards = JSON.parse(localStorage.getItem('displayedFlashcards')) || [];
+        let displayedLanguageFlashcards = JSON.parse(localStorage.getItem('displayedLanguageFlashcards')) || [];
 
         function addToCollection() {
             const newFlashcards = Array.from(document.querySelectorAll('.flashcard:not(.in-collection)')).map(flashcard => {
@@ -1289,7 +1306,7 @@ Phrase: "{phrase}"</textarea>
             }
         });
 
-        // Initialize recent PDFs list
+        // Initialize recent PDFs list and load saved flashcards
         window.onload = function () {
             loadRecentFiles();
 
@@ -1307,7 +1324,23 @@ Phrase: "{phrase}"</textarea>
             // Load and set the saved language choice
             const savedLanguage = loadLanguageChoice();
             setLanguageButton(savedLanguage);
+
+            // Load saved flashcards
+            loadSavedFlashcards();
         };
+
+        function loadSavedFlashcards() {
+            const savedFlashcards = JSON.parse(localStorage.getItem('displayedFlashcards')) || [];
+            const savedLanguageFlashcards = JSON.parse(localStorage.getItem('displayedLanguageFlashcards')) || [];
+
+            if (savedFlashcards.length > 0) {
+                displayFlashcards(savedFlashcards, true);
+            }
+
+            savedLanguageFlashcards.forEach(flashcard => {
+                displayLanguageFlashcard(flashcard);
+            });
+        }
 
         fileInput.addEventListener('change', function (e) {
             const file = e.target.files[0];
