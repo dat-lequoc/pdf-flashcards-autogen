@@ -6,8 +6,14 @@ from datetime import datetime
 import base64
 
 app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = 'uploads'
 
+# Use an environment variable for the upload folder, with a default to /tmp/uploads
+UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER', '/tmp/uploads')
+
+# Ensure the upload folder exists
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 @app.route('/favicon.ico')
 def favicon():
     return send_from_directory(os.path.join(app.root_path, 'static'),
