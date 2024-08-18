@@ -1156,10 +1156,25 @@ Phrase: "{phrase}"</textarea>
                 rendition = book.renderTo("epub-viewer", {
                     width: "100%",
                     height: "100%",
-                    allowScriptedContent: true, // Add this line to allow scripted content
-                    method: 'default' // Use 'default' method instead of iframe
+                    allowScriptedContent: false, // Disable scripted content for security
+                    method: 'default'
                 });
-                rendition.display();
+
+                // Custom iframe creation to control sandbox attributes
+                book.ready.then(() => {
+                    const iframe = document.createElement('iframe');
+                    iframe.style.width = '100%';
+                    iframe.style.height = '100%';
+                    iframe.style.border = 'none';
+                    
+                    // Set sandbox attribute to allow minimal necessary permissions
+                    iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin');
+                    
+                    document.getElementById('epub-viewer').appendChild(iframe);
+                    
+                    rendition.attachTo(iframe);
+                    rendition.display();
+                });
 
                 document.getElementById('pdf-viewer').style.display = 'none';
                 document.getElementById('epub-viewer').style.display = 'block';
