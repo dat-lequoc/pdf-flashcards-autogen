@@ -1071,28 +1071,32 @@ Phrase: "{phrase}"</textarea>
         });
 
         function loadRecentFiles() {
-            const recentFiles = {{ recent_files| tojson }};
-            const fileList = document.getElementById('file-list');
-            fileList.innerHTML = '';
-            recentFiles.forEach(file => {
-                const li = document.createElement('li');
-                const a = document.createElement('a');
-                a.href = '#';
-                a.textContent = `${file.filename} (${new Date(file.date).toLocaleDateString()})`;
-                a.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    fetch(`/open_pdf/${file.filename}`)
-                        .then(response => response.blob())
-                        .then(blob => {
-                            const fileType = file.filename.endsWith('.pdf') ? 'application/pdf' : 'text/plain';
-                            const newFile = new File([blob], file.filename, { type: fileType });
-                            loadFile(newFile);
-                        })
-                        .catch(error => console.error('Error:', error));
-                });
-                li.appendChild(a);
-                fileList.appendChild(li);
-            });
+            fetch('/get_recent_files')
+                .then(response => response.json())
+                .then(recentFiles => {
+                    const fileList = document.getElementById('file-list');
+                    fileList.innerHTML = '';
+                    recentFiles.forEach(file => {
+                        const li = document.createElement('li');
+                        const a = document.createElement('a');
+                        a.href = '#';
+                        a.textContent = `${file.filename} (${new Date(file.date).toLocaleDateString()})`;
+                        a.addEventListener('click', function (e) {
+                            e.preventDefault();
+                            fetch(`/open_pdf/${file.filename}`)
+                                .then(response => response.blob())
+                                .then(blob => {
+                                    const fileType = file.filename.toLowerCase().endsWith('.pdf') ? 'application/pdf' : 'text/plain';
+                                    const newFile = new File([blob], file.filename, { type: fileType });
+                                    loadFile(newFile);
+                                })
+                                .catch(error => console.error('Error:', error));
+                        });
+                        li.appendChild(a);
+                        fileList.appendChild(li);
+                    });
+                })
+                .catch(error => console.error('Error loading recent files:', error));
         }
 
         // Save current page before unloading
