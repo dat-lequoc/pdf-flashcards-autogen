@@ -242,6 +242,9 @@ Phrase: "{phrase}"</textarea>
                 textContainer.textContent = content;
                 pdfViewer.appendChild(textContainer);
                 hideHeaderPanel();
+        
+                // Add event listeners for language mode
+                attachLanguageModeListener(textContainer);
             };
             fileReader.readAsText(file);
         }
@@ -887,19 +890,19 @@ Phrase: "{phrase}"</textarea>
 
         let highlights = [];
 
-        function attachLanguageModeListener(pageDiv) {
-            pageDiv.addEventListener('mouseup', function (event) {
+        function attachLanguageModeListener(container) {
+            container.addEventListener('mouseup', function (event) {
                 if (event.altKey) {
                     const selection = window.getSelection();
                     if (selection.rangeCount > 0) {
                         const range = selection.getRangeAt(0);
                         const selectedText = selection.toString().trim();
 
-                    console.log(selectedText);
+                        console.log(selectedText);
 
                         if (selectedText !== '') {
-                                    console.log(range, pageDiv);
-                            const highlight = createHighlight(range, pageDiv);
+                            console.log(range, container);
+                            const highlight = createHighlight(range, container);
                             highlights.push(highlight);
                             saveHighlights();
                         }
@@ -907,14 +910,14 @@ Phrase: "{phrase}"</textarea>
                 }
             });
 
-            pageDiv.addEventListener('dblclick', function (event) {
+            container.addEventListener('dblclick', function (event) {
                 if (mode === 'language') {
                     const selection = window.getSelection();
                     const range = selection.getRangeAt(0);
                     const word = selection.toString().trim();
 
                     if (word !== '' && word.length < 20) {
-                         // Highlight the selected word
+                        // Highlight the selected word
                         const span = document.createElement('span');
                         span.style.backgroundColor = 'rgba(255, 255, 0, 0.5)';
                         span.textContent = word;
