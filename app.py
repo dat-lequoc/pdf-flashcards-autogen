@@ -77,9 +77,14 @@ def generate_flashcard():
         
         content = message.content[0].text
         print(prompt)
+        print('-'*10)
         print(content)
 
-        if mode == 'language':
+        if "Translate the text below" in prompt:
+            response = make_response(jsonify({'translation': content}))
+            print('hi')
+
+        elif mode == 'language':
             # For Language mode, parse the content and return in the custom format
             lines = content.split('\n')
             word = ''

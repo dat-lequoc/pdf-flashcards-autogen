@@ -890,18 +890,12 @@ Phrase: "{phrase}"</textarea>
                 if (event.altKey) {
                     const selection = window.getSelection();
                     if (selection.rangeCount > 0) {
-                        const range = selection.getRangeAt(0);
                         const selectedText = selection.toString().trim();
-
-                        console.log(selectedText);
-
                         if (selectedText !== '') {
-                            console.log(range, container);
-                            const highlight = createHighlight(range, container);
-                            highlights.push(highlight);
-                            saveHighlights();
-                        }
-                    }
+                                    console.log(selectedText);
+                            translateText(selectedText);
+                         }
+                     }
                 }
             });
 
@@ -932,6 +926,43 @@ Phrase: "{phrase}"</textarea>
                 }
             });
         }
+
+        async function translateText(text) {
+            if (!apiKey) {
+                alert('Please enter your Claude API key first.');
+                return;
+            }
+
+            const prompt = `Translate the text below to Vietnamese with no further explanation:\nText: ${text}\nTranslation: `;
+
+            try {
+                const response = await callClaudeAPI(prompt);
+                response.text = text
+                console.log(response);
+                displayTranslationFlashcard(response);
+            } catch (error) {
+                console.error('Error calling Claude API:', error);
+                alert('Failed to translate text. Please check your API key and try again.');
+            }
+        }
+
+        function displayTranslationFlashcard(response) {
+                console.log(response);
+            const flashcardElement = document.createElement('div');
+            flashcardElement.className = 'flashcard translation-flashcard';
+            flashcardElement.innerHTML = `
+            <div style="font-size: 1.2em; margin-bottom: 10px;"><b>${response.translation}</b><br>
+                       <span style="font-size: 0.7em;">${response.text}</span>
+           </div>
+                <button class="remove-btn">Remove</button>
+            `;
+            flashcardElement.querySelector('.remove-btn').addEventListener('click', function () {
+                flashcardElement.remove();
+                updateExportButtonVisibility();
+             });
+            flashcardsContainer.appendChild(flashcardElement);
+            updateExportButtonVisibility();
+         }
 
         function createHighlight(range, pageDiv) {
             const highlight = document.createElement('div');
