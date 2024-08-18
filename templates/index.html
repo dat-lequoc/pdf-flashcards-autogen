@@ -204,6 +204,8 @@ Phrase: "{phrase}"</textarea>
                 if (num < pdfDoc.numPages && pdfViewer.scrollHeight <= window.innerHeight * 2) {
                     renderPage(num + 1);
                 }
+            }).catch(function (error) {
+                console.error('Error rendering page:', error);
             });
         }
 
@@ -1040,32 +1042,36 @@ Phrase: "{phrase}"</textarea>
         }
 
         function renderHighlights() {
-            highlights.forEach(highlight => {
-                const pageDiv = document.querySelector(`.page[data-page-number="${highlight.pageNumber}"]`);
-                if (pageDiv) {
-                    const newHighlight = document.createElement('div');
-                    newHighlight.className = 'highlight';
-                    newHighlight.style.position = 'absolute';
-                    newHighlight.style.backgroundColor = 'rgba(255, 255, 0, 0.3)';
-                    newHighlight.style.pointerEvents = 'none';
+            if (highlights && highlights.length > 0) {
+                highlights.forEach(highlight => {
+                    const pageDiv = document.querySelector(`.page[data-page-number="${highlight.pageNumber}"]`);
+                    if (pageDiv) {
+                        const newHighlight = document.createElement('div');
+                        newHighlight.className = 'highlight';
+                        newHighlight.style.position = 'absolute';
+                        newHighlight.style.backgroundColor = 'rgba(255, 255, 0, 0.3)';
+                        newHighlight.style.pointerEvents = 'none';
 
-                    const pageBounds = pageDiv.getBoundingClientRect();
-                    const scale = parseFloat(pageDiv.style.width) / pageBounds.width;
+                        const pageBounds = pageDiv.getBoundingClientRect();
+                        const scale = parseFloat(pageDiv.style.width) / pageBounds.width;
 
-                    highlight.rects.forEach(rect => {
-                        const highlightRect = document.createElement('div');
-                        highlightRect.style.position = 'absolute';
-                        highlightRect.style.left = (rect.left * scale) + 'px';
-                        highlightRect.style.top = (rect.top * scale) + 'px';
-                        highlightRect.style.width = (rect.width * scale) + 'px';
-                        highlightRect.style.height = (rect.height * scale) + 'px';
-                        highlightRect.style.backgroundColor = 'inherit';
-                        newHighlight.appendChild(highlightRect);
-                    });
+                        if (highlight.rects && highlight.rects.length > 0) {
+                            highlight.rects.forEach(rect => {
+                                const highlightRect = document.createElement('div');
+                                highlightRect.style.position = 'absolute';
+                                highlightRect.style.left = (rect.left * scale) + 'px';
+                                highlightRect.style.top = (rect.top * scale) + 'px';
+                                highlightRect.style.width = (rect.width * scale) + 'px';
+                                highlightRect.style.height = (rect.height * scale) + 'px';
+                                highlightRect.style.backgroundColor = 'inherit';
+                                newHighlight.appendChild(highlightRect);
+                            });
+                        }
 
-                    pageDiv.appendChild(newHighlight);
-                }
-            });
+                        pageDiv.appendChild(newHighlight);
+                    }
+                });
+            }
         }
 
         function getPhrase(range, word) {
@@ -1135,11 +1141,8 @@ Phrase: "{phrase}"</textarea>
             }
             
             // Update the page number in the "Go to page" box
-            if (PDFViewerApplication && PDFViewerApplication.pdfViewer) {
-                const currentPageNumber = PDFViewerApplication.pdfViewer.currentPageNumber;
-                document.getElementById('page-input').value = currentPageNumber;
-                document.getElementById('current-page').textContent = `Page: ${currentPageNumber}`;
-            }
+            document.getElementById('page-input').value = pageNum;
+            document.getElementById('current-page').textContent = `Page: ${pageNum}`;
         });
 
         function loadRecentFiles() {
