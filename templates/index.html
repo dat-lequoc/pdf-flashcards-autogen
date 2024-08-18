@@ -101,7 +101,7 @@ Phrase: "{phrase}"</textarea>
         </div>
         <div id="highlight-instruction"
             style="font-size: 0.7em; color: #666; position: absolute; bottom: 5px; right: 5px;">Use Alt+Select to
-            highlight text</div>
+            highlight & translate text</div>
     </div>
 
     <!-- Explanation Modal -->
@@ -892,7 +892,6 @@ Phrase: "{phrase}"</textarea>
                     if (selection.rangeCount > 0) {
                         const selectedText = selection.toString().trim();
                         if (selectedText !== '') {
-                                    console.log(selectedText);
                             translateText(selectedText);
                          }
 
@@ -944,7 +943,6 @@ Phrase: "{phrase}"</textarea>
             try {
                 const response = await callClaudeAPI(prompt);
                 response.text = text
-                console.log(response);
                 displayTranslationFlashcard(response);
             } catch (error) {
                 console.error('Error calling Claude API:', error);
@@ -953,7 +951,6 @@ Phrase: "{phrase}"</textarea>
         }
 
         function displayTranslationFlashcard(response) {
-                console.log(response);
             const flashcardElement = document.createElement('div');
             flashcardElement.className = 'flashcard translation-flashcard';
             flashcardElement.innerHTML = `
