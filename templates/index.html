@@ -1148,40 +1148,62 @@ Phrase: "{phrase}"</textarea>
             loadRecentFiles(); // Reload the recent files list after loading a file
         }
 
-        function loadEPUB(file) {
+                function loadEPUB(file) {
+            console.log('loadEPUB function called with file:', file.name);
+
+            const epubContainer = document.getElementById('epub-viewer');
+            epubContainer.innerHTML = 'Loading EPUB...'; // Visual feedback
+
             const reader = new FileReader();
+
             reader.onload = function(e) {
+                console.log('FileReader onload event fired');
                 const arrayBuffer = e.target.result;
-                book = ePub(arrayBuffer);
-                rendition = book.renderTo("epub-viewer", {
-                    width: "100%",
-                    height: "100%",
-                    allowScriptedContent: false, // Disable scripted content for security
-                    method: 'default'
-                });
 
-                // Custom iframe creation to control sandbox attributes
-                book.ready.then(() => {
-                    const iframe = document.createElement('iframe');
-                    iframe.style.width = '100%';
-                    iframe.style.height = '100%';
-                    iframe.style.border = 'none';
-                    
-                    // Set sandbox attribute to allow minimal necessary permissions
-                    iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin');
-                    
-                    document.getElementById('epub-viewer').appendChild(iframe);
-                    
-                    rendition.attachTo(iframe);
-                    rendition.display();
-                });
+                try {
+                    book = ePub(arrayBuffer);
+                    console.log('EPUB book object created:', book);
 
-                document.getElementById('pdf-viewer').style.display = 'none';
-                document.getElementById('epub-viewer').style.display = 'block';
+                    book.ready.then(() => {
+                        console.log('EPUB book is ready');
 
-                // Enable keyboard navigation
-                document.addEventListener('keydown', handleKeyPress);
-            }
+                        rendition = book.renderTo('epub-viewer', {
+                            width: '100%',
+                            height: '100%',
+                            spread: 'always',
+                            allowScriptedContent: true,
+                            allowPopups: false
+                        });
+
+                        console.log('Rendition object created:', rendition);
+
+                        rendition.display().then(() => {
+                            console.log('EPUB content displayed');
+                        }).catch(error => {
+                            console.error('Error displaying EPUB content:', error);
+                            epubContainer.innerHTML = 'Error displaying EPUB content. Please check console for details.';
+                        });
+
+                        document.getElementById('pdf-viewer').style.display = 'none';
+                        epubContainer.style.display = 'block';
+
+                        // Enable keyboard navigation
+                        document.addEventListener('keydown', handleKeyPress);
+                    }).catch(error => {
+                        console.error('Error in book.ready:', error);
+                        epubContainer.innerHTML = 'Error preparing EPUB. Please check console for details.';
+                    });
+                } catch (error) {
+                    console.error('Error creating EPUB book object:', error);
+                    epubContainer.innerHTML = 'Error loading EPUB. Please check console for details.';
+                }
+            };
+
+            reader.onerror = function(e) {
+                console.error('Error reading file:', e);
+                epubContainer.innerHTML = 'Error reading file. Please try again.';
+            };
+
             reader.readAsArrayBuffer(file);
         }
 

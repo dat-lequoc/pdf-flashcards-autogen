@@ -12,17 +12,10 @@ app.config['UPLOAD_FOLDER'] = 'uploads'
 def favicon():
     return send_from_directory(os.path.join(app.root_path, 'static'),
                                'favicon.ico', mimetype='image/vnd.microsoft.icon')
-
-#  @app.route('/')
-#  def index():
-    #  recent_files = get_recent_files()
-    #  return render_template('index.html', recent_files=recent_files)
-
 @app.route('/')
 def index():
     recent_files = get_recent_files()
     response = make_response(render_template('index.html', recent_files=recent_files))
-    response.headers['Content-Security-Policy'] = "sandbox allow-scripts allow-same-origin"
     return response
 
 def get_recent_files():
