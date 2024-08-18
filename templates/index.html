@@ -1311,10 +1311,17 @@ Phrase: "{phrase}"</textarea>
             }
         }
 
-        // Save current page before unloading
-        window.addEventListener('beforeunload', function () {
+        // Save current page and check for unsaved flashcards before unloading
+        window.addEventListener('beforeunload', function (e) {
             if (currentFileName) {
                 localStorage.setItem(`lastPage_${currentFileName}`, pageNum);
+            }
+
+            const unsavedFlashcards = document.querySelectorAll('.flashcard:not(.in-collection)');
+            if (unsavedFlashcards.length > 0) {
+                e.preventDefault(); // Cancel the event
+                e.returnValue = ''; // Display a default message in most browsers
+                return 'You have unsaved flashcards. Are you sure you want to leave?'; // Custom message (may not be displayed in some browsers)
             }
         });
 
