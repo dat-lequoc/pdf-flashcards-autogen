@@ -7,6 +7,11 @@ from datetime import datetime
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'
 
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory(os.path.join(app.root_path, 'static'),
+                               'favicon.ico', mimetype='image/vnd.microsoft.icon')
+
 @app.route('/')
 def index():
     recent_files = get_recent_files()
