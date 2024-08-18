@@ -978,11 +978,27 @@ Phrase: "{phrase}"</textarea>
             `;
             flashcardElement.querySelector('.remove-btn').addEventListener('click', function () {
                 flashcardElement.remove();
+                const index = displayedLanguageFlashcards.findIndex(f => f.word === response.text && f.translation === response.translation);
+                if (index > -1) {
+                    displayedLanguageFlashcards.splice(index, 1);
+                    localStorage.setItem('displayedLanguageFlashcards', JSON.stringify(displayedLanguageFlashcards));
+                }
                 updateExportButtonVisibility();
-             });
+            });
             flashcardsContainer.insertBefore(flashcardElement, flashcardsContainer.firstChild);
+    
+            // Add the translation flashcard to the collection
+            const translationFlashcard = {
+                word: response.text,
+                translation: response.translation,
+                answer: response.translation, // Using translation as answer for consistency
+                question: response.text
+            };
+            displayedLanguageFlashcards.push(translationFlashcard);
+            localStorage.setItem('displayedLanguageFlashcards', JSON.stringify(displayedLanguageFlashcards));
+    
             updateExportButtonVisibility();
-         }
+        }
 
         function createHighlight(range, pageDiv) {
             const highlight = document.createElement('div');
