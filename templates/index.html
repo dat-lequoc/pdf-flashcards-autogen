@@ -1148,11 +1148,12 @@ Phrase: "{phrase}"</textarea>
             loadRecentFiles(); // Reload the recent files list after loading a file
         }
 
-                function loadEPUB(file) {
+        function loadEPUB(file) {
             console.log('loadEPUB function called with file:', file.name);
 
             const epubContainer = document.getElementById('epub-viewer');
-            epubContainer.innerHTML = 'Loading EPUB...'; // Visual feedback
+            epubContainer.innerHTML = ''; // Clear previous content
+            epubContainer.style.display = 'block';
 
             const reader = new FileReader();
 
@@ -1170,9 +1171,7 @@ Phrase: "{phrase}"</textarea>
                         rendition = book.renderTo('epub-viewer', {
                             width: '100%',
                             height: '100%',
-                            spread: 'always',
-                            allowScriptedContent: true,
-                            allowPopups: false
+                            spread: 'always'
                         });
 
                         console.log('Rendition object created:', rendition);
@@ -1185,7 +1184,12 @@ Phrase: "{phrase}"</textarea>
                         });
 
                         document.getElementById('pdf-viewer').style.display = 'none';
-                        epubContainer.style.display = 'block';
+
+                        // Enable navigation controls
+                        document.getElementById('prev-btn').onclick = prevPage;
+                        document.getElementById('next-btn').onclick = nextPage;
+                        document.getElementById('zoom-in-btn').onclick = zoomIn;
+                        document.getElementById('zoom-out-btn').onclick = zoomOut;
 
                         // Enable keyboard navigation
                         document.addEventListener('keydown', handleKeyPress);
