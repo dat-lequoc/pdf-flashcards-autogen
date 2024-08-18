@@ -1155,7 +1155,9 @@ Phrase: "{phrase}"</textarea>
                 book = ePub(arrayBuffer);
                 rendition = book.renderTo("epub-viewer", {
                     width: "100%",
-                    height: "100%"
+                    height: "100%",
+                    allowScriptedContent: true, // Add this line to allow scripted content
+                    method: 'default' // Use 'default' method instead of iframe
                 });
                 rendition.display();
 
