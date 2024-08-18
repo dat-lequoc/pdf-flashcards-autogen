@@ -778,8 +778,8 @@ Phrase: "{phrase}"</textarea>
 
         fileInput.addEventListener('change', function (e) {
             const file = e.target.files[0];
-            if (file.type !== 'application/pdf' && file.type !== 'text/plain') {
-                console.error('Error: Not a PDF or TXT file');
+            if (file.type !== 'application/pdf' && file.type !== 'text/plain' && file.type !== 'application/epub+zip') {
+                console.error('Error: Not a PDF, TXT, or EPUB file');
                 return;
             }
             loadFile(file);
