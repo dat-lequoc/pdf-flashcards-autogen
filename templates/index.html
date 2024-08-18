@@ -87,9 +87,9 @@ Phrase: "{phrase}"</textarea>
             <button id="clear-collection-btn">Clear Collection</button>
         </div>
         <button id="export-csv-btn" style="display: none;">Export Flashcards to CSV</button>
-        <div id="recent-pdfs">
-            <h3>Recent PDFs</h3>
-            <ul id="pdf-list"></ul>
+        <div id="recent-files">
+            <h3>Recent Files</h3>
+            <ul id="file-list"></ul>
         </div>
         <div id="highlight-instruction" style="font-size: 0.7em; color: #666; position: absolute; bottom: 5px; right: 5px;">Use Alt+Select to highlight text</div>
     </div>
@@ -1097,6 +1097,43 @@ Phrase: "{phrase}"</textarea>
                     });
                 })
                 .catch(error => console.error('Error loading recent files:', error));
+        }
+
+        // Call loadRecentFiles when the page loads
+        window.addEventListener('load', loadRecentFiles);
+
+        // Update recent files list after uploading a new file
+        function uploadFile(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            fetch('/upload_pdf', {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.message) {
+                        console.log(data.message);
+                        loadFile(file);
+                        loadRecentFiles(); // Reload the recent files list
+                    } else {
+                        console.error(data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
+
+        // Update loadFile function to reload recent files list
+        function loadFile(file) {
+            if (file.name.endsWith('.pdf')) {
+                loadPDF(file);
+            } else if (file.name.endsWith('.txt')) {
+                loadTXT(file);
+            }
+            loadRecentFiles(); // Reload the recent files list after loading a file
         }
 
         // Save current page before unloading
