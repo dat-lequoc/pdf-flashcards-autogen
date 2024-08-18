@@ -280,7 +280,12 @@ Phrase: "{phrase}"</textarea>
         function updateProgressBar(currentPage) {
             const progressBar = document.getElementById('progress-bar');
             const progressText = document.getElementById('progress-text');
-            const totalPages = pdfDoc ? pdfDoc.numPages : (book ? book.packaging.metadata.numberOfPages : 1);
+            let totalPages = 1;
+            if (pdfDoc) {
+                totalPages = pdfDoc.numPages;
+            } else if (book && book.packaging && book.packaging.metadata) {
+                totalPages = book.packaging.metadata.numberOfPages;
+            }
             const progress = (currentPage / totalPages) * 100;
             progressBar.style.width = `${progress}%`;
             progressText.textContent = `${currentPage} / ${totalPages}`;
