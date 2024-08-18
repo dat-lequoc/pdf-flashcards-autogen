@@ -2,6 +2,8 @@
 
 Unlock the power of your PDFs with AI-driven learning! This web application transforms your documents into interactive flashcards and explanations using Claude AI, perfect for importing into **ANKI**. Ideal for students, researchers, and lifelong learners looking to supercharge their study sessions and spaced repetition practice.
 
+> **Featured Project:** 🤗 [PDF with Flashcard Generation - a Hugging Face Space by quocdat25](https://huggingface.co/spaces/quocdat25/pdf-flashcards-autogen)
+
 ![image](https://github.com/user-attachments/assets/c82dc51e-588e-4d14-b399-34c6784d5d99)
 
 ## Key Features:
