@@ -757,13 +757,13 @@ Phrase: "{phrase}"</textarea>
         // Initialize export button visibility
         updateExportButtonVisibility();
 
-        function addRecentPDF(filename) {
-            let recentPDFs = JSON.parse(localStorage.getItem('recentPDFs')) || [];
-            recentPDFs = recentPDFs.filter(pdf => pdf.filename !== filename);
-            recentPDFs.unshift({ filename: filename, date: new Date().toISOString() });
-            recentPDFs = recentPDFs.slice(0, 5);  // Keep only the 5 most recent
-            localStorage.setItem('recentPDFs', JSON.stringify(recentPDFs));
-            updateRecentPDFsList();
+        function addRecentFile(filename) {
+            let recentFiles = JSON.parse(localStorage.getItem('recentFiles')) || [];
+            recentFiles = recentFiles.filter(file => file.filename !== filename);
+            recentFiles.unshift({ filename: filename, date: new Date().toISOString() });
+            recentFiles = recentFiles.slice(0, 5);  // Keep only the 5 most recent
+            localStorage.setItem('recentFiles', JSON.stringify(recentFiles));
+            loadRecentFiles();
         }
 
         function updateRecentPDFsList() {
@@ -1260,7 +1260,7 @@ Phrase: "{phrase}"</textarea>
             const formData = new FormData();
             formData.append('file', file);
 
-            fetch('/upload_pdf', {
+            fetch('/upload_file', {
                 method: 'POST',
                 body: formData
             })
@@ -1270,7 +1270,7 @@ Phrase: "{phrase}"</textarea>
                         console.log(data.message);
                         loadFile(file);
                         loadRecentFiles();
-                        addRecentFile(file.name); // Add this line to update recent files
+                        addRecentFile(file.name);
                     } else {
                         console.error(data.error);
                     }

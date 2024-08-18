@@ -37,10 +37,10 @@ def upload_file():
     file = request.files['file']
     if file.filename == '':
         return jsonify({'error': 'No selected file'}), 400
-    if file and (file.filename.endswith('.pdf') or file.filename.endswith('.txt') or file.filename.endswith('.epub')):
+    if file and (file.filename.lower().endswith(('.pdf', '.txt', '.epub'))):
         filename = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
         file.save(filename)
-        return jsonify({'message': 'File uploaded successfully'}), 200
+        return jsonify({'message': 'File uploaded successfully', 'filename': file.filename}), 200
     return jsonify({'error': 'Invalid file type. Please upload a PDF, TXT, or EPUB file.'}), 400
 
 @app.route('/get_epub_content/<path:filename>')
