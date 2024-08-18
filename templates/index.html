@@ -1168,11 +1168,11 @@ Phrase: "{phrase}"</textarea>
 
         fileInput.addEventListener('change', function (e) {
             const file = e.target.files[0];
-            if (file.type !== 'application/pdf') {
-                console.error('Error: Not a PDF file');
+            if (file.type !== 'application/pdf' && file.type !== 'text/plain') {
+                console.error('Error: Not a PDF or TXT file');
                 return;
             }
-            uploadPDF(file);
+            uploadFile(file);
         });
 
         function uploadFile(file) {
@@ -1189,6 +1189,7 @@ Phrase: "{phrase}"</textarea>
                         console.log(data.message);
                         loadFile(file);
                         loadRecentFiles();
+                        addRecentFile(file.name); // Add this line to update recent files
                     } else {
                         console.error(data.error);
                     }
