@@ -131,6 +131,7 @@ def generate_flashcard():
         return response
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-
 if __name__ == '__main__':
-    app.run(debug=True)
+    # Use environment variables to determine the run mode
+    debug_mode = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
+    app.run(debug=debug_mode, host='0.0.0.0', port=7860)
