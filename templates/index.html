@@ -18,7 +18,7 @@
     </div>
     <div id="left-panel">
         <div id="pdf-viewer"></div>
-        <div id="epub-viewer" style="display: none;"></div>
+        <div id="epub-viewer"></div>
     </div>
     <div id="right-panel">
         <div id="top-controls">
@@ -1138,20 +1138,34 @@ Phrase: "{phrase}"</textarea>
         let currentScale = 100;
 
         function loadFile(file) {
+            const pdfViewer = document.getElementById('pdf-viewer');
+            const epubViewer = document.getElementById('epub-viewer');
+            
+            // Hide both viewers initially
+            pdfViewer.style.display = 'none';
+            epubViewer.style.display = 'none';
+
             if (file.name.endsWith('.pdf')) {
+                pdfViewer.style.display = 'block';
                 loadPDF(file);
             } else if (file.name.endsWith('.txt')) {
+                pdfViewer.style.display = 'block'; // Assuming TXT files use the PDF viewer
                 loadTXT(file);
             } else if (file.name.endsWith('.epub')) {
+                epubViewer.style.display = 'block';
                 loadEPUB(file);
             }
-            loadRecentFiles(); // Reload the recent files list after loading a file
         }
 
         function loadEPUB(file) {
             console.log('loadEPUB function called with file:', file.name);
 
             const epubContainer = document.getElementById('epub-viewer');
+            if (!epubContainer) {
+                console.error('EPUB viewer container not found');
+                return;
+            }
+
             epubContainer.innerHTML = ''; // Clear previous content
             epubContainer.style.display = 'block';
 
@@ -1178,21 +1192,16 @@ Phrase: "{phrase}"</textarea>
 
                         rendition.display().then(() => {
                             console.log('EPUB content displayed');
+                            setupNavigation();
                         }).catch(error => {
                             console.error('Error displaying EPUB content:', error);
                             epubContainer.innerHTML = 'Error displaying EPUB content. Please check console for details.';
                         });
 
-                        document.getElementById('pdf-viewer').style.display = 'none';
+                        if (document.getElementById('pdf-viewer')) {
+                            document.getElementById('pdf-viewer').style.display = 'none';
+                        }
 
-                        // Enable navigation controls
-                        document.getElementById('prev-btn').onclick = prevPage;
-                        document.getElementById('next-btn').onclick = nextPage;
-                        document.getElementById('zoom-in-btn').onclick = zoomIn;
-                        document.getElementById('zoom-out-btn').onclick = zoomOut;
-
-                        // Enable keyboard navigation
-                        document.addEventListener('keydown', handleKeyPress);
                     }).catch(error => {
                         console.error('Error in book.ready:', error);
                         epubContainer.innerHTML = 'Error preparing EPUB. Please check console for details.';
@@ -1211,43 +1220,46 @@ Phrase: "{phrase}"</textarea>
             reader.readAsArrayBuffer(file);
         }
 
+        function setupNavigation() {
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
+            const zoomInBtn = document.getElementById('zoom-in-btn');
+            const zoomOutBtn = document.getElementById('zoom-out-btn');
+
+            if (prevBtn) prevBtn.onclick = prevPage;
+            if (nextBtn) nextBtn.onclick = nextPage;
+            if (zoomInBtn) zoomInBtn.onclick = zoomIn;
+            if (zoomOutBtn) zoomOutBtn.onclick = zoomOut;
+
+            // Enable keyboard navigation
+            document.addEventListener('keydown', handleKeyPress);
+        }
+
         function prevPage() {
-            if (book) {
-                rendition.prev();
-            } else {
-                // Existing PDF navigation code
-            }
+            if (rendition) rendition.prev();
         }
 
         function nextPage() {
-            if (book) {
-                rendition.next();
-            } else {
-                // Existing PDF navigation code
-            }
+            if (rendition) rendition.next();
         }
 
         function zoomIn() {
-            if (book) {
+            if (rendition) {
                 currentScale += 10;
                 setZoom();
-            } else {
-                // Existing PDF zoom code
             }
         }
 
         function zoomOut() {
-            if (book) {
+            if (rendition) {
                 currentScale -= 10;
                 if (currentScale < 50) currentScale = 50; // Prevent zooming out too much
                 setZoom();
-            } else {
-                // Existing PDF zoom code
             }
         }
 
         function setZoom() {
-            if (book) {
+            if (rendition) {
                 rendition.themes.fontSize(`${currentScale}%`);
             }
         }
