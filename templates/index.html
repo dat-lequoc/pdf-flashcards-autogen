@@ -52,9 +52,15 @@ A: Dynamic balancing <b>adjusts work distribution during runtime</b>, while stat
 
 That was example, now generate flashcards for this text:
             </textarea>
-            <textarea id="explain-prompt" placeholder="Enter system prompt for explanation" style="display: none;">Explain the following text in simple terms, focusing on the main concepts and their relationships. Use clear and concise language, and break down complex ideas into easily understandable parts. If there are any technical terms, provide brief explanations for them. Return your explanation in markdown format.
+            <textarea id="explain-prompt" placeholder="Enter system prompt for explanation" style="display: none;">Explain the following text in simple terms: 
 
-Now explain this text:</textarea>
+<text>
+{{TEXT}}
+</text>
+
+Focusing on the main concepts. Use clear and concise language, and break down complex ideas into easily understandable parts. If there are any technical terms, provide brief explanations for them. 
+
+Now, provide your answer in markdown format based on the provided text.</textarea>
             <textarea id="language-prompt" placeholder="Enter system prompt for language mode">Explain the word in the phrase in {targetLanguage} using this format:
 
 T: [Translation of the word in Vietnamese]
