@@ -484,9 +484,10 @@ Remember to focus solely on the given word and the required outputs. Now, procee
             }
 
             const prompt = document.getElementById('language-prompt').value
-                .replace('{word}', word)
-                .replace('{phrase}', phrase)
-                .replace('{targetLanguage}', targetLanguage);
+                .replace('{{WORD}}', word)
+                .replace('{{PHRASE}}', phrase)
+                .replace('{{TRANSLATION_LANGUAGE}}', targetLanguage)
+                .replace('{{TARGET_LANGUAGE}}', 'English');
 
             try {
                 const response = await callClaudeAPI(prompt);
