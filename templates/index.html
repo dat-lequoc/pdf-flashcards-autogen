@@ -521,10 +521,10 @@ Remember to focus solely on the given word and the required outputs. Now, procee
                 let prompt;
 
                 if (mode === 'flashcard') {
-                    prompt = `${systemPrompt.value}\n\n${selectedText}`;
+                    prompt = systemPrompt.value.replace('{{TEXT}}', selectedText);
                 } else if (mode === 'explain') {
                     const explainPromptValue = document.getElementById('explain-prompt').value;
-                    prompt = `${explainPromptValue}\n\n${selectedText}`;
+                    prompt = explainPromptValue.replace('{{TEXT}}', selectedText);
                 } else {
                     return;
                 }
