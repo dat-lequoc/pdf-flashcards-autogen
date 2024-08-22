@@ -85,42 +85,36 @@ def generate_flashcard():
 
         elif mode == 'language':
             # For Language mode, parse the content and return in the custom format
-            lines = content.split('\n')
-            word = ''
-            translation = ''
-            answer = ''
-            for line in lines:
-                if line.startswith('<T>'):
-                    translation = line[3:-4].strip()
-                elif line.startswith('<Q>'):
-                    word = line[3:-4].split('<b>')[1].split('</b>')[0].strip()
-                    question = line[3:-4].strip()
-                elif line.startswith('<A>'):
-                    answer = line[3:-4].strip()
+            import re
+
+            translation = re.search(r'<T>(.*?)</T>', content, re.DOTALL)
+            question = re.search(r'<Q>(.*?)</Q>', content, re.DOTALL)
+            answer = re.search(r'<A>(.*?)</A>', content, re.DOTALL)
             
+            if question:
+                word = re.search(r'<b>(.*?)</b>', question.group(1))
+                word = word.group(1) if word else ''
+            else:
+                word = ''
+
             flashcard = {
                 'word': word,
-                'question': question,
-                'translation': translation,
-                'answer': answer
+                'question': question.group(1).strip() if question else '',
+                'translation': translation.group(1).strip() if translation else '',
+                'answer': answer.group(1).strip() if answer else ''
             }
             response = make_response(jsonify({'flashcard': flashcard}))
         elif mode == 'flashcard' or 'flashcard' in prompt.lower():
+            import re
+
             flashcards = []
-            current_question = ''
-            current_answer = ''
+            qa_pairs = re.findall(r'<Q>(.*?)</Q>\s*<A>(.*?)</A>', content, re.DOTALL)
 
-            for line in content.split('\n'):
-                if line.startswith('<Q>'):
-                    if current_question and current_answer:
-                        flashcards.append({'question': current_question, 'answer': current_answer})
-                    current_question = line[3:-4].strip()
-                    current_answer = ''
-                elif line.startswith('<A>'):
-                    current_answer = line[3:-4].strip()
-
-            if current_question and current_answer:
-                flashcards.append({'question': current_question, 'answer': current_answer})
+            for question, answer in qa_pairs:
+                flashcards.append({
+                    'question': question.strip(),
+                    'answer': answer.strip()
+                })
 
             response = make_response(jsonify({'flashcards': flashcards}))
         elif mode == 'explain' or 'explain' in prompt.lower():
