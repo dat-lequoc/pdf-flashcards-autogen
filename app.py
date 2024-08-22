@@ -90,13 +90,13 @@ def generate_flashcard():
             translation = ''
             answer = ''
             for line in lines:
-                if line.startswith('T:'):
-                    translation = line[2:].strip()
-                elif line.startswith('Q:'):
-                    word = line[2:].split('<b>')[1].split('</b>')[0].strip()
-                    question = line[2:].strip()
-                elif line.startswith('A:'):
-                    answer = line[2:].strip()
+                if line.startswith('<T>'):
+                    translation = line[3:-4].strip()
+                elif line.startswith('<Q>'):
+                    word = line[3:-4].split('<b>')[1].split('</b>')[0].strip()
+                    question = line[3:-4].strip()
+                elif line.startswith('<A>'):
+                    answer = line[3:-4].strip()
             
             flashcard = {
                 'word': word,
@@ -111,13 +111,13 @@ def generate_flashcard():
             current_answer = ''
 
             for line in content.split('\n'):
-                if line.startswith('Q:'):
+                if line.startswith('<Q>'):
                     if current_question and current_answer:
                         flashcards.append({'question': current_question, 'answer': current_answer})
-                    current_question = line[2:].strip()
+                    current_question = line[3:-4].strip()
                     current_answer = ''
-                elif line.startswith('A:'):
-                    current_answer = line[2:].strip()
+                elif line.startswith('<A>'):
+                    current_answer = line[3:-4].strip()
 
             if current_question and current_answer:
                 flashcards.append({'question': current_question, 'answer': current_answer})
