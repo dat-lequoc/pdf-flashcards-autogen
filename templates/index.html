@@ -47,7 +47,7 @@
 Here is the text:
 
 <text>
-{{TEXT}}
+<TEXT>
 </text>
 
 To create effective flashcards:
@@ -72,7 +72,7 @@ Now, create the flashcards based on the provided text.</textarea>
             <textarea id="explain-prompt" placeholder="Enter system prompt for explanation" style="display: none;">Explain the following text in simple terms: 
 
 <text>
-{{TEXT}}
+<TEXT>
 </text>
 
 Focusing on the main concepts. Use clear and concise language, and break down complex ideas into easily understandable parts. If there are any technical terms, provide brief explanations for them. 
@@ -82,13 +82,13 @@ Now, provide your answer in markdown format based on the provided text.</textare
 
 Here are the inputs you will be working with:
 
-Word: <word>{{WORD}}</word>
-Phrase: <phrase>{{PHRASE}}</phrase>
+Word: <word><WORD></word>
+Phrase: <phrase><PHRASE></phrase>
 
 Present your output in the following format:
-<T>[Translation of the word in {{TRANSLATION_LANGUAGE}}]</T>
+<T>[Translation of the word in <TRANSLATION_LANGUAGE>]</T>
 <Q>[An example sentence that contains the exact form of the word. The word must be enclosed in <b></b> tags]</Q>
-<A>[Short explanation of the word's meaning in {{TARGET_LANGUAGE}}]</A>
+<A>[Short explanation of the word's meaning in <TARGET_LANGUAGE>]</A>
 
 Here's an example of the expected output:
 Word: "escalated"
@@ -483,11 +483,15 @@ Remember to focus solely on the given word and the required outputs. Now, procee
                 return;
             }
 
+            console.log("Translate: ", word, phrase);
+            console.log(document.getElementById('language-prompt').value);
             const prompt = document.getElementById('language-prompt').value
-                .replace('{{WORD}}', word)
-                .replace('{{PHRASE}}', phrase)
-                .replace('{{TRANSLATION_LANGUAGE}}', targetLanguage)
-                .replace('{{TARGET_LANGUAGE}}', 'English');
+                .replace('<WORD>', word)
+                .replace('<PHRASE>', phrase)
+                .replace('<TRANSLATION_LANGUAGE>','Vietnamese')
+                .replace('<TARGET_LANGUAGE>', targetLanguage);
+
+            console.log("Prompt", prompt);
 
             try {
                 const response = await callClaudeAPI(prompt);
@@ -522,10 +526,10 @@ Remember to focus solely on the given word and the required outputs. Now, procee
                 let prompt;
 
                 if (mode === 'flashcard') {
-                    prompt = systemPrompt.value.replace('{{TEXT}}', selectedText);
+                    prompt = systemPrompt.value.replace('<TEXT>', selectedText);
                 } else if (mode === 'explain') {
                     const explainPromptValue = document.getElementById('explain-prompt').value;
-                    prompt = explainPromptValue.replace('{{TEXT}}', selectedText);
+                    prompt = explainPromptValue.replace('<TEXT>', selectedText);
                 } else {
                     return;
                 }
@@ -1108,11 +1112,6 @@ Remember to focus solely on the given word and the required outputs. Now, procee
                 if (currentNode === endNode) break;
                 currentNode = currentNode.nextSibling;
             }
-
-            // Ensure the word is bolded in the phrase
-            const wordRegex = new RegExp(`\\b${word}\\b`, 'gi');
-            phrase = phrase.replace(wordRegex, `<b>$&</b>`);
-
             return phrase.trim();
         }
 
