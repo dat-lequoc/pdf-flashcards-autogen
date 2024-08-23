@@ -1192,7 +1192,7 @@ Remember to focus solely on the given word and the required outputs. Now, procee
                 .then(recentFiles => {
                     const fileList = document.getElementById('file-list');
                     fileList.innerHTML = '';
-                    recentFiles.slice(0, 10).forEach(file => {
+                    recentFiles.forEach(file => {
                         const li = document.createElement('li');
                         li.style.marginBottom = '10px'; // Add spacing between list items
                         const a = document.createElement('a');

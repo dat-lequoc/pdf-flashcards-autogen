@@ -24,7 +24,7 @@ def get_recent_files():
     files = os.listdir(app.config['UPLOAD_FOLDER'])
     valid_files = [f for f in files if f.lower().endswith(('.pdf', '.txt'))]
     valid_files.sort(key=lambda x: os.path.getmtime(os.path.join(app.config['UPLOAD_FOLDER'], x)), reverse=True)
-    return [{'filename': file, 'date': datetime.fromtimestamp(os.path.getmtime(os.path.join(app.config['UPLOAD_FOLDER'], file))).isoformat()} for file in valid_files[:5]]
+    return [{'filename': file, 'date': datetime.fromtimestamp(os.path.getmtime(os.path.join(app.config['UPLOAD_FOLDER'], file))).isoformat()} for file in valid_files[:10]]
 
 @app.route('/get_recent_files')
 def get_recent_files_route():
