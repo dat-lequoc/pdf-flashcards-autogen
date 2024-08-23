@@ -1198,7 +1198,8 @@ Remember to focus solely on the given word and the required outputs. Now, procee
                         const a = document.createElement('a');
                         a.href = '#';
                         const progress = localStorage.getItem(`progress_${file.filename}`) || '0';
-                        a.textContent = `${file.filename} (${new Date(file.date).toLocaleDateString()}) - ${progress}%`;
+                        const truncatedFilename = file.filename.length > 20 ? file.filename.substring(0, 20) + '...' : file.filename;
+                        a.textContent = `${truncatedFilename} - ${progress}%`;
                         a.addEventListener('click', function (e) {
                             e.preventDefault();
                             fetch(`/open_pdf/${file.filename}`)
