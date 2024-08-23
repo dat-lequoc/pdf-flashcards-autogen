@@ -51,25 +51,24 @@ Here is the text:
 <TEXT>
 </text>
 
-To create effective flashcards:
+Follow these guidelines to create effective flashcards:
 
-1. Carefully read and analyze the given text.
-2. Identify the main concepts, facts, definitions, and important details.
-3. Create questions that test understanding of these key points.
-4. Provide brief but complete answers to these questions.
-5. Ensure that each flashcard is independent and self-contained.
-6. If a question refers to an example or code snippet, include it in the question.
+1. Carefully analyze the text and identify the most important concepts, facts, and ideas.
+2. Craft clear, concise questions that test these essential concepts.
+3. Provide brief but complete answers. Use bullet points when appropriate.
+4. Ensure each flashcard is self-contained. Include relevant examples or code snippets in the question if necessary for understanding or answering.
+5. Use <b> tags to highlight important words or phrases in both the question and the answer.
+6. Answer directly without repeating the question in the answer.
 
 Format your flashcards as follows:
 <Q> [Question] </Q>
 <A> [Answer] </A>
 [... additional flashcards as needed ...]
 
-Create between 1 and 10 flashcards, depending on the complexity and amount of information in the text. More complex or information-rich texts should have more flashcards, while simpler or shorter texts may have fewer.
+Create between 1 and 10 flashcards, as many high-quality flashcards as the content allows.
 
-Remember to include any relevant examples or code snippets in the question if they are necessary to understand or answer the question.
+Now, proceed with creating the flashcards based on the provided text. Remember to use the specified format and follow the guidelines closely.</textarea>
 
-Now, create the flashcards based on the provided text.</textarea>
                 <textarea id="explain-prompt" placeholder="Enter system prompt for explanation" style="display: none;">Explain the following text in simple terms: 
 
 <text>
@@ -79,6 +78,7 @@ Now, create the flashcards based on the provided text.</textarea>
 Focusing on the main concepts. Use clear and concise language, and break down complex ideas into easily understandable parts. If there are any technical terms, provide brief explanations for them. 
 
 Now, provide your answer in markdown format based on the provided text.</textarea>
+
                 <textarea id="language-prompt" placeholder="Enter system prompt for language mode">You are an AI language assistant tasked with providing information about a given word in multiple languages. Your goal is to provide a translation, an example, and an explanation for the given word based on the provided inputs.
 
 Here are the inputs you will be working with:
@@ -88,7 +88,7 @@ Phrase: <phrase><PHRASE></phrase>
 
 Present your output in the following format:
 <T>[Translation of the word in <TRANSLATION_LANGUAGE>]</T>
-<Q>[An example sentence that contains the exact form of the word. The word must be enclosed in <b></b> tags]</Q>
+<Q>[An example sentence in <TARGET_LANGUAGE> that contains the exact form of the word. The word must be enclosed in <b></b> tags]</Q>
 <A>[Short explanation of the word's meaning in <TARGET_LANGUAGE>]</A>
 
 Here's an example of the expected output:
@@ -98,9 +98,8 @@ Phrase: "etween the two countries after the border"
 <Q>Tensions <b>escalated</b> between the two countries after the border incident.</Q>
 <A>Increased rapidly in intensity or severity.</A>
 
-
 Additional guidelines:
-- The example sentence must contain the exact form of the word as provided in the input.
+- The example sentence must contain the exact form of the word as provided in the input, in the correct language, as shown the example.
 - If you are unsure about any part of the task, still give the best response you can in the given format, based on the information available.
 - Do not include any additional commentary or explanations outside of the specified output format.
 - Remember to use <b> tags for the word in the example.
@@ -645,8 +644,8 @@ Remember to focus solely on the given word and the required outputs. Now, procee
                 const flashcardElement = document.createElement('div');
                 flashcardElement.className = 'flashcard';
                 flashcardElement.innerHTML = `
-                    <strong>Q: ${flashcard.question}</strong><br>
-                    A: ${flashcard.answer}
+                    <strong>Q:</strong> ${flashcard.question}<br>
+                    <strong>A:</strong> ${flashcard.answer.trim().replace(/\n/g, '<br>')}
                     <button class="remove-btn">Remove</button>
                 `;
                 flashcardElement.querySelector('.remove-btn').addEventListener('click', function () {
