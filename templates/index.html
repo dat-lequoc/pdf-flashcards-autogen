@@ -815,7 +815,7 @@ Remember to focus solely on the given word and the required outputs. Now, procee
             let recentFiles = JSON.parse(localStorage.getItem('recentFiles')) || [];
             recentFiles = recentFiles.filter(file => file.filename !== filename);
             recentFiles.unshift({ filename: filename, date: new Date().toISOString() });
-            recentFiles = recentFiles.slice(0, 5);  // Keep only the 5 most recent
+            recentFiles = recentFiles.slice(0, 10);  // Keep only the 10 most recent
             localStorage.setItem('recentFiles', JSON.stringify(recentFiles));
             loadRecentFiles();
         }
