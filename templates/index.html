@@ -316,6 +316,12 @@ Remember to focus solely on the given word and the required outputs. Now, procee
             const progress = (currentPage / totalPages) * 100;
             progressBar.style.width = `${progress}%`;
             progressText.textContent = `${currentPage} / ${totalPages}`;
+            
+            // Save progress to localStorage
+            if (currentFileName) {
+                const roundedProgress = Math.round(progress);
+                localStorage.setItem(`progress_${currentFileName}`, roundedProgress);
+            }
         }
 
         // Infinite scrolling with page tracking
@@ -1186,12 +1192,13 @@ Remember to focus solely on the given word and the required outputs. Now, procee
                 .then(recentFiles => {
                     const fileList = document.getElementById('file-list');
                     fileList.innerHTML = '';
-                    recentFiles.forEach(file => {
+                    recentFiles.slice(0, 10).forEach(file => {
                         const li = document.createElement('li');
                         li.style.marginBottom = '10px'; // Add spacing between list items
                         const a = document.createElement('a');
                         a.href = '#';
-                        a.textContent = `${file.filename} (${new Date(file.date).toLocaleDateString()})`;
+                        const progress = localStorage.getItem(`progress_${file.filename}`) || '0';
+                        a.textContent = `${file.filename} (${new Date(file.date).toLocaleDateString()}) - ${progress}%`;
                         a.addEventListener('click', function (e) {
                             e.preventDefault();
                             fetch(`/open_pdf/${file.filename}`)
