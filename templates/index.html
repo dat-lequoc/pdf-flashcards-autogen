@@ -695,7 +695,7 @@ Remember to focus solely on the given word and the required outputs. Now, procee
                         translationAnswer: `${translation.trim()}\n${answer.trim()}`
                     };
                 } else {
-                    const question = flashcard.querySelector('strong').textContent;
+                    const question = flashcard.querySelector('strong').nextSibling.textContent.trim();
                     const answer = flashcard.innerHTML.split('<br>')[1].split('<button')[0].trim();
                     return {
                         phrase: question,
