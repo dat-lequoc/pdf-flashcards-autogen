@@ -695,8 +695,8 @@ Remember to focus solely on the given word and the required outputs. Now, procee
                         translationAnswer: `${translation.trim()}\n${answer.trim()}`
                     };
                 } else {
-                    const question = flashcard.querySelector('strong').textContent.slice(3);
-                    const answer = flashcard.innerHTML.split('<br>')[1].split('<button')[0].trim().slice(3);
+                    const question = flashcard.querySelector('strong').textContent;
+                    const answer = flashcard.innerHTML.split('<br>')[1].split('<button')[0].trim();
                     return {
                         phrase: question,
                         translationAnswer: answer
@@ -766,6 +766,7 @@ Remember to focus solely on the given word and the required outputs. Now, procee
                 });
             } else {
                 currentCollection.forEach(({ phrase, translationAnswer }) => {
+                    console.log(translationAnswer);
                     csvContent += `"${removeQuotes(phrase)}";"${removeQuotes(replaceNewlines(translationAnswer))}"\n`;
                 });
             }
