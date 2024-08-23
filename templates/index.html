@@ -756,16 +756,17 @@ Remember to focus solely on the given word and the required outputs. Now, procee
         function exportToCSV() {
             let csvContent = "data:text/csv;charset=utf-8,";
             const currentCollection = mode === 'language' ? collectedLanguageFlashcards : collectedFlashcards;
-            const removeQuotes = str => str.replace(/"/g, '');
+            const removeQuotes = str => str.replace(/"/g, '""');
+            const replaceNewlines = str => str.replace(/\n/g, '<br>');
 
             if (mode === 'language') {
                 currentCollection.forEach(({ phrase, translationAnswer }) => {
                     const [translation, answer] = translationAnswer.split('\n');
-                    csvContent += `${removeQuotes(phrase)};- ${removeQuotes(translation)}<br>- ${removeQuotes(answer)}\n`;
+                    csvContent += `"${removeQuotes(phrase)}";"-${removeQuotes(replaceNewlines(translation))}<br>- ${removeQuotes(replaceNewlines(answer))}"\n`;
                 });
             } else {
                 currentCollection.forEach(({ phrase, translationAnswer }) => {
-                    csvContent += `${removeQuotes(phrase)};${removeQuotes(translationAnswer)}\n`;
+                    csvContent += `"${removeQuotes(phrase)}";"${removeQuotes(replaceNewlines(translationAnswer))}"\n`;
                 });
             }
 
