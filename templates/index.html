@@ -492,10 +492,10 @@ Remember to focus solely on the given word and the required outputs. Now, procee
             console.log("Translate: ", word, phrase);
             console.log(document.getElementById('language-prompt').value);
             const prompt = document.getElementById('language-prompt').value
-                .replace('<WORD>', word)
-                .replace('<PHRASE>', phrase)
-                .replace('<TRANSLATION_LANGUAGE>','Vietnamese')
-                .replace('<TARGET_LANGUAGE>', targetLanguage);
+                .replace(/<WORD>/g, word)
+                .replace(/<PHRASE>/g, phrase)
+                .replace(/<TRANSLATION_LANGUAGE>/g, 'Vietnamese')
+                .replace(/<TARGET_LANGUAGE>/g, targetLanguage);
 
             console.log("Prompt", prompt);
 
