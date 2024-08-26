@@ -1201,7 +1201,7 @@ Remember to focus solely on the given word and the required outputs. Now, procee
                         const truncatedFilename = file.filename.length > 20 ? file.filename.substring(0, 20) + '...' : file.filename;
                         let lastOpenedDate;
                         try {
-                            lastOpenedDate = new Date(file.last_opened).toLocaleString();
+                            lastOpenedDate = new Date(file.date).toLocaleString();
                         } catch (error) {
                             console.error('Error parsing date:', error);
                             lastOpenedDate = 'Unknown';
