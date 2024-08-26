@@ -28,7 +28,10 @@ def get_recent_files():
 
 @app.route('/get_recent_files')
 def get_recent_files_route():
-    return jsonify(get_recent_files())
+    recent_files = get_recent_files()
+    # Sort the list by last_opened date in descending order
+    recent_files.sort(key=lambda x: x['date'], reverse=True)
+    return jsonify(recent_files)
 
 @app.route('/upload_file', methods=['POST'])
 def upload_file():
