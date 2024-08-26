@@ -1199,19 +1199,26 @@ Remember to focus solely on the given word and the required outputs. Now, procee
                         a.href = '#';
                         const progress = localStorage.getItem(`progress_${file.filename}`) || '0';
                         const truncatedFilename = file.filename.length > 20 ? file.filename.substring(0, 20) + '...' : file.filename;
+                        const lastOpenedDate = new Date(file.last_opened * 1000).toLocaleString();
                         a.textContent = `${truncatedFilename} - ${progress}%`;
+                        const dateSpan = document.createElement('span');
+                        dateSpan.textContent = ` (Last opened: ${lastOpenedDate})`;
+                        dateSpan.style.fontSize = '0.8em';
+                        dateSpan.style.color = '#666';
                         a.addEventListener('click', function (e) {
                             e.preventDefault();
                             fetch(`/open_pdf/${file.filename}`)
                                 .then(response => response.blob())
                                 .then(blob => {
-                                    const fileType = file.filename.toLowerCase().endsWith('.pdf') ? 'application/pdf' : 'text/plain';
+                                    const fileType = file.filename.toLowerCase().endsWith('.pdf') ? 'application/pdf' : 
+                                                     file.filename.toLowerCase().endsWith('.epub') ? 'application/epub+zip' : 'text/plain';
                                     const newFile = new File([blob], file.filename, { type: fileType });
                                     loadFile(newFile);
                                 })
                                 .catch(error => console.error('Error:', error));
                         });
                         li.appendChild(a);
+                        li.appendChild(dateSpan);
                         fileList.appendChild(li);
                     });
                 })
