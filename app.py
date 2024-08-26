@@ -57,7 +57,20 @@ def get_epub_content(filename):
 
 @app.route('/open_pdf/<path:filename>')
 def open_pdf(filename):
+    file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    if os.path.exists(file_path):
+        # Update the last modified time
+        os.utime(file_path, None)
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
+@app.route('/update_last_opened/<path:filename>', methods=['POST'])
+def update_last_opened(filename):
+    file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    if os.path.exists(file_path):
+        # Update the last modified time
+        os.utime(file_path, None)
+        return jsonify({'success': True, 'message': 'Last opened date updated'})
+    return jsonify({'success': False, 'message': 'File not found'}), 404
 
 @app.route('/generate_flashcard', methods=['POST'])
 def generate_flashcard():

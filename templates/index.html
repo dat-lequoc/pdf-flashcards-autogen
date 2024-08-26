@@ -1220,6 +1220,8 @@ Remember to focus solely on the given word and the required outputs. Now, procee
                                                      file.filename.toLowerCase().endsWith('.epub') ? 'application/epub+zip' : 'text/plain';
                                     const newFile = new File([blob], file.filename, { type: fileType });
                                     loadFile(newFile);
+                                    // Update last opened date
+                                    updateLastOpenedDate(file.filename);
                                 })
                                 .catch(error => console.error('Error:', error));
                         });
@@ -1384,10 +1386,25 @@ Remember to focus solely on the given word and the required outputs. Now, procee
             }
         }
 
-        // Save current page and check for unsaved flashcards before unloading
+        function updateLastOpenedDate(filename) {
+            fetch(`/update_last_opened/${filename}`, { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        console.log('Last opened date updated');
+                        loadRecentFiles(); // Reload the recent files list to reflect the updated date
+                    } else {
+                        console.error('Failed to update last opened date:', data.message);
+                    }
+                })
+                .catch(error => console.error('Error updating last opened date:', error));
+        }
+
+        // Save current page, update last opened date, and check for unsaved flashcards before unloading
         window.addEventListener('beforeunload', function (e) {
             if (currentFileName) {
                 localStorage.setItem(`lastPage_${currentFileName}`, pageNum);
+                updateLastOpenedDate(currentFileName);
             }
 
             const unsavedFlashcards = document.querySelectorAll('.flashcard:not(.in-collection)');
