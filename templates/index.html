@@ -949,20 +949,21 @@ Remember to focus solely on the given word and the required outputs. Now, procee
 
         function attachLanguageModeListener(container) {
             container.addEventListener('mouseup', function (event) {
-                if (event.altKey) {
+                if (event.altKey || event.ctrlKey) {
                     const selection = window.getSelection();
                     if (selection.rangeCount > 0) {
                         const selectedText = selection.toString().trim();
                         if (selectedText !== '') {
-                            translateText(selectedText);
-                         }
+                            if (event.altKey) {
+                                translateText(selectedText);
+                            }
+                        }
 
                         const range = selection.getRangeAt(0);
                         const span = document.createElement('span');
                         span.className = 'highlight';
                         range.surroundContents(span);
-                     }
-
+                    }
                 }
             });
 
