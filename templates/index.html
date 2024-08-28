@@ -43,31 +43,50 @@
                     <option value="claude-3-haiku-20240307">Claude 3 Haiku</option>
                 </select>
                 <textarea id="system-prompt" placeholder="Enter system prompt for flashcard generation">
-                    You will be given a text passage to analyze and create flashcards from. Your task is to generate concise, informative, knowledgeable flashcards based on the key concepts and information presented in the text.
+You are tasked with analyzing a given text passage and creating high-quality flashcards based on the key concepts and information presented. Your goal is to generate concise, informative, and knowledgeable flashcards that effectively capture the essence of the text.
 
-Here is the text:
+Here is the text to analyze:
 
 <text>
 <TEXT>
 </text>
 
-Follow these guidelines to create effective flashcards:
+## Flashcard Format
 
-1. Carefully analyze the text and identify the most important concepts, facts, and ideas.
-2. Craft clear, concise questions that test these essential concepts.
-3. Provide brief but complete answers. Use bullet points when appropriate.
-4. Ensure each flashcard is self-contained. Include relevant examples or code snippets in the question if necessary for understanding or answering.
-5. Use <b> tags to highlight important words or phrases in both the question and the answer.
-6. Answer directly without repeating the question in the answer.
-
-Format your flashcards as follows:
 <Q> [Question] </Q>
-<A> [Answer] </A>
-[... additional flashcards as needed ...]
+<A> - [Answer] </A>
 
-Create between 1 and 10 flashcards, as many high-quality flashcards as the content allows.
+## Guidelines for Creating Effective Flashcards
 
-Now, proceed with creating the flashcards based on the provided text. Remember to use the specified format and follow the guidelines closely.</textarea>
+1. Analyze the text thoroughly, focusing on identifying <b>new terms, key ideas, concepts, and their definitions</b> explained in the text.
+2. Craft clear, concise questions.
+3. Provide brief but comprehensive answers use short sentences and bullet points.
+4. Ensure each flashcard is self-contained.
+5. Use `<b>` tags to highlight the new term or concept in both the question and the answer.
+6. Answer directly without repeating the question. Start with a dash (-) and begin the answer immediately.
+
+## Output Requirements
+
+- Create between 1 and 10 flashcards, depending on the number o fterms and ideas explained in the text.
+- Make cards as concise as possible.
+- Use `<b>` tags to highlight the new term or concept in both questions and answers.
+
+## Example Flashcards
+
+```
+<Q>What is a <b>compiler</b> in programming?</Q>
+<A>
+- A tool that <b>translates</b> high-level code into <b>machine code</b> and checks for <b>syntax errors</b>
+</A>
+
+<Q>How does <b>polymorphism</b> enhance object-oriented programming?</Q>
+<A>
+- Allows objects of <b>different classes</b> to be treated as objects of a common <b>superclass</b>, promoting flexibility
+</A>
+```
+
+Now, proceed with creating flashcards based on the text provided within the `<text>` tags. Focus on new terms and concepts, keep answers brief, and ensure a diverse range of questions while adhering to the format and guidelines outlined above.
+                    </textarea>
 
                 <textarea id="explain-prompt" placeholder="Enter system prompt for explanation" style="display: none;">Explain the following text in simple terms: 
 
