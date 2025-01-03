@@ -1,9 +1,10 @@
 from flask import Flask, request, jsonify, render_template, make_response, send_from_directory
-import anthropic
+from litellm import completion
 import os
 import json
 from datetime import datetime
 import base64
+from llm_utils import generate_completion
 
 app = Flask(__name__)
 
@@ -66,27 +67,16 @@ def open_pdf(filename):
 def generate_flashcard():
     data = request.json
     prompt = data['prompt']
-    api_key = request.headers.get('X-API-Key')
     mode = data.get('mode', 'flashcard')
 
-    client = anthropic.Anthropic(api_key=api_key)
-
     try:
-        model = data.get('model', "claude-3-5-sonnet-20240620")
-        message = client.messages.create(
-            model=model,
-            max_tokens=1024,
-            messages=[
-                {"role": "user", "content": prompt}
-            ]
-        )
-        
-        content = message.content[0].text
+        # Use llm_utils to generate completion
+        content = generate_completion(prompt)
         print(prompt)
         print(content)
 
         if mode == 'language':
-            # For Language mode, parse the content and return in the custom format
+            # Parse language learning format
             lines = content.split('\n')
             word = ''
             translation = ''
@@ -106,8 +96,10 @@ def generate_flashcard():
                 'translation': translation,
                 'answer': answer
             }
-            response = make_response(jsonify({'flashcard': flashcard}))
+            return jsonify({'flashcard': flashcard})
+            
         elif mode == 'flashcard' or 'flashcard' in prompt.lower():
+            # Parse flashcard format
             flashcards = []
             current_question = ''
             current_answer = ''
@@ -124,17 +116,15 @@ def generate_flashcard():
             if current_question and current_answer:
                 flashcards.append({'question': current_question, 'answer': current_answer})
 
-            response = make_response(jsonify({'flashcards': flashcards}))
+            return jsonify({'flashcards': flashcards})
+            
         elif mode == 'explain' or 'explain' in prompt.lower():
-            # For Explain mode, return the entire content as the explanation
-            response = make_response(jsonify({'explanation': content}))
+            # Return explanation format
+            return jsonify({'explanation': content})
+            
         else:
-            response = make_response(jsonify({'error': 'Invalid mode'}))
-
-        # Set cookie with the API key
-        response.set_cookie('last_working_api_key', api_key, secure=True, httponly=True, samesite='Strict')
-
-        return response
+            return jsonify({'error': 'Invalid mode'}), 400
+        
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 if __name__ == '__main__':
