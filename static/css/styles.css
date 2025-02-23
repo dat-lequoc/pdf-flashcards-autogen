@@ -4,9 +4,9 @@
   --background-color: #ecf0f1;
   --text-color: #34495e;
   --highlight-color: #e74c3c;
-  --button-min-width: 100px;
-  --button-height: 36px;
-  --button-font-size: 14px;
+  --button-min-width: 80px;
+  --button-height: 30px;
+  --button-font-size: 12px;
 }
 
 body {
@@ -19,6 +19,7 @@ body {
   overflow: hidden;
   background-color: var(--background-color);
   color: var(--text-color);
+  font-size: 80%;
 }
 
 #top-bar {
@@ -87,7 +88,7 @@ body {
   position: fixed;
   right: 0;
   top: 0;
-  padding: 20px;
+  padding: 10px;
   box-sizing: border-box;
   overflow-y: auto;
   background-color: white;
@@ -111,7 +112,7 @@ body {
 
 .mode-btn {
   flex: 1;
-  padding: 10px;
+  padding: 5px;
   border: 1px solid var(--secondary-color);
   background-color: white;
   color: var(--secondary-color);
@@ -120,7 +121,7 @@ body {
 }
 
 .mode-btn:not(:last-child) {
-  margin-right: 10px;
+  margin-right: 5px;
 }
 
 .mode-btn.selected {
@@ -213,21 +214,21 @@ body {
 
 #flashcards {
   border: 1px solid #ddd;
-  padding: 15px;
-  margin-top: 15px;
+  padding: 10px;
+  margin-top: 10px;
   background-color: white;
   border-radius: 3px;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 .flashcard {
-  margin-bottom: 15px;
-  padding: 15px;
+  margin-bottom: 8px;
+  padding: 10px;
   border: 1px solid #ddd;
   background-color: white;
   border-radius: 3px;
   transition: box-shadow 0.3s ease;
-  font-size: 16px;
+  font-size: 1em;
 }
 
 .flashcard:hover {
@@ -497,4 +498,178 @@ body {
   #left-panel {
     width: 100%;
   }
+}
+
+/* Add these new styles at the end of the file */
+.api-settings {
+    margin-bottom: 15px;
+    padding: 10px;
+    background: #f5f5f5;
+    border-radius: 5px;
+}
+
+.model-group {
+    margin-bottom: 10px;
+}
+
+#model-select {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+#custom-model-inputs {
+    margin-top: 10px;
+}
+
+#custom-model-inputs input {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 5px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.default-api-key input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+#recent-files {
+    margin-top: 20px;
+    padding: 15px;
+    background: #f8f8f8;
+    border-radius: 5px;
+}
+
+#recent-files h3 {
+    margin: 0 0 15px 0;
+    color: #333;
+    font-size: 1.1em;
+}
+
+#file-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+#file-list li {
+    margin-bottom: 10px;
+    padding: 8px;
+    background: white;
+    border-radius: 4px;
+    border: 1px solid #eee;
+    transition: background-color 0.2s;
+}
+
+#file-list li:hover {
+    background-color: #f0f0f0;
+}
+
+#file-list a {
+    text-decoration: none;
+    color: #2196F3;
+    display: block;
+    width: 100%;
+}
+
+#file-list a:hover {
+    color: #1976D2;
+}
+
+/* Dropdown styles for collection actions */
+.dropdown {
+  position: relative;
+  display: block;
+  margin-bottom: 15px;
+  width: 100%;
+}
+
+.dropbtn {
+  background-color: var(--secondary-color);
+  color: white;
+  padding: 12px 20px;
+  font-size: 14px;
+  border: none;
+  cursor: pointer;
+  border-radius: 5px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Add a down arrow to the button */
+.dropbtn::after {
+  content: '▼';
+  font-size: 10px;
+  margin-left: 8px;
+  transition: transform 0.3s ease;
+}
+
+/* Rotate arrow when dropdown is open */
+.dropbtn.active::after {
+  transform: rotate(180deg);
+}
+
+.dropbtn:hover {
+  background-color: #34495e;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background-color: white;
+  min-width: 100%;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  z-index: 1001;
+  border-radius: 5px;
+  margin-top: 5px;
+  border: 1px solid rgba(0,0,0,0.1);
+  overflow: hidden;
+  animation: dropdownFade 0.3s ease;
+}
+
+@keyframes dropdownFade {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dropdown-content a {
+  color: var(--text-color);
+  padding: 12px 20px;
+  text-decoration: none;
+  display: block;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+  transition: all 0.2s ease;
+  font-size: 14px;
+}
+
+.dropdown-content a:last-child {
+  border-bottom: none;
+}
+
+.dropdown-content a:hover {
+  background-color: #f8f9fa;
+  padding-left: 25px;
+  color: var(--primary-color);
+}
+
+/* Class to show the dropdown */
+.show {
+  display: block;
 }

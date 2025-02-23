@@ -11,45 +11,6 @@
     <link rel="stylesheet" href="/static/css/styles.css">
     <script src="/static/js/prompts.js"></script>
     <script src="/static/js/models.js"></script>
-    <style>
-        .api-settings {
-            margin-bottom: 15px;
-            padding: 10px;
-            background: #f5f5f5;
-            border-radius: 5px;
-        }
-
-        .model-group {
-            margin-bottom: 10px;
-        }
-
-        #model-select {
-            width: 100%;
-            padding: 8px;
-            margin-bottom: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-
-        #custom-model-inputs {
-            margin-top: 10px;
-        }
-
-        #custom-model-inputs input {
-            width: 100%;
-            padding: 8px;
-            margin-bottom: 5px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-
-        .default-api-key input {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-    </style>
 </head>
 
 <body>
@@ -67,7 +28,7 @@
             <div id="page-navigation">
                 <button id="zoom-out-btn">-</button>
                 <button id="zoom-in-btn">+</button>
-                <input type="number" id="page-input" min="1" placeholder="Go to page">
+                <input type="number" id="page-input" min="1" placeholder="Page #">
                 <button id="go-to-page-btn">Go</button>
             </div>
         </div>
@@ -89,11 +50,14 @@
         </div>
         <button id="submit-btn" style="display: block;">Generate</button>
         <div id="flashcards"></div>
-        <div id="collection">
-            <button id="add-to-collection-btn">Add to Collection (0)</button>
-            <button id="clear-collection-btn">Clear Collection</button>
+        <div class="dropdown" id="collection-dropdown">
+            <button class="dropbtn" id="collection-dropbtn">Collection Options</button>
+            <div class="dropdown-content" id="collection-dropdown-content">
+                <a href="#" id="add-to-collection-option">Add to Collection (0)</a>
+                <a href="#" id="clear-collection-option">Clear Collection</a>
+                <a href="#" id="export-csv-option" style="display: none;">Export Flashcards to CSV</a>
+            </div>
         </div>
-        <button id="export-csv-btn" style="display: none;">Export Flashcards to CSV</button>
         <div id="recent-files">
             <h3>Recent Files</h3>
             <ul id="file-list"></ul>
@@ -675,9 +639,9 @@
         }
 
         function updateAddToCollectionButtonText() {
-            const addToCollectionBtn = document.getElementById('add-to-collection-btn');
-            const count = mode === 'language' ? languageCollectionCount : flashcardCollectionCount;
-            addToCollectionBtn.textContent = `Add to Collection (${count})`;
+            var addToCollectionOption = document.getElementById('add-to-collection-option');
+            var count = mode === 'language' ? languageCollectionCount : flashcardCollectionCount;
+            addToCollectionOption.textContent = `Add to Collection (${count})`;
         }
 
         // Initialize collection counts and flashcards from localStorage
@@ -687,12 +651,15 @@
         collectedLanguageFlashcards = JSON.parse(localStorage.getItem('collectedLanguageFlashcards')) || [];
         updateAddToCollectionButtonText();
 
-        document.getElementById('add-to-collection-btn').addEventListener('click', addToCollection);
+        document.getElementById('add-to-collection-option').addEventListener('click', function(e) {
+            e.preventDefault();
+            addToCollection();
+        });
 
         function updateExportButtonVisibility() {
-            const exportButton = document.getElementById('export-csv-btn');
-            const currentCollection = mode === 'language' ? collectedLanguageFlashcards : collectedFlashcards;
-            exportButton.style.display = currentCollection.length > 0 ? 'block' : 'none';
+            var exportOption = document.getElementById('export-csv-option');
+            var currentCollection = mode === 'language' ? collectedLanguageFlashcards : collectedFlashcards;
+            exportOption.style.display = currentCollection.length > 0 ? 'block' : 'none';
         }
 
         function exportToCSV() {
@@ -720,7 +687,10 @@
             document.body.removeChild(link);
         }
 
-        document.getElementById('export-csv-btn').addEventListener('click', exportToCSV);
+        document.getElementById('export-csv-option').addEventListener('click', function(e) {
+            e.preventDefault();
+            exportToCSV();
+        });
 
         function clearCollection() {
             if (confirm('Are you sure you want to clear the entire collection? This action cannot be undone.')) {
@@ -740,7 +710,10 @@
             }
         }
 
-        document.getElementById('clear-collection-btn').addEventListener('click', clearCollection);
+        document.getElementById('clear-collection-option').addEventListener('click', function(e) {
+            e.preventDefault();
+            clearCollection();
+        });
 
         // Initialize export button visibility
         updateExportButtonVisibility();
@@ -1372,6 +1345,40 @@
             // Set initial API key placeholder based on the first model
             const initialKey = MODEL_API_KEY_MAPPING[firstModel]; // Updated to use firstModel
             apiKeyInput.placeholder = `Enter ${initialKey}`;
+        });
+
+        // Ensure these run after the DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Dropdown toggle logic for the collection dropdown
+            var collectionDropbtn = document.getElementById('collection-dropbtn');
+            var dropdownContent = document.getElementById('collection-dropdown-content');
+            
+            collectionDropbtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                dropdownContent.classList.toggle('show');
+                this.classList.toggle('active');
+            });
+            
+            document.addEventListener('click', function(e) {
+                if (!dropdownContent.contains(e.target)) {
+                    dropdownContent.classList.remove('show');
+                    collectionDropbtn.classList.remove('active');
+                }
+            });
+            
+            // Update event listeners for dropdown options instead of separate buttons
+            document.getElementById('add-to-collection-option').addEventListener('click', function(e) {
+                e.preventDefault();
+                addToCollection();
+            });
+            document.getElementById('clear-collection-option').addEventListener('click', function(e) {
+                e.preventDefault();
+                clearCollection();
+            });
+            document.getElementById('export-csv-option').addEventListener('click', function(e) {
+                e.preventDefault();
+                exportToCSV();
+            });
         });
     </script>
 </body>
