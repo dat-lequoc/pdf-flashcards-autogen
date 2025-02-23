@@ -728,3 +728,8 @@ body {
 .dark-mode .dropdown-content a:hover {
     background-color: var(--bg-primary);
 }
+
+/* Add this rule to invert PDF canvas colors when dark mode is on */
+.dark-mode #pdf-viewer canvas {
+    filter: invert(1) hue-rotate(180deg);
+}
