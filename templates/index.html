@@ -1332,6 +1332,18 @@ Phrase: "{phrase}"</textarea>
                 settingsPanel.style.display = settingsPanel.style.display === 'none' ? 'block' : 'none';
             });
 
+            // Remove 'selected' class from main mode buttons only
+            document.getElementById('mode-toggle').querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('selected'));
+
+            // Set default mode to language
+            mode = 'language';
+            document.querySelector('.mode-btn[data-mode="language"]').classList.add('selected');
+            document.getElementById('language-buttons').style.display = 'flex';
+            document.getElementById('submit-btn').style.display = 'none';
+            systemPrompt.style.display = 'none';
+            document.getElementById('explain-prompt').style.display = 'none';
+            document.getElementById('language-prompt').style.display = 'block';
+
             // Set default language to English if not already set
             if (!localStorage.getItem('selectedLanguage')) {
                 saveLanguageChoice('English');
