@@ -38,15 +38,15 @@
             <textarea id="system-prompt" placeholder="Enter system prompt for flashcard generation"></textarea>
             <textarea id="explain-prompt" placeholder="Enter system prompt for explanation" style="display: none;"></textarea>
             <textarea id="language-prompt" placeholder="Enter system prompt for language mode"></textarea>
+            <div id="language-buttons" style="display: none; margin-top: 10px;">
+                <button class="mode-btn" data-language="English">English</button>
+                <button class="mode-btn" data-language="French">French</button>
+            </div>
         </div>
         <div id="mode-toggle">
             <button class="mode-btn selected" data-mode="flashcard">Flashcard</button>
             <button class="mode-btn" data-mode="explain">Explain</button>
             <button class="mode-btn" data-mode="language">Language</button>
-        </div>
-        <div id="language-buttons" style="display: none; margin-top: 10px;">
-            <button class="mode-btn" data-language="English">English</button>
-            <button class="mode-btn" data-language="French">French</button>
         </div>
         <button id="submit-btn" style="display: block;">Generate</button>
         <div id="flashcards"></div>
@@ -821,14 +821,10 @@
                 document.getElementById('explain-prompt').style.display = mode === 'explain' ? 'block' : 'none';
                 document.getElementById('language-prompt').style.display = mode === 'language' ? 'block' : 'none';
                 submitBtn.style.display = mode === 'language' ? 'none' : 'block';
-                submitBtn.textContent = mode === 'flashcard' ? 'Generate Flashcards' : 'Generate Explanation';
 
-                if (mode === 'language') {
-                    const savedLanguage = loadLanguageChoice();
-                    setLanguageButton(savedLanguage);
-                }
+                // The settings panel will not auto–open now. Users must open it manually via the settings icon.
 
-                // Update Add to Collection button and export button visibility
+                // Update the collection button text and export button visibility as before
                 updateAddToCollectionButtonText();
                 updateExportButtonVisibility();
             });

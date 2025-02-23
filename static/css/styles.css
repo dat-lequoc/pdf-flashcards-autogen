@@ -213,12 +213,8 @@ body {
 }
 
 #flashcards {
-  border: 1px solid #ddd;
-  padding: 10px;
   margin-top: 10px;
-  background-color: white;
-  border-radius: 3px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  width: 100%;
 }
 
 .flashcard {
