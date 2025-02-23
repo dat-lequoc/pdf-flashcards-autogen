@@ -56,6 +56,7 @@
                 <a href="#" id="add-to-collection-option">Add to Collection (0)</a>
                 <a href="#" id="clear-collection-option">Clear Collection</a>
                 <a href="#" id="export-csv-option" style="display: none;">Export Flashcards to CSV</a>
+                <a href="#" id="export-json-option" style="display: none;">Export Flashcards to JSON</a>
             </div>
         </div>
         <div id="recent-files">
@@ -492,7 +493,7 @@
                     }
                 } catch (error) {
                     console.error('Error calling LLM API:', error);
-                    alert(`Failed to generate ${mode === 'flashcard' ? 'flashcards' : 'explanation'}. Please check your API key and try again.`);
+                    alert(`Failed to generate ${mode === 'flashcard' ? 'flashcards' : 'an explanation'}. Please check your API key and try again.`);
                 } finally {
                     setTimeout(() => {
                         document.body.removeChild(notification);
@@ -657,9 +658,16 @@
         });
 
         function updateExportButtonVisibility() {
-            var exportOption = document.getElementById('export-csv-option');
+            var csvExportOption = document.getElementById('export-csv-option');
+            var jsonExportOption = document.getElementById('export-json-option');
             var currentCollection = mode === 'language' ? collectedLanguageFlashcards : collectedFlashcards;
-            exportOption.style.display = currentCollection.length > 0 ? 'block' : 'none';
+            var count = currentCollection.length;
+            
+            csvExportOption.style.display = count > 0 ? 'block' : 'none';
+            csvExportOption.textContent = `Export Flashcards to CSV (${count})`;
+            
+            jsonExportOption.style.display = count > 0 ? 'block' : 'none';
+            jsonExportOption.textContent = `Export Flashcards to JSON (${count})`;
         }
 
         function exportToCSV() {
@@ -687,9 +695,27 @@
             document.body.removeChild(link);
         }
 
+        // New function: Export flashcards as JSON
+        function exportToJSON() {
+            const currentCollection = mode === 'language' ? collectedLanguageFlashcards : collectedFlashcards;
+            const dataStr = JSON.stringify(currentCollection, null, 2);
+            const jsonContent = "data:text/json;charset=utf-8," + encodeURIComponent(dataStr);
+            const link = document.createElement("a");
+            link.setAttribute("href", jsonContent);
+            link.setAttribute("download", `${mode}_flashcards.json`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
         document.getElementById('export-csv-option').addEventListener('click', function(e) {
             e.preventDefault();
             exportToCSV();
+        });
+
+        document.getElementById('export-json-option').addEventListener('click', function(e) {
+            e.preventDefault();
+            exportToJSON();
         });
 
         function clearCollection() {
@@ -1374,6 +1400,10 @@
             document.getElementById('export-csv-option').addEventListener('click', function(e) {
                 e.preventDefault();
                 exportToCSV();
+            });
+            document.getElementById('export-json-option').addEventListener('click', function(e) {
+                e.preventDefault();
+                exportToJSON();
             });
         });
     </script>
