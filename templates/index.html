@@ -9,6 +9,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.5/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/epubjs/dist/epub.min.js"></script>
     <link rel="stylesheet" href="/static/css/styles.css">
+    <script src="/static/js/prompts.js"></script>
+    <script src="/static/js/models.js"></script>
     <style>
         .api-settings {
             margin-bottom: 15px;
@@ -70,53 +72,11 @@
             </div>
         </div>
         <div id="settings-panel" style="display: none;">
-            <input type="password" id="api-key-input" placeholder="Enter Claude API Key">
-            <select id="model-select">
-                <option value="claude-3-5-sonnet-20240620">Claude 3.5 Sonnet</option>
-                <option value="claude-3-haiku-20240307">Claude 3 Haiku</option>
-            </select>
-            <textarea id="system-prompt" placeholder="Enter system prompt for flashcard generation">Generate flashcards as a JSON array where each object has "question" and "answer" keys. The number of flashcards should be proportional to the text's length and complexity, with a minimum of 1 and a maximum of 10. Each question should test a key concept and the answer should be brief but complete. Use <b> tags to emphasize important words or phrases. Cite short code or examples if needed.
-
-Example input: "In parallel computing, load balancing refers to the practice of distributing computational work evenly across multiple processing units. This is crucial for maximizing efficiency and minimizing idle time. Dynamic load balancing adjusts the distribution of work during runtime, while static load balancing determines the distribution before execution begins."
-
-Example output:
-[
-  {
-    "question": "What is the primary goal of <b>load balancing</b> in parallel computing?",
-    "answer": "To <b>distribute work evenly</b> across processing units, maximizing efficiency and minimizing idle time."
-  },
-  {
-    "question": "How does <b>dynamic load balancing</b> differ from <b>static load balancing</b>?",
-    "answer": "Dynamic balancing <b>adjusts work distribution during runtime</b>, while static balancing <b>determines distribution before execution</b>."
-  }
-]
-
-Now generate flashcards for this text:</textarea>
-            <textarea id="explain-prompt" placeholder="Enter system prompt for explanation" style="display: none;">Explain the following text in simple terms, focusing on the main concepts and their relationships. Use clear and concise language, and break down complex ideas into easily understandable parts. If there are any technical terms, provide brief explanations for them. Return your explanation in a JSON object with an "explanation" key.
-
-Example output:
-{
-  "explanation": "Load balancing is a technique in parallel computing that ensures work is distributed evenly across different processing units. Think of it like distributing tasks among team members - when done well, everyone has a fair amount of work and the team is more efficient. There are two main approaches: dynamic balancing (adjusting work distribution as needed) and static balancing (planning the distribution ahead of time)."
-}
-
-Now explain this text:</textarea>
-            <textarea id="language-prompt" placeholder="Enter system prompt for language mode">Return a JSON object with "word", "translation", "question", and "answer" keys for the given word in {targetLanguage}.
-
-Example input:
-Word: "refused"
-Phrase: "Hamas refused to join a new round of peace negotiations."
-
-Example output:
-{
-  "word": "refused",
-  "translation": "từ chối",
-  "question": "Hamas <b>refused</b> to join a new round of peace negotiations.",
-  "answer": "Declined to accept or comply with a request or proposal."
-}
-
-Now explain the word in the phrase below:
-Word: "{word}"
-Phrase: "{phrase}"</textarea>
+            <input type="password" id="api-key-input" placeholder="Enter API Key">
+            <select id="model-select"></select>
+            <textarea id="system-prompt" placeholder="Enter system prompt for flashcard generation"></textarea>
+            <textarea id="explain-prompt" placeholder="Enter system prompt for explanation" style="display: none;"></textarea>
+            <textarea id="language-prompt" placeholder="Enter system prompt for language mode"></textarea>
         </div>
         <div id="mode-toggle">
             <button class="mode-btn selected" data-mode="flashcard">Flashcard</button>
@@ -149,7 +109,6 @@ Phrase: "{phrase}"</textarea>
         </div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/1.9.1/showdown.min.js"></script>
     <script>
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.9.359/pdf.worker.min.js';
 
@@ -174,7 +133,7 @@ Phrase: "{phrase}"</textarea>
         let apiKey = '';
         let currentFileName = '';
         let currentPage = 1;
-        let selectedModel = 'claude-3-haiku-20240307';
+        let selectedModel = 'gemini/gemini-exp-1206';
         let lastProcessedQuery = '';
         let lastRequestTime = 0;
         const cooldownTime = 1000; // 1 second cooldown
@@ -480,9 +439,30 @@ Phrase: "{phrase}"</textarea>
             }
         }
 
+        async function callLLMAPI(prompt) {
+            const response = await fetch('/generate_flashcard', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-API-Key': apiKey
+                },
+                body: JSON.stringify({
+                    prompt: prompt,
+                    model: selectedModel,
+                    mode: mode
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            return await response.json();
+        }
+
         async function generateLanguageFlashcard(word, phrase, targetLanguage) {
             if (!apiKey) {
-                alert('Please enter your Claude API key first.');
+                alert('Please enter your API key first.');
                 return;
             }
 
@@ -492,7 +472,7 @@ Phrase: "{phrase}"</textarea>
                 .replace('{targetLanguage}', targetLanguage);
 
             try {
-                const response = await callClaudeAPI(prompt);
+                const response = await callLLMAPI(prompt);
                 if (response.flashcard) {
                     const flashcard = response.flashcard;
                     const formattedFlashcard = {
@@ -507,14 +487,14 @@ Phrase: "{phrase}"</textarea>
                     throw new Error('Invalid response from API');
                 }
             } catch (error) {
-                console.error('Error calling Claude API:', error);
+                console.error('Error calling LLM API:', error);
                 alert('Failed to generate language flashcard. Please check your API key and try again.');
             }
         }
 
         async function generateContent() {
             if (!apiKey) {
-                alert('Please enter your Claude API key first.');
+                alert('Please enter your API key first.');
                 return;
             }
 
@@ -532,23 +512,23 @@ Phrase: "{phrase}"</textarea>
                     return;
                 }
 
-                // Disable the button, change its color, and show notification
+                // Disable the button and show notification
                 submitBtn.disabled = true;
-                submitBtn.style.backgroundColor = '#808080'; // Change to gray
+                submitBtn.style.backgroundColor = '#808080';
                 const notification = document.createElement('div');
                 notification.textContent = 'Generating...';
                 notification.style.position = 'fixed';
                 notification.style.top = '20px';
                 notification.style.right = '20px';
                 notification.style.padding = '10px';
-                notification.style.backgroundColor = 'rgba(0, 128, 0, 0.7)'; // Change to green
+                notification.style.backgroundColor = 'rgba(0, 128, 0, 0.7)';
                 notification.style.color = 'white';
                 notification.style.borderRadius = '5px';
                 notification.style.zIndex = '1000';
                 document.body.appendChild(notification);
 
                 try {
-                    const response = await callClaudeAPI(prompt);
+                    const response = await callLLMAPI(prompt);
                     if (mode === 'flashcard' && response.flashcards) {
                         displayFlashcards(response.flashcards, true);
                     } else if (mode === 'explain' && response.explanation) {
@@ -557,18 +537,17 @@ Phrase: "{phrase}"</textarea>
                         throw new Error('Invalid response from API');
                     }
                 } catch (error) {
-                    console.error('Error calling Claude API:', error);
+                    console.error('Error calling LLM API:', error);
                     alert(`Failed to generate ${mode === 'flashcard' ? 'flashcards' : 'explanation'}. Please check your API key and try again.`);
                 } finally {
-                    // Remove notification, re-enable button, and restore its color after 3 seconds
                     setTimeout(() => {
                         document.body.removeChild(notification);
                         submitBtn.disabled = false;
-                        submitBtn.style.backgroundColor = ''; // Restore original color
+                        submitBtn.style.backgroundColor = '';
                     }, 3000);
                 }
             } else {
-                alert(`Please select some text from the PDF to generate ${mode === 'flashcard' ? 'flashcards' : 'an explanation'}.`);
+                alert(`Please select some text to generate ${mode === 'flashcard' ? 'flashcards' : 'an explanation'}.`);
             }
         }
 
@@ -608,31 +587,6 @@ Phrase: "{phrase}"</textarea>
                 }
             }
         }
-
-        async function callClaudeAPI(prompt) {
-            const response = await fetch('/generate_flashcard', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-API-Key': apiKey
-                },
-                body: JSON.stringify({
-                    prompt: prompt,
-                    model: selectedModel,
-                    mode: mode // Add the current mode to the request
-                })
-            });
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            return await response.json();
-        }
-
-        modelSelect.addEventListener('change', function () {
-            selectedModel = this.value;
-        });
 
         function displayFlashcards(flashcards, append = false) {
             if (!append) {
@@ -1391,6 +1345,43 @@ Phrase: "{phrase}"</textarea>
                     console.error('Error:', error);
                 });
         }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            // Ensure the variables are defined from /static/js/prompts.js
+            if (typeof FLASHCARD_PROMPT !== 'undefined') {
+                document.getElementById('system-prompt').value = FLASHCARD_PROMPT;
+            }
+            if (typeof EXPLAIN_PROMPT !== 'undefined') {
+                document.getElementById('explain-prompt').value = EXPLAIN_PROMPT;
+            }
+            if (typeof LANGUAGE_PROMPT !== 'undefined') {
+                document.getElementById('language-prompt').value = LANGUAGE_PROMPT;
+            }
+
+            // Populate the model select options
+            const modelSelect = document.getElementById('model-select');
+            availableModels.forEach(model => {
+                const option = document.createElement('option');
+                option.value = model;
+                option.textContent = model;
+                modelSelect.appendChild(option);
+            });
+
+            // Set default model to Gemini
+            modelSelect.value = "gemini/gemini-exp-1206";
+            selectedModel = "gemini/gemini-exp-1206";
+
+            // Update API key placeholder based on selected model
+            modelSelect.addEventListener('change', function() {
+                selectedModel = this.value;
+                const requiredKey = MODEL_API_KEY_MAPPING[selectedModel];
+                apiKeyInput.placeholder = `Enter ${requiredKey}`;
+            });
+
+            // Set initial API key placeholder
+            const initialKey = MODEL_API_KEY_MAPPING["gemini/gemini-exp-1206"];
+            apiKeyInput.placeholder = `Enter ${initialKey}`;
+        });
     </script>
 </body>
 

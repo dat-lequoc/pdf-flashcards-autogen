@@ -5,6 +5,7 @@ import json
 from datetime import datetime
 import base64
 from llm_utils import generate_completion
+import re
 
 app = Flask(__name__)
 
@@ -68,18 +69,24 @@ def generate_flashcard():
     data = request.json
     prompt = data['prompt']
     mode = data.get('mode', 'flashcard')
+    model = data.get('model')
 
     try:
-        # Use llm_utils to generate completion
-        content = generate_completion(prompt)
+        # Use llm_utils to generate completion with the selected model
+        content = generate_completion(prompt, model=model)
         print(prompt)
         print(content)
 
         if mode == 'language':
             try:
-                # Expecting a JSON object with "word", "translation", "question", "answer"
-                flashcard = json.loads(content)
-                return jsonify({'flashcard': flashcard})
+                # Extract the JSON substring from the content in case there is extra text.
+                json_match = re.search(r'\{[\s\S]*\}', content)
+                if json_match:
+                    json_text = json_match.group(0)
+                    flashcard = json.loads(json_text)
+                    return jsonify({'flashcard': flashcard})
+                else:
+                    raise ValueError("No JSON object found in response")
             except Exception as parse_err:
                 return jsonify({'error': 'JSON parsing error in language mode: ' + str(parse_err)})
         elif mode == 'flashcard':
