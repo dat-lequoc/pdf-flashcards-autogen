@@ -88,6 +88,7 @@ def generate_flashcard():
                 else:
                     raise ValueError("No JSON object found in response")
             except Exception as parse_err:
+                print("JSON parsing error in language mode: ", parse_err)
                 return jsonify({'error': 'JSON parsing error in language mode: ' + str(parse_err)})
         elif mode == 'flashcard':
             try:

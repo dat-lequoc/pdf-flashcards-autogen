@@ -461,11 +461,6 @@
         }
 
         async function generateLanguageFlashcard(word, phrase, targetLanguage) {
-            if (!apiKey) {
-                alert('Please enter your API key first.');
-                return;
-            }
-
             const prompt = document.getElementById('language-prompt').value
                 .replace('{word}', word)
                 .replace('{phrase}', phrase)
@@ -493,11 +488,6 @@
         }
 
         async function generateContent() {
-            if (!apiKey) {
-                alert('Please enter your API key first.');
-                return;
-            }
-
             const selection = window.getSelection();
             if (selection.rangeCount > 0 && selection.toString().trim() !== '') {
                 const selectedText = selection.toString();
@@ -511,7 +501,7 @@
                 } else {
                     return;
                 }
-
+                
                 // Disable the button and show notification
                 submitBtn.disabled = true;
                 submitBtn.style.backgroundColor = '#808080';
@@ -1367,19 +1357,20 @@
                 modelSelect.appendChild(option);
             });
 
-            // Set default model to Gemini
-            modelSelect.value = "gemini/gemini-exp-1206";
-            selectedModel = "gemini/gemini-exp-1206";
+            // Set default model to the first one in the list instead of hard-coding Gemini
+            const firstModel = availableModels[0]; // New: use the first model from availableModels
+            modelSelect.value = firstModel;          // Update the select element
+            selectedModel = firstModel;              // Update the global selectedModel value
 
-            // Update API key placeholder based on selected model
+            // Update API key placeholder based on selected model on change
             modelSelect.addEventListener('change', function() {
                 selectedModel = this.value;
                 const requiredKey = MODEL_API_KEY_MAPPING[selectedModel];
                 apiKeyInput.placeholder = `Enter ${requiredKey}`;
             });
 
-            // Set initial API key placeholder
-            const initialKey = MODEL_API_KEY_MAPPING["gemini/gemini-exp-1206"];
+            // Set initial API key placeholder based on the first model
+            const initialKey = MODEL_API_KEY_MAPPING[firstModel]; // Updated to use firstModel
             apiKeyInput.placeholder = `Enter ${initialKey}`;
         });
     </script>

@@ -32,15 +32,22 @@ def generate_completion(prompt: str, model: str = None, api_key: str = None) -> 
         first_env_var = list(config['models'][0].keys())[0]
         model = config['models'][0][first_env_var][0]
 
+    # Get the correct environment variable for the model.
     env_var = model_to_env.get(model)
     if not env_var:
-        raise ValueError("Model is not supported.")
+        raise ValueError(f"Model '{model}' is not supported. Available models: {list(model_to_env.keys())}")
 
-    if api_key is None:
-        api_key = os.getenv(env_var)
-    if not api_key:
-        raise ValueError(f"Please set {env_var} environment variable")
-    
+    # First, check if the environment variable is set.
+    env_api_key = os.getenv(env_var)
+    if env_api_key:
+        # Use the API key from environment if available
+        api_key = env_api_key
+    elif api_key:
+        # Fallback to the API key provided by the user
+        pass
+    else:
+        raise ValueError(f"Please set {env_var} environment variable or provide the API key.")
+
     messages = [{"role": "user", "content": prompt}]
     
     response = completion(
