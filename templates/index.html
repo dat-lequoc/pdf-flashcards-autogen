@@ -25,6 +25,7 @@
     <div id="right-panel">
         <div id="top-controls">
             <div id="settings-icon">⚙️</div>
+            <div id="dark-mode-toggle">🌙</div>
             <div id="page-navigation">
                 <button id="zoom-out-btn">-</button>
                 <button id="zoom-in-btn">+</button>
@@ -1405,6 +1406,23 @@
                 e.preventDefault();
                 exportToJSON();
             });
+        });
+
+        // Dark mode toggle functionality
+        const darkModeToggle = document.getElementById('dark-mode-toggle');
+        let isDarkMode = localStorage.getItem('darkMode') === 'true';
+
+        // Initialize dark mode state
+        if (isDarkMode) {
+            document.body.classList.add('dark-mode');
+            darkModeToggle.textContent = '☀️';
+        }
+
+        darkModeToggle.addEventListener('click', () => {
+            isDarkMode = !isDarkMode;
+            document.body.classList.toggle('dark-mode');
+            darkModeToggle.textContent = isDarkMode ? '☀️' : '🌙';
+            localStorage.setItem('darkMode', isDarkMode);
         });
     </script>
 </body>
