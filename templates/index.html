@@ -75,39 +75,44 @@
                 <option value="claude-3-5-sonnet-20240620">Claude 3.5 Sonnet</option>
                 <option value="claude-3-haiku-20240307">Claude 3 Haiku</option>
             </select>
-            <textarea id="system-prompt" placeholder="Enter system prompt for flashcard generation">Generate concise flashcards based on the following text. The number of flashcards should be proportional to the text's length and complexity, with a minimum of 1 and a maximum of 10. Each flashcard should have a question (Q:) that tests a key concept and an answer (A:) that is brief but complete. Ensure that the flashcards cover different aspects of the text when possible. Use <b> tags to emphasize important words or phrases in both questions and answers. Cite the short code or example to the question if needed. 
+            <textarea id="system-prompt" placeholder="Enter system prompt for flashcard generation">Generate flashcards as a JSON array where each object has "question" and "answer" keys. The number of flashcards should be proportional to the text's length and complexity, with a minimum of 1 and a maximum of 10. Each question should test a key concept and the answer should be brief but complete. Use <b> tags to emphasize important words or phrases. Cite short code or examples if needed.
 
-Example:
-Text: "In parallel computing, load balancing refers to the practice of distributing computational work evenly across multiple processing units. This is crucial for maximizing efficiency and minimizing idle time. Dynamic load balancing adjusts the distribution of work during runtime, while static load balancing determines the distribution before execution begins."
-Q: What is the primary goal of <b>load balancing</b> in parallel computing?
-A: To <b>distribute work evenly</b> across processing units, maximizing efficiency and minimizing idle time.
-Q: How does <b>dynamic load balancing</b> differ from <b>static load balancing</b>?
-A: Dynamic balancing <b>adjusts work distribution during runtime</b>, while static balancing <b>determines distribution before execution</b>.
+Example input: "In parallel computing, load balancing refers to the practice of distributing computational work evenly across multiple processing units. This is crucial for maximizing efficiency and minimizing idle time. Dynamic load balancing adjusts the distribution of work during runtime, while static load balancing determines the distribution before execution begins."
 
-That was example, now generate flashcards for this text:
-            </textarea>
-            <textarea id="explain-prompt" placeholder="Enter system prompt for explanation" style="display: none;">Explain the following text in simple terms, focusing on the main concepts and their relationships. Use clear and concise language, and break down complex ideas into easily understandable parts. If there are any technical terms, provide brief explanations for them. Return your explanation in markdown format.
+Example output:
+[
+  {
+    "question": "What is the primary goal of <b>load balancing</b> in parallel computing?",
+    "answer": "To <b>distribute work evenly</b> across processing units, maximizing efficiency and minimizing idle time."
+  },
+  {
+    "question": "How does <b>dynamic load balancing</b> differ from <b>static load balancing</b>?",
+    "answer": "Dynamic balancing <b>adjusts work distribution during runtime</b>, while static balancing <b>determines distribution before execution</b>."
+  }
+]
+
+Now generate flashcards for this text:</textarea>
+            <textarea id="explain-prompt" placeholder="Enter system prompt for explanation" style="display: none;">Explain the following text in simple terms, focusing on the main concepts and their relationships. Use clear and concise language, and break down complex ideas into easily understandable parts. If there are any technical terms, provide brief explanations for them. Return your explanation in a JSON object with an "explanation" key.
+
+Example output:
+{
+  "explanation": "Load balancing is a technique in parallel computing that ensures work is distributed evenly across different processing units. Think of it like distributing tasks among team members - when done well, everyone has a fair amount of work and the team is more efficient. There are two main approaches: dynamic balancing (adjusting work distribution as needed) and static balancing (planning the distribution ahead of time)."
+}
 
 Now explain this text:</textarea>
-            <textarea id="language-prompt" placeholder="Enter system prompt for language mode">Explain the word in the phrase in {targetLanguage} using this format:
+            <textarea id="language-prompt" placeholder="Enter system prompt for language mode">Return a JSON object with "word", "translation", "question", and "answer" keys for the given word in {targetLanguage}.
 
-T: [Translation of the word in Vietnamese]
-Q: [Original phrase with the target word in <b> tags, or craft an example with ONLY the target word in <b> tags if no phrase is provided. The Q must contain the word in <b> tags.]
-A: [Short explanation of the word's meaning in the context]
-
-Example:
+Example input:
 Word: "refused"
 Phrase: "Hamas refused to join a new round of peace negotiations."
-T: từ chối
-Q: "Hamas <b>refused</b> to join a new round of peace negotiations."
-A: Declined to accept or comply with a request or proposal.
 
-Example when no phrase is provided or it's unclear:
-Word: "analogues"
-Phrase: ""
-T: tương tự
-Q: "Scientists often use animal <b>analogues</b> to study human diseases."
-A: Things or concepts that are similar or comparable to something else, often used in scientific contexts.
+Example output:
+{
+  "word": "refused",
+  "translation": "từ chối",
+  "question": "Hamas <b>refused</b> to join a new round of peace negotiations.",
+  "answer": "Declined to accept or comply with a request or proposal."
+}
 
 Now explain the word in the phrase below:
 Word: "{word}"

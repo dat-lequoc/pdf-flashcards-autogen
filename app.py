@@ -76,55 +76,30 @@ def generate_flashcard():
         print(content)
 
         if mode == 'language':
-            # Parse language learning format
-            lines = content.split('\n')
-            word = ''
-            translation = ''
-            answer = ''
-            for line in lines:
-                if line.startswith('T:'):
-                    translation = line[2:].strip()
-                elif line.startswith('Q:'):
-                    word = line[2:].split('<b>')[1].split('</b>')[0].strip()
-                    question = line[2:].strip()
-                elif line.startswith('A:'):
-                    answer = line[2:].strip()
-            
-            flashcard = {
-                'word': word,
-                'question': question,
-                'translation': translation,
-                'answer': answer
-            }
-            return jsonify({'flashcard': flashcard})
-            
-        elif mode == 'flashcard' or 'flashcard' in prompt.lower():
-            # Parse flashcard format
-            flashcards = []
-            current_question = ''
-            current_answer = ''
-
-            for line in content.split('\n'):
-                if line.startswith('Q:'):
-                    if current_question and current_answer:
-                        flashcards.append({'question': current_question, 'answer': current_answer})
-                    current_question = line[2:].strip()
-                    current_answer = ''
-                elif line.startswith('A:'):
-                    current_answer = line[2:].strip()
-
-            if current_question and current_answer:
-                flashcards.append({'question': current_question, 'answer': current_answer})
-
-            return jsonify({'flashcards': flashcards})
-            
-        elif mode == 'explain' or 'explain' in prompt.lower():
-            # Return explanation format
-            return jsonify({'explanation': content})
-            
+            try:
+                # Expecting a JSON object with "word", "translation", "question", "answer"
+                flashcard = json.loads(content)
+                return jsonify({'flashcard': flashcard})
+            except Exception as parse_err:
+                return jsonify({'error': 'JSON parsing error in language mode: ' + str(parse_err)})
+        elif mode == 'flashcard':
+            try:
+                # Expecting a JSON array, each element having "question" and "answer"
+                flashcards = json.loads(content)
+                return jsonify({'flashcards': flashcards})
+            except Exception as parse_err:
+                return jsonify({'error': 'JSON parsing error in flashcard mode: ' + str(parse_err)})
+        elif mode == 'explain':
+            try:
+                # Try loading JSON with an "explanation" key; fallback to plain text if not provided
+                parsed = json.loads(content)
+                explanation = parsed.get('explanation', content)
+                return jsonify({'explanation': explanation})
+            except Exception as parse_err:
+                return jsonify({'explanation': content})
         else:
             return jsonify({'error': 'Invalid mode'}), 400
-        
+
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 if __name__ == '__main__':
