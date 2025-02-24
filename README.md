@@ -1,19 +1,7 @@
----
-title: PDF with Flashcard Generation | AI-Powered Study Companion
-emoji: 📚
-colorFrom: blue
-colorTo: green
-sdk: docker
-sdk_version: "3.9"
-app_file: app.py
-pinned: false
----
-
 ```bash
 pip install -r requirements.txt
 python app.py
 ```
-
 
 # PDF with Flashcard Generation: AI-Powered Study Companion
 
