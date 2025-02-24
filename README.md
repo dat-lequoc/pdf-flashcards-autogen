@@ -9,6 +9,12 @@ app_file: app.py
 pinned: false
 ---
 
+```bash
+pip install -r requirements.txt
+python app.py
+```
+
+
 # PDF with Flashcard Generation: AI-Powered Study Companion
 
 Elevate your learning experience with our AI-driven document viewer and flashcard generator! This web application transforms your PDFs, TXT files, and EPUBs into interactive flashcards and explanations using Claude AI, perfect for importing into Anki. Ideal for students, researchers, and lifelong learners looking to enhance their study sessions and spaced repetition practice.
