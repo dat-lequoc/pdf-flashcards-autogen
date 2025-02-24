@@ -92,9 +92,14 @@ def generate_flashcard():
                 return jsonify({'error': 'JSON parsing error in language mode: ' + str(parse_err)})
         elif mode == 'flashcard':
             try:
-                # Expecting a JSON array, each element having "question" and "answer"
-                flashcards = json.loads(content)
-                return jsonify({'flashcards': flashcards})
+                # Extract the JSON array substring from the content in case there is extra text.
+                json_match = re.search(r'\[[\s\S]*\]', content)
+                if json_match:
+                    json_text = json_match.group(0)
+                    flashcards = json.loads(json_text)
+                    return jsonify({'flashcards': flashcards})
+                else:
+                    raise ValueError("No JSON array found in response")
             except Exception as parse_err:
                 return jsonify({'error': 'JSON parsing error in flashcard mode: ' + str(parse_err)})
         elif mode == 'explain':

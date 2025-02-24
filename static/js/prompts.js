@@ -14,8 +14,8 @@ Example output:
   }
 ]
 
-Now generate flashcards for this text:
-Please output only the JSON array with no additional text or commentary.`;
+Please output only the JSON array with no additional text or commentary.
+Now generate flashcards for the text below:`;
 
 const EXPLAIN_PROMPT = `Explain the following text in simple terms, focusing on the main concepts and their relationships. Use clear and concise language, and break down complex ideas into easily understandable parts. If there are any technical terms, provide brief explanations for them. Return your explanation in a JSON object with an "explanation" key.
 
@@ -57,3 +57,17 @@ Now explain the word in the phrase below:
 Word: "{word}"
 Phrase: "{phrase}"
 Please output only the JSON object without any additional text or commentary.`; 
+
+/*
+Example input for multiple words:
+Word: "better suited for the region than some of the more traditional ones embraced by agribusiness."
+Phrase: "change and better suited for the region than some of"
+
+Example output:
+{
+  "word": "better suited for the region than some of the more traditional ones embraced by agribusiness.",
+  "translation": "thích hợp hơn cho khu vực hơn là một số trong số những phương pháp truyền thống được chấp nhận bởi ngành nông nghiệp",
+  "question": "The proposal is <b>better suited for the region than some of the more traditional ones embraced by agribusiness</b>.",
+  "answer": "It means that the proposal fits the local context better compared to older, conventional methods."
+}
+*/

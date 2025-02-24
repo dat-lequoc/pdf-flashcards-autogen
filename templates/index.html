@@ -560,7 +560,8 @@
                     flashcardElement.remove();
                     updateExportButtonVisibility();
                 });
-                flashcardsContainer.appendChild(flashcardElement);
+                // Prepend new flashcard to the container to show it at the top
+                flashcardsContainer.insertBefore(flashcardElement, flashcardsContainer.firstChild);
             });
             updateExportButtonVisibility();
         }
@@ -573,15 +574,16 @@
             flashcardElement.dataset.translation = flashcard.translation;
             flashcardElement.dataset.answer = flashcard.answer;
             flashcardElement.innerHTML = `
-                <div style="font-size: 1.2em; margin-bottom: 10px;"><b>${flashcard.word}</b>: ${flashcard.translation}</div>
-                <div>- ${flashcard.answer}</div>
-                <button class="remove-btn">Remove</button>
-            `;
+                    <div style="font-size: 1.2em; margin-bottom: 10px;"><b>${flashcard.word}</b>: ${flashcard.translation}</div>
+                    <div>- ${flashcard.answer}</div>
+                    <button class="remove-btn">Remove</button>
+                `;
             flashcardElement.querySelector('.remove-btn').addEventListener('click', function () {
                 flashcardElement.remove();
                 updateExportButtonVisibility();
             });
-            flashcardsContainer.appendChild(flashcardElement);
+            // Prepend new language flashcard at the top of the container
+            flashcardsContainer.insertBefore(flashcardElement, flashcardsContainer.firstChild);
             updateExportButtonVisibility();
         }
 
