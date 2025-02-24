@@ -14,7 +14,8 @@ Example output:
   }
 ]
 
-Now generate flashcards for this text:`;
+Now generate flashcards for this text:
+Please output only the JSON array with no additional text or commentary.`;
 
 const EXPLAIN_PROMPT = `Explain the following text in simple terms, focusing on the main concepts and their relationships. Use clear and concise language, and break down complex ideas into easily understandable parts. If there are any technical terms, provide brief explanations for them. Return your explanation in a JSON object with an "explanation" key.
 
@@ -23,7 +24,8 @@ Example output:
   "explanation": "Load balancing is a technique in parallel computing that ensures work is distributed evenly across different processing units. Think of it like distributing tasks among team members - when done well, everyone has a fair amount of work and the team is more efficient. There are two main approaches: dynamic balancing (adjusting work distribution as needed) and static balancing (planning the distribution ahead of time)."
 }
 
-Now explain this text:`;
+Now explain this text:
+Please output only the JSON object with no additional text or commentary.`;
 
 const LANGUAGE_PROMPT = `Return a JSON object with "word", "translation", "question", and "answer" keys for the given word in {targetLanguage}.
 
@@ -39,6 +41,19 @@ Example output:
   "answer": "Declined to accept or comply with a request or proposal."
 }
 
+Sometimes the input may be malformed or incomplete:
+Word: "@foreignminister"
+Phrase: ""
+
+Example output for malformed input:
+{
+  "word": "foreign minister",
+  "translation": "bộ trưởng ngoại giao",
+  "question": "The <b>foreign minister</b> announced new trade agreements with neighboring countries.",
+  "answer": "The government minister responsible for a country's foreign policy and relations."
+}
+
 Now explain the word in the phrase below:
 Word: "{word}"
-Phrase: "{phrase}"`; 
+Phrase: "{phrase}"
+Please output only the JSON object without any additional text or commentary.`; 
