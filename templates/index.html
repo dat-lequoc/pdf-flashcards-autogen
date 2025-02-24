@@ -240,9 +240,18 @@
         function updateCurrentPage(num) {
             if (num !== currentPage) {
                 currentPage = num;
-                document.getElementById('current-page').textContent = `Page: ${num}`;
-                document.getElementById('page-input').value = num;
+                const currentPageDisplay = document.getElementById('current-page');
+                const pageInput = document.getElementById('page-input');
+                currentPageDisplay.textContent = `Page: ${num}`;
+                pageInput.value = num;
                 localStorage.setItem(`lastPage_${currentFileName}`, num);
+
+                // Update progress background for "Go to Page" button based on reading progress.
+                if (pdfDoc && pdfDoc.numPages) {
+                    const fraction = (num / pdfDoc.numPages) * 100;
+                    const goToPageBtn = document.getElementById('go-to-page-btn');
+                    goToPageBtn.style.background = `linear-gradient(to right, #28a745 ${fraction}%, var(--secondary-color) ${fraction}%)`;
+                }
             }
         }
 
@@ -255,12 +264,13 @@
                 }
             }
 
-            // Update current page based on scroll position
+            // Updated: Update current page based on the center of the viewport
             const pages = document.querySelectorAll('.page');
+            const viewportMid = window.innerHeight / 2;
             for (let i = 0; i < pages.length; i++) {
                 const page = pages[i];
                 const rect = page.getBoundingClientRect();
-                if (rect.top >= 0 && rect.bottom <= window.innerHeight) {
+                if (rect.top < viewportMid && rect.bottom > viewportMid) {
                     const newPageNum = parseInt(page.dataset.pageNumber);
                     updateCurrentPage(newPageNum);
                     break;
