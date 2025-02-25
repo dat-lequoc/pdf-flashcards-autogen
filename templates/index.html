@@ -228,10 +228,24 @@
         function goToPage(num) {
             if (num >= 1 && num <= pdfDoc.numPages) {
                 pageNum = num;
-                pdfViewer.innerHTML = '';
-                renderPage(pageNum);
+                pdfViewer.innerHTML = '';  // Clear all pages
+                renderPage(pageNum);  // Render the selected page
+                
+                // Also render a few pages after the selected page for better scrolling experience
+                for (let i = 1; i <= 2; i++) {
+                    if (pageNum + i <= pdfDoc.numPages) {
+                        renderPage(pageNum + i);
+                    }
+                }
+                
                 updateCurrentPage(pageNum);
                 localStorage.setItem(`lastPage_${currentFileName}`, pageNum);
+                
+                // Scroll to the selected page
+                const targetPage = document.querySelector(`.page[data-page-number="${pageNum}"]`);
+                if (targetPage) {
+                    targetPage.scrollIntoView({ behavior: 'smooth' });
+                }
             } else {
                 alert('Invalid page number');
             }
@@ -680,7 +694,7 @@
             csvExportOption.textContent = `Export Flashcards to CSV (${count})`;
             
             jsonExportOption.style.display = count > 0 ? 'block' : 'none';
-            jsonExportOption.textContent = `Export Flashcards to JSON (${count})`;
+            jsonExportOption.textContent = `Export Flashcards to JSONL (${count})`;
         }
 
         function exportToCSV() {
@@ -708,14 +722,23 @@
             document.body.removeChild(link);
         }
 
-        // New function: Export flashcards as JSON
+        // Updated export function: Export flashcards as JSONL with updated column name `translation_answer`
         function exportToJSON() {
             const currentCollection = mode === 'language' ? collectedLanguageFlashcards : collectedFlashcards;
-            const dataStr = JSON.stringify(currentCollection, null, 2);
-            const jsonContent = "data:text/json;charset=utf-8," + encodeURIComponent(dataStr);
+            let output = '';
+            currentCollection.forEach(item => {
+                // Create a copy and update property name from translationAnswer to translation_answer if present
+                const transformedItem = { ...item };
+                if (transformedItem.translationAnswer !== undefined) {
+                    transformedItem.translation_answer = transformedItem.translationAnswer;
+                    delete transformedItem.translationAnswer;
+                }
+                output += JSON.stringify(transformedItem) + "\n";
+            });
+            const jsonContent = "data:text/json;charset=utf-8," + encodeURIComponent(output);
             const link = document.createElement("a");
             link.setAttribute("href", jsonContent);
-            link.setAttribute("download", `${mode}_flashcards.json`);
+            link.setAttribute("download", `${mode}_flashcards.jsonl`);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -794,7 +817,22 @@
 
         function handleGoToPage() {
             const pageInput = document.getElementById('page-input');
-            const pageNumber = parseInt(pageInput.value);
+            const pageInputValue = pageInput.value.trim();
+            
+            // Return early if input is empty
+            if (!pageInputValue) {
+                alert('Please enter a page number');
+                return;
+            }
+            
+            const pageNumber = parseInt(pageInputValue);
+            
+            // Check if the input is a valid number
+            if (isNaN(pageNumber)) {
+                alert('Please enter a valid page number');
+                return;
+            }
+            
             goToPage(pageNumber);
         }
 
@@ -1418,7 +1456,7 @@
             collectionDropbtn.addEventListener('click', function(e) {
                 e.stopPropagation();
                 dropdownContent.classList.toggle('show');
-                this.classList.toggle('active');
+                collectionDropbtn.classList.toggle('active');
             });
             
             document.addEventListener('click', function(e) {
@@ -1437,15 +1475,7 @@
                 e.preventDefault();
                 clearCollection();
             });
-            document.getElementById('export-csv-option').addEventListener('click', function(e) {
-                e.preventDefault();
-                exportToCSV();
-            });
-            document.getElementById('export-json-option').addEventListener('click', function(e) {
-                e.preventDefault();
-                exportToJSON();
-            });
-        });
+        })
 
         // Dark mode toggle functionality
         const darkModeToggle = document.getElementById('dark-mode-toggle');
