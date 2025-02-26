@@ -2,3 +2,8 @@ flask_cors
 flask
 anthropic
 python-dotenv
+
+
+epitran
+gtts
+eng_to_ipa

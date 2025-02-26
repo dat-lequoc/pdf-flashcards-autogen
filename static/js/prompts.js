@@ -1,3 +1,5 @@
+// ng Window Attention, we have significantly reduced computational overhead while
+
 const FLASHCARD_PROMPT = `Generate flashcards as a JSON array where each object has "question" and "answer" keys. The number of flashcards should be proportional to the text's length and complexity, with a minimum of 1 and a maximum of 10. Each question should test a key concept and the answer should be brief but complete. Use <b> tags to emphasize important words or phrases. Cite short code or examples if needed.
 
 Example input: "In parallel computing, load balancing refers to the practice of distributing computational work evenly across multiple processing units. This is crucial for maximizing efficiency and minimizing idle time. Dynamic load balancing adjusts the distribution of work during runtime, while static load balancing determines the distribution before execution begins."

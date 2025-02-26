@@ -8,7 +8,7 @@
 **/__pycache__/
 *.pyc
 .aider*
-
+.env
 
 uploads/
 TODO.txt

@@ -450,6 +450,28 @@
             return await response.json();
         }
 
+        async function getIPATranscription(word, language) {
+            console.log(`Requesting IPA transcription for: '${word}' in ${language}`);
+            try {
+                const response = await fetch('/get_ipa', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        word: word,
+                        language: language
+                    })
+                });
+                const data = await response.json();
+                console.log(`IPA server response for '${word}':`, data);
+                return data.ipa;
+            } catch (error) {
+                console.error(`Error getting IPA for '${word}':`, error);
+                return '';
+            }
+        }
+
         async function generateLanguageFlashcard(word, phrase, targetLanguage) {
             const prompt = document.getElementById('language-prompt').value
                 .replace('{word}', word)
@@ -457,15 +479,43 @@
                 .replace('{targetLanguage}', targetLanguage);
 
             try {
+                // Get IPA transcription while waiting for the LLM response
+                const ipaPromise = getIPATranscription(word, targetLanguage);
+                
+                // Get word audio (gTTS) in parallel
+                const wordAudioPromise = getAudioPromise(word, 'word', targetLanguage);
+                
+                // Get phrase audio (Polly) in parallel
+                const phraseAudioPromise = getAudioPromise(phrase, 'phrase', targetLanguage);
+                
                 const response = await callLLMAPI(prompt);
                 if (response.flashcard) {
                     const flashcard = response.flashcard;
+                    
+                    // Wait for all promises to resolve
+                    const [ipa, wordAudio, phraseAudio] = await Promise.all([
+                        ipaPromise, 
+                        wordAudioPromise, 
+                        phraseAudioPromise
+                    ]);
+                    
+                    // Add logging for IPA completion
+                    if (ipa) {
+                        console.log(`Completed IPA transcription for: ${flashcard.word} -> ${ipa}`);
+                    } else {
+                        console.log(`Failed to get IPA transcription for: ${flashcard.word}`);
+                    }
+                    
                     const formattedFlashcard = {
                         question: flashcard.question,
                         answer: flashcard.answer,
                         word: flashcard.word,
-                        translation: flashcard.translation
+                        translation: flashcard.translation,
+                        ipa: ipa,
+                        wordAudio: wordAudio,
+                        phraseAudio: phraseAudio
                     };
+                    
                     console.log(formattedFlashcard);
                     displayLanguageFlashcard(formattedFlashcard);
                 } else {
@@ -474,6 +524,27 @@
             } catch (error) {
                 console.error('Error calling LLM API:', error);
                 alert('Failed to generate language flashcard. Please check your API key and try again.');
+            }
+        }
+
+        async function getAudioPromise(text, type, language) {
+            try {
+                const response = await fetch('/get_audio', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        word: text,
+                        language: language,
+                        type: type
+                    })
+                });
+                const data = await response.json();
+                return data.audio || '';
+            } catch (error) {
+                console.error(`Error getting ${type} audio:`, error);
+                return '';
             }
         }
 
@@ -597,18 +668,82 @@
             flashcardElement.dataset.word = flashcard.word;
             flashcardElement.dataset.translation = flashcard.translation;
             flashcardElement.dataset.answer = flashcard.answer;
+            flashcardElement.dataset.ipa = flashcard.ipa || '';
+            // Store audio data in the dataset if available
+            flashcardElement.dataset.wordAudio = flashcard.wordAudio || '';
+            flashcardElement.dataset.phraseAudio = flashcard.phraseAudio || '';
+            
             flashcardElement.innerHTML = `
-                    <div style="font-size: 1.2em; margin-bottom: 10px;"><b>${flashcard.word}</b>: ${flashcard.translation}</div>
+                    <div style="font-size: 1.2em; margin-bottom: 10px;">
+                        <b>${flashcard.word}</b>: ${flashcard.translation} 
+                        <button class="pronunciation-btn" title="Listen to pronunciation">🔊</button>
+                    </div>
                     <div>- ${flashcard.answer}</div>
                     <button class="remove-btn">Remove</button>
                 `;
+            
+            // Add event listener for pronunciation button
+            const pronBtn = flashcardElement.querySelector('.pronunciation-btn');
+            pronBtn.addEventListener('click', function() {
+                if (flashcard.wordAudio) {
+                    playAudio(flashcard.wordAudio);
+                } else {
+                    getAndPlayAudio(flashcard.word, 'word');
+                }
+            });
+            
             flashcardElement.querySelector('.remove-btn').addEventListener('click', function () {
                 flashcardElement.remove();
                 updateExportButtonVisibility();
             });
+            
             // Prepend new language flashcard at the top of the container
             flashcardsContainer.insertBefore(flashcardElement, flashcardsContainer.firstChild);
             updateExportButtonVisibility();
+        }
+
+        function playAudio(base64Audio) {
+            const audio = new Audio(`data:audio/mp3;base64,${base64Audio}`);
+            audio.play().catch(e => console.error('Error playing audio:', e));
+        }
+
+        function getAndPlayAudio(text, type = 'word') {
+            const selectedLanguageButton = document.querySelector('#language-buttons .mode-btn.selected');
+            const language = selectedLanguageButton ? selectedLanguageButton.dataset.language : 'English';
+            
+            fetch('/get_audio', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    word: text,
+                    language: language,
+                    type: type
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.audio) {
+                    playAudio(data.audio);
+                    
+                    // Store the audio in the flashcard for future use
+                    const flashcards = document.querySelectorAll('.language-flashcard');
+                    flashcards.forEach(card => {
+                        if ((type === 'word' && card.dataset.word === text) || 
+                            (type === 'phrase' && card.dataset.question === text)) {
+                            if (type === 'word') {
+                                card.dataset.wordAudio = data.audio;
+                            } else {
+                                card.dataset.phraseAudio = data.audio;
+                            }
+                        }
+                    });
+                } else if (data.error) {
+                    console.error('Error getting audio:', data.error);
+                }
+            })
+            .catch(error => console.error('Error:', error));
         }
 
         let flashcardCollectionCount = 0;
@@ -623,10 +758,17 @@
                     const translation = flashcard.dataset.translation;
                     const answer = flashcard.dataset.answer;
                     const question = flashcard.dataset.question;
+                    const ipa = flashcard.dataset.ipa || '';
+                    const wordAudio = flashcard.dataset.wordAudio || '';
+                    const phraseAudio = flashcard.dataset.phraseAudio || '';
+                    
                     return {
                         word: word,
                         phrase: question,
-                        translationAnswer: `${translation.trim()}\n${answer.trim()}`
+                        translationAnswer: `${translation.trim()}\n${answer.trim()}`,
+                        ipa: ipa,
+                        wordAudio: wordAudio,
+                        phraseAudio: phraseAudio
                     };
                 } else {
                     const question = flashcard.querySelector('strong').textContent.slice(3);
@@ -703,11 +845,15 @@
             const removeQuotes = str => str.replace(/"/g, '');
 
             if (mode === 'language') {
-                currentCollection.forEach(({ phrase, translationAnswer }) => {
+                // Add headers for CSV with new fields
+                csvContent += "word;translation;ipa;example;word_audio;phrase_audio\n";
+                
+                currentCollection.forEach(({ word, translationAnswer, ipa, wordAudio, phraseAudio }) => {
                     const [translation, answer] = translationAnswer.split('\n');
-                    csvContent += `${removeQuotes(phrase)};- ${removeQuotes(translation)}<br>- ${removeQuotes(answer)}\n`;
+                    csvContent += `${removeQuotes(word)};${removeQuotes(translation)};${ipa || ''};${removeQuotes(answer)};${wordAudio || ''};${phraseAudio || ''}\n`;
                 });
             } else {
+                csvContent += `question;answer\n`;
                 currentCollection.forEach(({ phrase, translationAnswer }) => {
                     csvContent += `${removeQuotes(phrase)};${removeQuotes(translationAnswer)}\n`;
                 });
@@ -725,8 +871,190 @@
         // Updated export function: Export flashcards as JSONL with updated column name `translation_answer`
         function exportToJSON() {
             const currentCollection = mode === 'language' ? collectedLanguageFlashcards : collectedFlashcards;
+            
+            if (mode === 'language') {
+                // Check and fill missing audio and IPA before export
+                completeMissingAudio(currentCollection)
+                    .then(completedCollection => {
+                        // Once all audio is filled, proceed with export
+                        downloadJSONL(completedCollection);
+                    })
+                    .catch(error => {
+                        console.error('Error completing audio:', error);
+                        // Fall back to exporting without completing audio
+                        alert('Could not complete all audio. Exporting with available audio only.');
+                        downloadJSONL(currentCollection);
+                    });
+            } else {
+                // For regular flashcards, proceed with immediate export
+                downloadJSONL(currentCollection);
+            }
+        }
+
+        // Function to fetch and fill missing audio and IPA
+        async function completeMissingAudio(collection) {
+            const promises = [];
+            const selectedLanguageButton = document.querySelector('#language-buttons .mode-btn.selected');
+            const language = selectedLanguageButton ? selectedLanguageButton.dataset.language : 'English';
+            
+            // Create a copy of the collection that we'll modify
+            const collectionCopy = JSON.parse(JSON.stringify(collection));
+            // Track which flashcards were updated
+            const updatedIndexes = [];
+            
+            for (let i = 0; i < collectionCopy.length; i++) {
+                const flashcard = collectionCopy[i];
+                let updated = false;
+                
+                // Check for missing IPA transcription
+                if (!flashcard.ipa && flashcard.word) {
+                    const ipaPromise = fetchIPA(flashcard.word, language)
+                        .then(ipaData => {
+                            flashcard.ipa = ipaData;
+                            updated = true;
+                            console.log(`Completed IPA transcription for: ${flashcard.word} -> ${ipaData}`);
+                        })
+                        .catch(error => {
+                            console.error(`Failed to get IPA for ${flashcard.word}:`, error);
+                        });
+                    promises.push(ipaPromise);
+                }
+                
+                // If word audio is missing, create a promise to fetch it
+                if (!flashcard.wordAudio && flashcard.word) {
+                    const wordPromise = fetchAudio(flashcard.word, 'word', language)
+                        .then(audioData => {
+                            flashcard.wordAudio = audioData;
+                            updated = true;
+                            console.log(`Completed word audio for: ${flashcard.word}`);
+                        });
+                    promises.push(wordPromise);
+                }
+                
+                // If phrase audio is missing, create a promise to fetch it
+                if (!flashcard.phraseAudio && flashcard.phrase) {
+                    const phrasePromise = fetchAudio(flashcard.phrase, 'phrase', language)
+                        .then(audioData => {
+                            flashcard.phraseAudio = audioData;
+                            updated = true;
+                            console.log(`Completed phrase audio for: ${flashcard.word}`);
+                        });
+                    promises.push(phrasePromise);
+                }
+                
+                // If this flashcard will be updated, add its index to the list
+                if (updated) {
+                    updatedIndexes.push(i);
+                }
+            }
+            
+            // Wait for all audio fetch operations to complete
+            if (promises.length > 0) {
+                // Show a loading indicator
+                const notification = document.createElement('div');
+                notification.textContent = `Filling missing audio (${promises.length} items)...`;
+                notification.style.position = 'fixed';
+                notification.style.top = '20px';
+                notification.style.right = '20px';
+                notification.style.padding = '10px';
+                notification.style.backgroundColor = 'rgba(0, 128, 0, 0.7)';
+                notification.style.color = 'white';
+                notification.style.borderRadius = '5px';
+                notification.style.zIndex = '1000';
+                document.body.appendChild(notification);
+                
+                try {
+                    await Promise.all(promises);
+                    
+                    // Update the original collection with the filled audio data
+                    updatedIndexes.forEach(index => {
+                        collectedLanguageFlashcards[index] = collectionCopy[index];
+                    });
+                    
+                    // Save the updated collection to localStorage
+                    localStorage.setItem('collectedLanguageFlashcards', JSON.stringify(collectedLanguageFlashcards));
+                    
+                    notification.textContent = 'Audio completion finished!';
+                    setTimeout(() => {
+                        document.body.removeChild(notification);
+                    }, 3000);
+                } catch (error) {
+                    notification.textContent = 'Error filling audio!';
+                    notification.style.backgroundColor = 'rgba(255, 0, 0, 0.7)';
+                    setTimeout(() => {
+                        document.body.removeChild(notification);
+                    }, 3000);
+                    throw error;
+                }
+            } else {
+                console.log('No missing audio to fill');
+            }
+            
+            // Return the updated collection
+            return collectionCopy;
+        }
+
+        // Add new function to fetch IPA data
+        function fetchIPA(word, language) {
+            return new Promise((resolve, reject) => {
+                fetch('/get_ipa', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        word: word,
+                        language: language
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.ipa || data.ipa === '') {
+                        resolve(data.ipa);
+                    } else {
+                        reject(new Error(data.error || 'Failed to get IPA transcription'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching IPA:', error);
+                    reject(error);
+                });
+            });
+        }
+
+        // Function to fetch audio data
+        function fetchAudio(text, type, language) {
+            return new Promise((resolve, reject) => {
+                fetch('/get_audio', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        word: text,
+                        language: language,
+                        type: type
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.audio) {
+                        resolve(data.audio);
+                    } else {
+                        reject(new Error(data.error || 'Failed to get audio'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching audio:', error);
+                    reject(error);
+                });
+            });
+        }
+
+        // Function to download the JSONL file
+        function downloadJSONL(collection) {
             let output = '';
-            currentCollection.forEach(item => {
+            collection.forEach(item => {
                 // Create a copy and update property name from translationAnswer to translation_answer if present
                 const transformedItem = { ...item };
                 if (transformedItem.translationAnswer !== undefined) {
@@ -735,6 +1063,7 @@
                 }
                 output += JSON.stringify(transformedItem) + "\n";
             });
+            
             const jsonContent = "data:text/json;charset=utf-8," + encodeURIComponent(output);
             const link = document.createElement("a");
             link.setAttribute("href", jsonContent);

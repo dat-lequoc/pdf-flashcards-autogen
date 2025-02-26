@@ -6,6 +6,10 @@ from datetime import datetime
 import base64
 from llm_utils import generate_completion
 import re
+import epitran
+from gtts import gTTS
+import io
+from ipa_speech import IPATranscriber
 
 app = Flask(__name__)
 
@@ -16,6 +20,17 @@ UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER', '/tmp/uploads')
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+# Initialize epitran for different languages
+epitran_models = {
+    'English': epitran.Epitran('eng-Latn'),
+    'French': epitran.Epitran('fra-Latn'),
+    # Add more languages as needed
+}
+
+# Initialize IPATranscriber for better IPA and audio generation
+ipa_transcriber = IPATranscriber()
+
 @app.route('/favicon.ico')
 def favicon():
     return send_from_directory(os.path.join(app.root_path, 'static'),
@@ -115,6 +130,94 @@ def generate_flashcard():
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@app.route('/get_ipa', methods=['POST'])
+def get_ipa():
+    data = request.json
+    word = data.get('word', '')
+    language = data.get('language', 'English')
+    
+    print(f"GET_IPA REQUEST: word='{word}', language='{language}'")
+    
+    try:
+        # First try using the ipa_transcriber for improved IPA
+        if language == 'English':
+            ipa = ipa_transcriber.get_ipa(word)
+            print(f"IPATranscriber result for '{word}': '{ipa}'")
+            if ipa:
+                return jsonify({'ipa': ipa})
+        
+        # Fallback to epitran if needed
+        if language in epitran_models:
+            ipa = epitran_models[language].transliterate(word)
+            print(f"Epitran fallback for '{word}': '{ipa}'")
+            return jsonify({'ipa': ipa})
+        else:
+            print(f"Language '{language}' not supported for IPA")
+            return jsonify({'ipa': '', 'error': f'Language {language} not supported for IPA'})
+    except Exception as e:
+        print(f"ERROR in /get_ipa: {str(e)}")
+        return jsonify({'ipa': '', 'error': str(e)})
+
+@app.route('/get_audio', methods=['POST'])
+def get_audio():
+    data = request.json
+    word = data.get('word', '')
+    language = data.get('language', 'en')
+    audio_type = data.get('type', 'word')  # 'word' or 'phrase'
+    
+    # Map language names to language codes for gTTS
+    language_codes = {
+        'English': 'en',
+        'French': 'fr',
+        # Add more languages as needed
+    }
+    
+    lang_code = language_codes.get(language, 'en')
+    
+    try:
+        if audio_type == 'word':
+            # Use gTTS for word pronunciation
+            audio_data = ipa_transcriber.text_to_speech_gtts(
+                word, 
+                lang=lang_code, 
+                return_base64=True
+            )
+        else:
+            # Use AWS Polly for phrase pronunciation (better quality)
+            # Choose an appropriate voice based on language
+            voice_id = 'Joanna' if lang_code == 'en' else 'Celine'  # Celine for French
+            audio_data = ipa_transcriber.text_to_speech_polly(
+                word,
+                voice_id=voice_id,
+                return_base64=True
+            )
+        
+        return jsonify({'audio': audio_data})
+    except Exception as e:
+        return jsonify({'error': str(e)})
+
+@app.route('/test_ipa')
+def test_ipa():
+    test_words = ["hello", "world", "test"]
+    results = {}
+    
+    for word in test_words:
+        try:
+            # Test eng_to_ipa
+            eng_ipa = ipa_transcriber.get_ipa(word)
+            # Test epitran
+            epi_ipa = epitran_models['English'].transliterate(word)
+            
+            results[word] = {
+                "eng_to_ipa": eng_ipa,
+                "epitran": epi_ipa
+            }
+        except Exception as e:
+            results[word] = {"error": str(e)}
+            
+    return jsonify(results)
+
 if __name__ == '__main__':
     # Use environment variables to determine the run mode
     debug_mode = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
