@@ -12,6 +12,7 @@ from datetime import datetime
 import eng_to_ipa
 import time
 import boto3
+import re
 from botocore.exceptions import BotoCoreError, ClientError
 from dotenv import load_dotenv
 
@@ -31,6 +32,17 @@ class IPATranscriber:
             aws_secret_access_key=os.environ.get('AWS_SECRET_ACCESS_KEY')
         )
     
+    def strip_html_tags(self, text):
+        """Remove HTML tags from text.
+        
+        Args:
+            text (str): Text that may contain HTML tags
+            
+        Returns:
+            str: Text with HTML tags removed
+        """
+        return re.sub(r'<[^>]+>', '', text)
+    
     def get_ipa(self, word):
         """Convert English text to IPA transcription.
         
@@ -41,8 +53,11 @@ class IPATranscriber:
             str: IPA transcription or None if error
         """
         try:
+            # Remove HTML tags before transcription
+            clean_word = self.strip_html_tags(word)
+            
             # Get IPA transcription
-            ipa = eng_to_ipa.convert(word)
+            ipa = eng_to_ipa.convert(clean_word)
             return ipa
         except Exception as e:
             print(f"Error with eng_to_ipa: {e}")
@@ -63,6 +78,9 @@ class IPATranscriber:
             str: Path to saved audio file or base64 encoded audio string
         """
         try:
+            # Remove HTML tags before text-to-speech
+            clean_text = self.strip_html_tags(text)
+            
             # If no save path is provided and we're not returning base64, create a path
             if save_path is None and not return_base64:
                 timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
@@ -72,7 +90,7 @@ class IPATranscriber:
             
             # Request speech synthesis
             response = self.polly_client.synthesize_speech(
-                Text=text,
+                Text=clean_text,
                 OutputFormat=output_format,
                 VoiceId=voice_id
             )
@@ -116,6 +134,9 @@ class IPATranscriber:
             str: Path to saved audio file or base64 encoded audio string
         """
         try:
+            # Remove HTML tags before text-to-speech
+            clean_text = self.strip_html_tags(text)
+            
             # Import gTTS here to make it optional
             from gtts import gTTS
             import io
@@ -127,7 +148,7 @@ class IPATranscriber:
             
             # Create TTS audio
             start_time = time.time()
-            tts = gTTS(text, lang=lang)
+            tts = gTTS(clean_text, lang=lang)
             
             if return_base64:
                 # Save to BytesIO object instead of file

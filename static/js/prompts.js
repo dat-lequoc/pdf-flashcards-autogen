@@ -55,21 +55,20 @@ Example output for malformed input:
   "answer": "The government minister responsible for a country's foreign policy and relations."
 }
 
+Example input for incomplete phrase:
+Word: "computational overhead"
+Phrase: "ng Window Attention, we have significantly reduced computational overhead while"
+
+Example output:
+{
+  "word": "computational overhead",
+  "translation": "chi phí tính toán",
+  "question": "Using Sliding Window Attention, we have significantly reduced <b>computational overhead</b> while maintaining model accuracy.",
+  "answer": "The additional computing resources (time, memory, processing power) required to perform an operation or run an algorithm."
+}
+
+
 Now explain the word in the phrase below:
 Word: "{word}"
 Phrase: "{phrase}"
 Please output only the JSON object without any additional text or commentary.`; 
-
-/*
-Example input for multiple words:
-Word: "better suited for the region than some of the more traditional ones embraced by agribusiness."
-Phrase: "change and better suited for the region than some of"
-
-Example output:
-{
-  "word": "better suited for the region than some of the more traditional ones embraced by agribusiness.",
-  "translation": "thích hợp hơn cho khu vực hơn là một số trong số những phương pháp truyền thống được chấp nhận bởi ngành nông nghiệp",
-  "question": "The proposal is <b>better suited for the region than some of the more traditional ones embraced by agribusiness</b>.",
-  "answer": "It means that the proposal fits the local context better compared to older, conventional methods."
-}
-*/
