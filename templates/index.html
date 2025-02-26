@@ -327,33 +327,69 @@
 
         function speakWord(word) {
             console.log('Attempting to speak word:', word);
-
-            const utterance = new SpeechSynthesisUtterance(word);
-            utterance.rate = 0.8; // Slightly slower rate for clarity
-
-            let englishVoice;
-            if (voices.length > 1) {
-                englishVoice = voices[2];
-                console.log('Using second voice in the list:', englishVoice.name);
-            } else {
-                englishVoice = voices.find(voice => voice.name === "Microsoft Zira Desktop - English (United States)") ||
-                    voices.find(voice => /en/i.test(voice.lang));
-                if (englishVoice) {
-                    console.log('Using voice:', englishVoice.name);
-                } else {
-                    console.log('No suitable English voice found. Using default voice.');
-                }
+            
+            // Cancel any ongoing speech
+            window.speechSynthesis.cancel();
+            
+            // Add a prefix of silence to ensure the beginning doesn't get cut off
+            const utterance = new SpeechSynthesisUtterance(". " + word);
+            utterance.rate = 0.8;
+            utterance.volume = 1.0;
+            
+            // Ensure we have the latest list of voices
+            const currentVoices = window.speechSynthesis.getVoices();
+            
+            // Better voice selection strategy
+            let englishVoice = currentVoices.find(voice => 
+                voice.lang.startsWith('en-') && voice.localService === true
+            );
+            
+            // If no local English voice, try any English voice
+            if (!englishVoice) {
+                englishVoice = currentVoices.find(voice => voice.lang.startsWith('en-'));
             }
-
+            
+            // Fallback to a default voice
+            if (!englishVoice && currentVoices.length > 0) {
+                englishVoice = currentVoices[0];
+            }
+            
             if (englishVoice) {
                 utterance.voice = englishVoice;
+                console.log('Using voice:', englishVoice.name, englishVoice.lang);
             }
-
-            try {
-                speechSynthesis.speak(utterance);
-            } catch (error) {
-                console.error('Error initiating speech:', error);
+            
+            // Force the audio context to resume if it's suspended
+            if (typeof window.AudioContext !== 'undefined' || typeof window.webkitAudioContext !== 'undefined') {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                const audioContext = new AudioContext();
+                if (audioContext.state === 'suspended') {
+                    audioContext.resume();
+                }
             }
+            
+            // Prepare the speech synthesis system
+            setTimeout(() => {
+                try {
+                    // Speak twice - first with an empty string to "wake up" the speech system
+                    const wakeup = new SpeechSynthesisUtterance('');
+                    window.speechSynthesis.speak(wakeup);
+                    
+                    // Then speak the actual word after a slight delay
+                    wakeup.onend = () => {
+                        window.speechSynthesis.speak(utterance);
+                    };
+                    
+                    // Fallback in case onend doesn't fire
+                    setTimeout(() => {
+                        if (!utterance.speaking) {
+                            window.speechSynthesis.speak(utterance);
+                        }
+                    }, 100);
+                } catch (error) {
+                    console.error('Error speaking:', error);
+                }
+            }, 100);
         }
 
         function getPhrase(range) {
@@ -451,7 +487,6 @@
         }
 
         async function getIPATranscription(word, language) {
-            console.log(`Requesting IPA transcription for: '${word}' in ${language}`);
             try {
                 const response = await fetch('/get_ipa', {
                     method: 'POST',
@@ -498,13 +533,6 @@
                         wordAudioPromise, 
                         phraseAudioPromise
                     ]);
-                    
-                    // Add logging for IPA completion
-                    if (ipa) {
-                        console.log(`Completed IPA transcription for: ${flashcard.word} -> ${ipa}`);
-                    } else {
-                        console.log(`Failed to get IPA transcription for: ${flashcard.word}`);
-                    }
                     
                     const formattedFlashcard = {
                         question: flashcard.question,
@@ -912,7 +940,6 @@
                         .then(ipaData => {
                             flashcard.ipa = ipaData;
                             updated = true;
-                            console.log(`Completed IPA transcription for: ${flashcard.word} -> ${ipaData}`);
                         })
                         .catch(error => {
                             console.error(`Failed to get IPA for ${flashcard.word}:`, error);
@@ -1822,6 +1849,63 @@
             darkModeToggle.textContent = isDarkMode ? '☀️' : '🌙';
             localStorage.setItem('darkMode', isDarkMode);
         });
+
+        // Add this function to debug voices
+        function debugVoices() {
+            // Create a dialog to show voices
+            const dialog = document.createElement('dialog');
+            dialog.style.width = '80%';
+            dialog.style.height = '80%';
+            dialog.style.padding = '20px';
+            dialog.style.overflow = 'auto';
+            
+            let content = '<h2>Available Speech Synthesis Voices</h2>';
+            content += '<button id="close-dialog">Close</button>';
+            content += '<table style="width:100%; border-collapse:collapse; margin-top:20px;">';
+            content += '<tr><th style="border:1px solid #ccc; padding:8px;">Index</th><th style="border:1px solid #ccc; padding:8px;">Name</th><th style="border:1px solid #ccc; padding:8px;">Lang</th><th style="border:1px solid #ccc; padding:8px;">Local/Remote</th><th style="border:1px solid #ccc; padding:8px;">Test</th></tr>';
+            
+            const allVoices = window.speechSynthesis.getVoices();
+            allVoices.forEach((voice, index) => {
+                content += `<tr>
+                    <td style="border:1px solid #ccc; padding:8px;">${index}</td>
+                    <td style="border:1px solid #ccc; padding:8px;">${voice.name}</td>
+                    <td style="border:1px solid #ccc; padding:8px;">${voice.lang}</td>
+                    <td style="border:1px solid #ccc; padding:8px;">${voice.localService ? 'Local' : 'Remote'}</td>
+                    <td style="border:1px solid #ccc; padding:8px;"><button class="test-voice" data-index="${index}">Test</button></td>
+                </tr>`;
+            });
+            
+            content += '</table>';
+            dialog.innerHTML = content;
+            document.body.appendChild(dialog);
+            dialog.showModal();
+            
+            // Add event listeners
+            dialog.querySelector('#close-dialog').addEventListener('click', () => {
+                dialog.close();
+                dialog.remove();
+            });
+            
+            dialog.querySelectorAll('.test-voice').forEach(button => {
+                button.addEventListener('click', () => {
+                    const index = parseInt(button.dataset.index);
+                    const voice = allVoices[index];
+                    const utterance = new SpeechSynthesisUtterance("This is a test of this voice");
+                    utterance.voice = voice;
+                    speechSynthesis.speak(utterance);
+                });
+            });
+        }
+
+        // Add a debug button near the top right
+        const debugButton = document.createElement('button');
+        debugButton.textContent = "Debug Voices";
+        debugButton.style.position = "fixed";
+        debugButton.style.top = "10px";
+        debugButton.style.right = "100px";
+        debugButton.style.zIndex = "9999";
+        debugButton.onclick = debugVoices;
+        document.body.appendChild(debugButton);
     </script>
 </body>
 

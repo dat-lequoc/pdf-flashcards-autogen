@@ -64,7 +64,7 @@ Example output:
   "word": "computational overhead",
   "translation": "chi phí tính toán",
   "question": "Using Sliding Window Attention, we have significantly reduced <b>computational overhead</b> while maintaining model accuracy.",
-  "answer": "The additional computing resources (time, memory, processing power) required to perform an operation or run an algorithm."
+  "answer": "The additional computing resources required to perform an operation or run an algorithm."
 }
 
 
