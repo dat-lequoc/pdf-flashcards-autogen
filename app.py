@@ -117,12 +117,22 @@ def generate_flashcard():
             except Exception as parse_err:
                 return jsonify({'error': 'JSON parsing error in flashcard mode: ' + str(parse_err)})
         elif mode == 'explain':
+            # For explanation mode, try parsing as JSON first, but always fall back to the raw content
             try:
-                # Try loading JSON with an "explanation" key; fallback to plain text if not provided
-                parsed = json.loads(content)
-                explanation = parsed.get('explanation', content)
-                return jsonify({'explanation': explanation})
+                # First try to see if it's a JSON object with an "explanation" key
+                json_match = re.search(r'\{[\s\S]*\}', content)
+                if json_match:
+                    json_text = json_match.group(0)
+                    parsed = json.loads(json_text)
+                    if 'explanation' in parsed:
+                        return jsonify({'explanation': parsed['explanation']})
+                
+                # If we get here, either the JSON parsing failed or there was no "explanation" key
+                # Just return the raw content as the explanation
+                return jsonify({'explanation': content})
             except Exception as parse_err:
+                # If JSON parsing fails, return the raw content
+                print("Using raw content for explanation: ", parse_err)
                 return jsonify({'explanation': content})
         else:
             return jsonify({'error': 'Invalid mode'}), 400

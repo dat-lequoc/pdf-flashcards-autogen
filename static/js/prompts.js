@@ -23,7 +23,7 @@ const EXPLAIN_PROMPT = `Explain the following text in simple terms, focusing on 
 
 Example output:
 {
-  "explanation": "Load balancing is a technique in parallel computing that ensures work is distributed evenly across different processing units. Think of it like distributing tasks among team members - when done well, everyone has a fair amount of work and the team is more efficient. There are two main approaches: dynamic balancing (adjusting work distribution as needed) and static balancing (planning the distribution ahead of time)."
+  "explanation": "# Load Balancing in Parallel Computing\n\nLoad balancing is a technique in parallel computing that ensures work is distributed evenly across different processing units. \n\nThink of it like distributing tasks among team members - when done well, everyone has a fair amount of work and the team is more efficient.\n\n## Two Main Approaches:\n\n- **Dynamic balancing**: Adjusting work distribution as needed\n- **Static balancing**: Planning the distribution ahead of time"
 }
 
 Now explain this text:

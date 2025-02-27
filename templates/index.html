@@ -8,6 +8,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.9.359/pdf.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.5/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/epubjs/dist/epub.min.js"></script>
+    <!-- Add Showdown library for Markdown conversion -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
     <link rel="stylesheet" href="/static/css/styles.css">
     <script src="/static/js/prompts.js"></script>
     <script src="/static/js/models.js"></script>
@@ -311,7 +313,8 @@
                 currentPage = num;
                 const currentPageDisplay = document.getElementById('current-page');
                 const pageInput = document.getElementById('page-input');
-                currentPageDisplay.textContent = `Page: ${num}`;
+                // Update to show both current page and total pages
+                currentPageDisplay.innerHTML = `Page: ${num} <span style="color: #999;">/ ${pdfDoc ? pdfDoc.numPages : '?'}</span>`;
                 pageInput.value = num;
                 localStorage.setItem(`lastPage_${currentFileName}`, num);
 
@@ -1373,6 +1376,12 @@
                 document.getElementById('language-prompt').style.display = mode === 'language' ? 'block' : 'none';
                 submitBtn.style.display = 'block';
                 
+                // For language mode, make sure to reinitialize the language selection
+                if (mode === 'language') {
+                    initializeLanguageSelection();
+                    updateLanguageIndicator();
+                }
+                
                 // Hide all flashcards first
                 document.querySelectorAll('.flashcard').forEach(card => {
                     card.style.display = 'none';
@@ -1389,6 +1398,17 @@
             });
         });
 
+        // Add this function to update the language indicator in the UI
+        function updateLanguageIndicator() {
+            const selectedLanguageButton = document.querySelector('#language-buttons .mode-btn.selected');
+            const currentLanguage = selectedLanguageButton ? selectedLanguageButton.dataset.language : 'English';
+            const submitBtn = document.getElementById('submit-btn');
+            
+            // Add language indicator to the submit button
+            submitBtn.innerHTML = `Generate <span style="font-size: 0.8em; color: #666; margin-left: 5px;">(${currentLanguage})</span>`;
+        }
+
+        // Update the languageButtons event listener to call updateLanguageIndicator
         const languageButtons = document.querySelectorAll('#language-buttons .mode-btn');
         languageButtons.forEach(button => {
             button.addEventListener('click', function (event) {
@@ -1397,6 +1417,8 @@
                 this.classList.add('selected');
                 const targetLanguage = this.dataset.language;
                 saveLanguageChoice(targetLanguage);
+                // Update the language indicator
+                updateLanguageIndicator();
                 // Ensure the Language mode button remains selected
                 document.querySelector('.mode-btn[data-mode="language"]').classList.add('selected');
                 // Keep language buttons visible and Generate button visible
@@ -1990,6 +2012,9 @@
                     }
                 }
             }
+            
+            // Add this line at the end of the function
+            updateLanguageIndicator();
         }
 
         fileInput.addEventListener('change', function (e) {
