@@ -1560,11 +1560,25 @@
         }
 
         function setLanguageButton(language) {
+            console.log('Setting language button to:', language);
             const languageButton = document.querySelector(`#language-buttons .mode-btn[data-language="${language}"]`);
             if (languageButton) {
+                const languageButtons = document.querySelectorAll('#language-buttons .mode-btn');
                 languageButtons.forEach(btn => btn.classList.remove('selected'));
                 languageButton.classList.add('selected');
+                return true;
+            } else {
+                console.warn(`Language button for "${language}" not found`);
+                // Fallback to English if the requested language button doesn't exist
+                const englishButton = document.querySelector('#language-buttons .mode-btn[data-language="English"]');
+                if (englishButton) {
+                    const languageButtons = document.querySelectorAll('#language-buttons .mode-btn');
+                    languageButtons.forEach(btn => btn.classList.remove('selected'));
+                    englishButton.classList.add('selected');
+                    return true;
+                }
             }
+            return false;
         }
 
         submitBtn.addEventListener('click', function() {
@@ -1586,6 +1600,12 @@
                             const targetLanguage = selectedLanguageButton.dataset.language;
                             const phrase = getPhrase(range, selectedText);
                             generateLanguageFlashcard(selectedText, phrase, targetLanguage);
+                            speakWord(selectedText);
+                        } else {
+                            // Ultimate fallback if still no language button is selected
+                            const fallbackLanguage = 'English';
+                            console.log('No language button found, using fallback:', fallbackLanguage);
+                            generateLanguageFlashcard(selectedText, getPhrase(range, selectedText), fallbackLanguage);
                             speakWord(selectedText);
                         }
                     } else {
@@ -1915,34 +1935,62 @@
             document.getElementById('explain-prompt').style.display = 'none';
             document.getElementById('language-prompt').style.display = 'block';
 
-            // Set default language to English if not already set
-            if (!localStorage.getItem('selectedLanguage')) {
-                saveLanguageChoice('English');
-            }
-
-            // Load and set the saved language choice
-            const savedLanguage = loadLanguageChoice();
-            
-            // Ensure we have access to the language buttons
-            const languageButtons = document.querySelectorAll('#language-buttons .mode-btn');
-            languageButtons.forEach(btn => btn.classList.remove('selected'));
-            
-            // First try to find the button for the saved language
-            const savedLanguageButton = document.querySelector(`#language-buttons .mode-btn[data-language="${savedLanguage}"]`);
-            if (savedLanguageButton) {
-                savedLanguageButton.classList.add('selected');
-            } else {
-                // Fall back to English if saved language button not found
-                const englishButton = document.querySelector('#language-buttons .mode-btn[data-language="English"]');
-                if (englishButton) {
-                    englishButton.classList.add('selected');
-                }
-            }
+            // IMPROVED: Initialize language selection
+            initializeLanguageSelection();
             
             // Make sure export buttons and collection count are properly initialized
             updateExportButtonVisibility();
             updateAddToCollectionButtonText();
         };
+
+        // New function to handle language selection initialization
+        function initializeLanguageSelection() {
+            // Set default language to English if not already set
+            if (!localStorage.getItem('selectedLanguage')) {
+                saveLanguageChoice('English');
+            }
+
+            // Get the saved language (defaults to English)
+            const savedLanguage = loadLanguageChoice();
+            console.log('Initializing language selection, saved language:', savedLanguage);
+            
+            // Ensure language buttons are visible
+            document.getElementById('language-buttons').style.display = 'flex';
+            
+            // Clear all selections first
+            document.querySelectorAll('#language-buttons .mode-btn').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+            
+            // Try to select the saved language button
+            let languageSelected = false;
+            const savedLanguageButton = document.querySelector(`#language-buttons .mode-btn[data-language="${savedLanguage}"]`);
+            
+            if (savedLanguageButton) {
+                savedLanguageButton.classList.add('selected');
+                languageSelected = true;
+                console.log('Selected saved language button:', savedLanguage);
+            } 
+            
+            // If no language was selected, default to English
+            if (!languageSelected) {
+                const englishButton = document.querySelector('#language-buttons .mode-btn[data-language="English"]');
+                if (englishButton) {
+                    englishButton.classList.add('selected');
+                    console.log('Defaulting to English language');
+                    saveLanguageChoice('English');
+                } else {
+                    console.warn('Could not find English language button');
+                    // If English button doesn't exist, select the first available language button
+                    const firstLanguageButton = document.querySelector('#language-buttons .mode-btn');
+                    if (firstLanguageButton) {
+                        firstLanguageButton.classList.add('selected');
+                        saveLanguageChoice(firstLanguageButton.dataset.language);
+                        console.log('Selected first available language:', firstLanguageButton.dataset.language);
+                    }
+                }
+            }
+        }
 
         fileInput.addEventListener('change', function (e) {
             const file = e.target.files[0];
