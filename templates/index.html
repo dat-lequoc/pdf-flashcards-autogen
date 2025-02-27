@@ -728,6 +728,7 @@
             // Display in right panel
             const explanationElement = document.createElement('div');
             explanationElement.className = 'explanation';
+            explanationElement.dataset.mode = 'explain';
             explanationElement.innerHTML = `
                 <h3>Explanation</h3>
                 <div class="explanation-content">${explanation}</div>
@@ -768,6 +769,7 @@
             flashcards.forEach(flashcard => {
                 const flashcardElement = document.createElement('div');
                 flashcardElement.className = 'flashcard';
+                flashcardElement.dataset.mode = mode;
                 flashcardElement.innerHTML = `
                     <strong>Q: ${flashcard.question}</strong><br>
                     A: ${flashcard.answer}
@@ -786,6 +788,7 @@
         function displayLanguageFlashcard(flashcard) {
             const flashcardElement = document.createElement('div');
             flashcardElement.className = 'flashcard language-flashcard';
+            flashcardElement.dataset.mode = 'language';
             flashcardElement.dataset.question = flashcard.question;
             flashcardElement.dataset.word = flashcard.word;
             flashcardElement.dataset.translation = flashcard.translation;
@@ -872,9 +875,11 @@
         let languageCollectionCount = 0;
         let collectedFlashcards = [];
         let collectedLanguageFlashcards = [];
+        let collectedExplanations = [];
+        let explanationCollectionCount = 0;
 
         function addToCollection() {
-            const newFlashcards = Array.from(document.querySelectorAll('.flashcard:not(.in-collection)')).map(flashcard => {
+            const newFlashcards = Array.from(document.querySelectorAll(`.flashcard[data-mode="${mode}"]:not(.in-collection)`)).map(flashcard => {
                 if (flashcard.classList.contains('language-flashcard')) {
                     const word = flashcard.dataset.word;
                     const translation = flashcard.dataset.translation;
@@ -905,6 +910,9 @@
             if (mode === 'language') {
                 collectedLanguageFlashcards = collectedLanguageFlashcards.concat(newFlashcards);
                 updateCollectionCount(newFlashcards.length, 'language');
+            } else if (mode === 'explain') {
+                collectedExplanations = collectedExplanations.concat(newFlashcards);
+                updateCollectionCount(newFlashcards.length, 'explain');
             } else {
                 collectedFlashcards = collectedFlashcards.concat(newFlashcards);
                 updateCollectionCount(newFlashcards.length, 'flashcard');
@@ -914,7 +922,7 @@
         }
 
         function clearDisplayedFlashcards() {
-            flashcardsContainer.innerHTML = '';
+            document.querySelectorAll(`.flashcard[data-mode="${mode}"]`).forEach(el => el.remove());
         }
 
         function updateCollectionCount(change, collectionType) {
@@ -922,6 +930,10 @@
                 languageCollectionCount += change;
                 localStorage.setItem('languageCollectionCount', languageCollectionCount);
                 localStorage.setItem('collectedLanguageFlashcards', JSON.stringify(collectedLanguageFlashcards));
+            } else if (collectionType === 'explain') {
+                explanationCollectionCount += change;
+                localStorage.setItem('explanationCollectionCount', explanationCollectionCount);
+                localStorage.setItem('collectedExplanations', JSON.stringify(collectedExplanations));
             } else {
                 flashcardCollectionCount += change;
                 localStorage.setItem('flashcardCollectionCount', flashcardCollectionCount);
@@ -931,9 +943,10 @@
         }
 
         function updateAddToCollectionButtonText() {
-            var addToCollectionOption = document.getElementById('add-to-collection-option');
-            var count = mode === 'language' ? languageCollectionCount : flashcardCollectionCount;
-            addToCollectionOption.textContent = `Add to Collection (${count})`;
+            var count = mode === 'language' ? languageCollectionCount : 
+                        mode === 'explain' ? explanationCollectionCount : 
+                        flashcardCollectionCount;
+            document.getElementById('add-to-collection-option').textContent = `Add to Collection (${count})`;
         }
 
         // Initialize collection counts and flashcards from localStorage
@@ -941,6 +954,8 @@
         languageCollectionCount = parseInt(localStorage.getItem('languageCollectionCount')) || 0;
         collectedFlashcards = JSON.parse(localStorage.getItem('collectedFlashcards')) || [];
         collectedLanguageFlashcards = JSON.parse(localStorage.getItem('collectedLanguageFlashcards')) || [];
+        explanationCollectionCount = parseInt(localStorage.getItem('explanationCollectionCount')) || 0;
+        collectedExplanations = JSON.parse(localStorage.getItem('collectedExplanations')) || [];
         updateAddToCollectionButtonText();
         updateExportButtonVisibility();
 
@@ -952,7 +967,8 @@
         function updateExportButtonVisibility() {
             var csvExportOption = document.getElementById('export-csv-option');
             var jsonExportOption = document.getElementById('export-json-option');
-            var currentCollection = mode === 'language' ? collectedLanguageFlashcards : collectedFlashcards;
+            var currentCollection = mode === 'language' ? collectedLanguageFlashcards : 
+                                    mode === 'explain' ? collectedExplanations : collectedFlashcards;
             var count = currentCollection.length;
             
             csvExportOption.style.display = count > 0 ? 'block' : 'none';
@@ -964,7 +980,8 @@
 
         function exportToCSV() {
             let csvContent = "data:text/csv;charset=utf-8,";
-            const currentCollection = mode === 'language' ? collectedLanguageFlashcards : collectedFlashcards;
+            const currentCollection = mode === 'language' ? collectedLanguageFlashcards : 
+                                    mode === 'explain' ? collectedExplanations : collectedFlashcards;
             const removeQuotes = str => str.replace(/"/g, '');
 
             if (mode === 'language') {
@@ -993,7 +1010,8 @@
 
         // Updated export function: Export flashcards as JSONL with updated column name `translation_answer`
         function exportToJSON() {
-            const currentCollection = mode === 'language' ? collectedLanguageFlashcards : collectedFlashcards;
+            const currentCollection = mode === 'language' ? collectedLanguageFlashcards : 
+                                    mode === 'explain' ? collectedExplanations : collectedFlashcards;
             
             if (mode === 'language') {
                 // Check and fill missing audio and IPA before export
@@ -1212,6 +1230,11 @@
                     languageCollectionCount = 0;
                     localStorage.removeItem('collectedLanguageFlashcards');
                     localStorage.removeItem('languageCollectionCount');
+                } else if (mode === 'explain') {
+                    collectedExplanations = [];
+                    explanationCollectionCount = 0;
+                    localStorage.removeItem('collectedExplanations');
+                    localStorage.removeItem('explanationCollectionCount');
                 } else {
                     collectedFlashcards = [];
                     flashcardCollectionCount = 0;
@@ -1349,6 +1372,16 @@
                 document.getElementById('explain-prompt').style.display = mode === 'explain' ? 'block' : 'none';
                 document.getElementById('language-prompt').style.display = mode === 'language' ? 'block' : 'none';
                 submitBtn.style.display = 'block';
+                
+                // Hide all flashcards first
+                document.querySelectorAll('.flashcard').forEach(card => {
+                    card.style.display = 'none';
+                });
+                
+                // Show only flashcards matching current mode
+                document.querySelectorAll(`.flashcard[data-mode="${mode}"]`).forEach(card => {
+                    card.style.display = 'block';
+                });
                 
                 // Update the collection button text and export button visibility
                 updateAddToCollectionButtonText();
