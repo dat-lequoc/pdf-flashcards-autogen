@@ -78,8 +78,14 @@ class IPATranscriber:
             str: Path to saved audio file or base64 encoded audio string
         """
         try:
+            # Check for empty text
+            if not text or text.strip() == '':
+                print("Warning: Empty text provided to text_to_speech_polly")
+                return None
+            
             # Remove HTML tags before text-to-speech
             clean_text = self.strip_html_tags(text)
+            print(f"Polly synthesizing: '{clean_text}'")
             
             # If no save path is provided and we're not returning base64, create a path
             if save_path is None and not return_base64:

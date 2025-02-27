@@ -89,7 +89,6 @@ def generate_flashcard():
     try:
         # Use llm_utils to generate completion with the selected model
         content = generate_completion(prompt, model=model)
-        print(prompt)
         print(content)
 
         if mode == 'language':
@@ -195,6 +194,7 @@ def get_audio():
         
         return jsonify({'audio': audio_data})
     except Exception as e:
+        print(f"Error generating audio: {str(e)}")
         return jsonify({'error': str(e)})
 
 @app.route('/test_ipa')
@@ -217,6 +217,27 @@ def test_ipa():
             results[word] = {"error": str(e)}
             
     return jsonify(results)
+
+@app.route('/remove_recent_file', methods=['POST'])
+def remove_recent_file():
+    data = request.json
+    filename = data.get('filename')
+    
+    if not filename:
+        return jsonify({'success': False, 'error': 'No filename provided'}), 400
+    
+    try:
+        # Read the recent files from localStorage
+        # Note: We're not actually deleting the file, just removing it from the recent files list
+        recent_files = get_recent_files()
+        recent_files = [f for f in recent_files if f['filename'] != filename]
+        
+        # Here you could optionally save the updated list to a server-side storage
+        # For now, we just return success and let the client update its localStorage
+        
+        return jsonify({'success': True, 'message': f'Removed {filename} from recent files'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 if __name__ == '__main__':
     # Use environment variables to determine the run mode

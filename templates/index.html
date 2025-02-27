@@ -11,6 +11,57 @@
     <link rel="stylesheet" href="/static/css/styles.css">
     <script src="/static/js/prompts.js"></script>
     <script src="/static/js/models.js"></script>
+    <style>
+        /* Add this in the <head> section or to your CSS file */
+        .recent-file-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            padding: 5px;
+            border-radius: 4px;
+            background-color: var(--bg-color);
+        }
+        
+        .recent-file-link {
+            flex-grow: 1;
+            color: var(--text-color);
+            text-decoration: none;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .file-progress-bar {
+            width: 60px;
+            height: 5px;
+            background-color: #e0e0e0;
+            border-radius: 2px;
+            margin: 0 10px;
+        }
+        
+        .file-progress-inner {
+            height: 100%;
+            background-color: #28a745;
+            border-radius: 2px;
+        }
+        
+        .file-delete-btn {
+            background: none;
+            border: none;
+            color: #ff4d4d;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 0 5px;
+        }
+        
+        .file-delete-btn:hover {
+            color: #ff0000;
+        }
+        
+        .dark-mode .file-progress-bar {
+            background-color: #555;
+        }
+    </style>
 </head>
 
 <body>
@@ -191,6 +242,10 @@
                     pdfDoc = pdf;
                     pdfViewer.innerHTML = '';
                     currentFileName = file.name;
+                    
+                    // Store total pages for this file
+                    localStorage.setItem(`totalPages_${currentFileName}`, pdf.numPages);
+                    
                     const lastPage = localStorage.getItem(`lastPage_${currentFileName}`);
                     pageNum = lastPage ? Math.max(parseInt(lastPage) - 2, 1) : 1;
                     loadScaleForCurrentFile();
@@ -512,18 +567,35 @@
                 .replace('{targetLanguage}', targetLanguage);
 
             try {
-                // Get IPA transcription while waiting for the LLM response
-                const ipaPromise = getIPATranscription(word, targetLanguage);
+                // Show loading indicator
+                const notification = document.createElement('div');
+                notification.textContent = 'Generating flashcard...';
+                notification.style.position = 'fixed';
+                notification.style.top = '20px';
+                notification.style.right = '20px';
+                notification.style.padding = '10px';
+                notification.style.backgroundColor = 'rgba(0, 128, 0, 0.7)';
+                notification.style.color = 'white';
+                notification.style.borderRadius = '5px';
+                notification.style.zIndex = '1000';
+                document.body.appendChild(notification);
                 
-                // Get word audio (gTTS) in parallel
-                const wordAudioPromise = getAudioPromise(word, 'word', targetLanguage);
-                
-                // Get phrase audio (Polly) in parallel
-                const phraseAudioPromise = getAudioPromise(phrase, 'phrase', targetLanguage);
-                
+                // First get the response from the LLM
                 const response = await callLLMAPI(prompt);
                 if (response.flashcard) {
                     const flashcard = response.flashcard;
+                    
+                    // Update notification
+                    notification.textContent = 'Generating audio...';
+                    
+                    // Get IPA transcription for the word from the flashcard
+                    const ipaPromise = getIPATranscription(flashcard.word, targetLanguage);
+                    
+                    // Get word audio using the word from the LLM response
+                    const wordAudioPromise = getAudioPromise(flashcard.word, 'word', targetLanguage);
+                    
+                    // Get phrase audio using the question from the LLM response (contains the example sentence)
+                    const phraseAudioPromise = getAudioPromise(flashcard.question, 'phrase', targetLanguage);
                     
                     // Wait for all promises to resolve
                     const [ipa, wordAudio, phraseAudio] = await Promise.all([
@@ -542,19 +614,37 @@
                         phraseAudio: phraseAudio
                     };
                     
-                    console.log(formattedFlashcard);
+                    console.log("Generated flashcard with audio:", formattedFlashcard);
                     displayLanguageFlashcard(formattedFlashcard);
+                    
+                    // Update notification
+                    notification.textContent = 'Flashcard created!';
+                    setTimeout(() => {
+                        document.body.removeChild(notification);
+                    }, 2000);
                 } else {
                     throw new Error('Invalid response from API');
                 }
             } catch (error) {
                 console.error('Error calling LLM API:', error);
                 alert('Failed to generate language flashcard. Please check your API key and try again.');
+                // Remove notification if it exists
+                const notification = document.querySelector('div[style*="position: fixed"]');
+                if (notification) {
+                    document.body.removeChild(notification);
+                }
             }
         }
 
         async function getAudioPromise(text, type, language) {
             try {
+                if (!text || text.trim() === '') {
+                    console.warn(`Empty text provided for ${type} audio`);
+                    return '';
+                }
+                
+                console.log(`Getting ${type} audio for: "${text.substring(0, 30)}..."`, language);
+                
                 const response = await fetch('/get_audio', {
                     method: 'POST',
                     headers: {
@@ -562,11 +652,17 @@
                     },
                     body: JSON.stringify({
                         word: text,
+                        type: type,
                         language: language,
-                        type: type
                     })
                 });
                 const data = await response.json();
+                
+                if (data.error) {
+                    console.error(`Error getting ${type} audio:`, data.error);
+                    return '';
+                }
+                
                 return data.audio || '';
             } catch (error) {
                 console.error(`Error getting ${type} audio:`, error);
@@ -1500,25 +1596,90 @@
                     fileList.innerHTML = '';
                     recentFiles.forEach(file => {
                         const li = document.createElement('li');
+                        li.className = 'recent-file-item';
+                        
+                        // Get completion percentage for this file
+                        const lastPage = parseInt(localStorage.getItem(`lastPage_${file.filename}`)) || 0;
+                        const totalPages = parseInt(localStorage.getItem(`totalPages_${file.filename}`)) || 0;
+                        let percentComplete = 0;
+                        
+                        if (totalPages > 0 && lastPage > 0) {
+                            percentComplete = Math.min(Math.round((lastPage / totalPages) * 100), 100);
+                        }
+                        
+                        // Create file link with completion percentage
                         const a = document.createElement('a');
                         a.href = '#';
+                        a.className = 'recent-file-link';
                         a.textContent = `${file.filename} (${new Date(file.date).toLocaleDateString()})`;
                         a.addEventListener('click', function (e) {
                             e.preventDefault();
                             fetch(`/open_pdf/${file.filename}`)
                                 .then(response => response.blob())
                                 .then(blob => {
-                                    const fileType = file.filename.toLowerCase().endsWith('.pdf') ? 'application/pdf' : 'text/plain';
+                                    const fileType = file.filename.toLowerCase().endsWith('.pdf') ? 'application/pdf' : 
+                                                    file.filename.toLowerCase().endsWith('.epub') ? 'application/epub+zip' : 'text/plain';
                                     const newFile = new File([blob], file.filename, { type: fileType });
                                     loadFile(newFile);
                                 })
                                 .catch(error => console.error('Error:', error));
                         });
+                        
+                        // Create progress bar
+                        const progressBar = document.createElement('div');
+                        progressBar.className = 'file-progress-bar';
+                        
+                        const progressInner = document.createElement('div');
+                        progressInner.className = 'file-progress-inner';
+                        progressInner.style.width = `${percentComplete}%`;
+                        progressInner.setAttribute('title', `${percentComplete}% complete`);
+                        
+                        progressBar.appendChild(progressInner);
+                        
+                        // Create delete button
+                        const deleteBtn = document.createElement('button');
+                        deleteBtn.className = 'file-delete-btn';
+                        deleteBtn.innerHTML = '&times;';
+                        deleteBtn.setAttribute('title', 'Remove from recent files');
+                        deleteBtn.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            removeFromRecentFiles(file.filename);
+                        });
+                        
+                        // Add all elements to list item
                         li.appendChild(a);
+                        li.appendChild(progressBar);
+                        li.appendChild(deleteBtn);
                         fileList.appendChild(li);
                     });
                 })
                 .catch(error => console.error('Error loading recent files:', error));
+        }
+
+        function removeFromRecentFiles(filename) {
+            if (confirm(`Remove ${filename} from recent files list?`)) {
+                fetch('/remove_recent_file', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ filename: filename })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        loadRecentFiles(); // Refresh the list
+                    } else {
+                        console.error('Error removing file:', data.error);
+                        alert('Failed to remove file from recent list');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Failed to remove file from recent list');
+                });
+            }
         }
 
         // Call loadRecentFiles when the page loads
@@ -1728,7 +1889,22 @@
 
             // Load and set the saved language choice
             const savedLanguage = loadLanguageChoice();
-            setLanguageButton(savedLanguage);
+            
+            // Ensure we have access to the language buttons
+            const languageButtons = document.querySelectorAll('#language-buttons .mode-btn');
+            languageButtons.forEach(btn => btn.classList.remove('selected'));
+            
+            // First try to find the button for the saved language
+            const savedLanguageButton = document.querySelector(`#language-buttons .mode-btn[data-language="${savedLanguage}"]`);
+            if (savedLanguageButton) {
+                savedLanguageButton.classList.add('selected');
+            } else {
+                // Fall back to English if saved language button not found
+                const englishButton = document.querySelector('#language-buttons .mode-btn[data-language="English"]');
+                if (englishButton) {
+                    englishButton.classList.add('selected');
+                }
+            }
             
             // Make sure export buttons and collection count are properly initialized
             updateExportButtonVisibility();
