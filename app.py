@@ -249,6 +249,29 @@ def remove_recent_file():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
+@app.route('/translate_text', methods=['POST'])
+def translate_text():
+    data = request.json
+    text = data.get('text', '')
+    model = data.get('model')
+    
+    if not text:
+        return jsonify({'error': 'No text provided'}), 400
+    
+    try:
+        # Create a simple prompt for translation
+        prompt = f"Translate this text to Vietnamese. Only return the translation, no additional text.\n\n{text}"
+        
+        # Use the existing function to generate completion
+        translation = generate_completion(prompt, model=model)
+        
+        # Clean up any additional text the model might include
+        translation = translation.strip()
+        
+        return jsonify({'translation': translation})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 if __name__ == '__main__':
     # Use environment variables to determine the run mode
     debug_mode = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
