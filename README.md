@@ -3,6 +3,20 @@ pip install -r requirements.txt
 python app.py
 ```
 
+``` 
+# Create .env file
+AWS_ACCESS_KEY_ID=...
+AWS_SECRET_ACCESS_KEY=...
+
+
+SUPABASE_URL=https://iioxqphxakvhhtyvdhrh.supabase.co
+SUPABASE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlpb3hxcGh4YWt2aGh0eXZkaHJoIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczODgzNDkyMCwiZXhwIjoyMDU0NDEwOTIwfQ.CNX5Fc0JAljnkL_uf7qnUjbWX2urwYXA-7ihpvopY1Y
+
+
+GEMINI_API_KEY=...
+```
+
+
 # PDF with Flashcard Generation: AI-Powered Study Companion
 
 Elevate your learning experience with our AI-driven document viewer and flashcard generator! This web application transforms your PDFs, TXT files, and EPUBs into interactive flashcards and explanations using Claude AI, perfect for importing into Anki. Ideal for students, researchers, and lifelong learners looking to enhance their study sessions and spaced repetition practice.
