@@ -251,7 +251,6 @@ def main():
             print(f"Generation time: {duration:.2f} seconds")
     else:  # default to polly
         print(f"\n--- Testing AWS Polly for: '{words[0]}' with voice {args.voice_id} ---")
-        print(f"Generating audio...")
         start_time = time.time()
         result = transcriber.text_to_speech_polly(
             words[0], args.voice_id, args.output_format, args.output, args.base64

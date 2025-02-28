@@ -733,3 +733,126 @@ body {
 .dark-mode #pdf-viewer canvas {
     filter: invert(1) hue-rotate(180deg);
 }
+
+/* Improved button styling for language actions */
+#language-actions {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+    width: 100%;
+}
+
+#language-actions button {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 40px;
+}
+
+/* Make buttons equal width when both are visible */
+#language-actions.dual-buttons #translate-btn,
+#language-actions.dual-buttons #submit-btn {
+    flex: 1;
+}
+
+/* Make submit button full width when it's the only button */
+#language-actions.single-button #submit-btn {
+    flex: 1;
+    width: 100%;
+}
+
+#translate-btn {
+    background-color: #2ecc71;  /* Green color for translate */
+    color: white;
+}
+
+#translate-btn:hover {
+    background-color: #27ae60;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+#submit-btn {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+#submit-btn:hover {
+    background-color: #2980b9;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+/* Dark mode specific adjustments */
+.dark-mode #translate-btn {
+    background-color: #27ae60;
+}
+
+.dark-mode #translate-btn:hover {
+    background-color: #2ecc71;
+}
+
+/* Recent files styling moved from inline HTML */
+.recent-file-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+    padding: 5px;
+    border-radius: 4px;
+    background-color: var(--bg-color);
+}
+
+.recent-file-link {
+    flex-grow: 1;
+    color: var(--text-color);
+    text-decoration: none;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.file-progress-bar {
+    width: 60px;
+    height: 5px;
+    background-color: #e0e0e0;
+    border-radius: 2px;
+    margin: 0 10px;
+}
+
+.file-progress-inner {
+    height: 100%;
+    background-color: #28a745;
+    border-radius: 2px;
+}
+
+.file-delete-btn {
+    background: none;
+    border: none;
+    color: #ff4d4d;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 0 5px;
+}
+
+.file-delete-btn:hover {
+    color: #ff0000;
+}
+
+.dark-mode .file-progress-bar {
+    background-color: #555;
+}
+
+/* Highlight instruction styling */
+#highlight-instruction {
+    font-size: 0.7em;
+    color: #666;
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+}

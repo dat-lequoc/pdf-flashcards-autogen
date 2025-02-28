@@ -13,57 +13,6 @@
     <link rel="stylesheet" href="/static/css/styles.css">
     <script src="/static/js/prompts.js"></script>
     <script src="/static/js/models.js"></script>
-    <style>
-        /* Add this in the <head> section or to your CSS file */
-        .recent-file-item {
-            display: flex;
-            align-items: center;
-            margin-bottom: 8px;
-            padding: 5px;
-            border-radius: 4px;
-            background-color: var(--bg-color);
-        }
-        
-        .recent-file-link {
-            flex-grow: 1;
-            color: var(--text-color);
-            text-decoration: none;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-        
-        .file-progress-bar {
-            width: 60px;
-            height: 5px;
-            background-color: #e0e0e0;
-            border-radius: 2px;
-            margin: 0 10px;
-        }
-        
-        .file-progress-inner {
-            height: 100%;
-            background-color: #28a745;
-            border-radius: 2px;
-        }
-        
-        .file-delete-btn {
-            background: none;
-            border: none;
-            color: #ff4d4d;
-            cursor: pointer;
-            font-size: 16px;
-            padding: 0 5px;
-        }
-        
-        .file-delete-btn:hover {
-            color: #ff0000;
-        }
-        
-        .dark-mode .file-progress-bar {
-            background-color: #555;
-        }
-    </style>
 </head>
 
 <body>
@@ -103,8 +52,8 @@
             <button class="mode-btn" data-mode="language">Language</button>
         </div>
         <div id="language-actions" style="display: none;">
-            <button id="submit-btn" style="display: block;">Generate</button>
-            <button id="translate-btn" style="display: none;">Translate</button>
+            <button id="translate-btn">Translate</button>
+            <button id="submit-btn">Generate</button>
         </div>
         <div id="flashcards"></div>
         <div class="dropdown" id="collection-dropdown">
@@ -120,7 +69,7 @@
             <h3>Recent Files</h3>
             <ul id="file-list"></ul>
         </div>
-        <div id="highlight-instruction" style="font-size: 0.7em; color: #666; position: absolute; bottom: 5px; right: 5px;">Use Alt+Select to highlight text</div>
+        <div id="highlight-instruction">Use Alt+Select to highlight text</div>
     </div>
 
     <!-- Explanation Modal -->
@@ -1377,7 +1326,22 @@
                 systemPrompt.style.display = mode === 'flashcard' ? 'block' : 'none';
                 document.getElementById('explain-prompt').style.display = mode === 'explain' ? 'block' : 'none';
                 document.getElementById('language-prompt').style.display = mode === 'language' ? 'block' : 'none';
-                submitBtn.style.display = 'block';
+                
+                // Update language actions container based on mode
+                const languageActions = document.getElementById('language-actions');
+                languageActions.style.display = 'flex'; // Always show the container
+                
+                // Show/hide translate button based on mode
+                const translateBtn = document.getElementById('translate-btn');
+                if (mode === 'language') {
+                    translateBtn.style.display = 'block';
+                    languageActions.classList.add('dual-buttons');
+                    languageActions.classList.remove('single-button');
+                } else {
+                    translateBtn.style.display = 'none';
+                    languageActions.classList.remove('dual-buttons');
+                    languageActions.classList.add('single-button');
+                }
                 
                 // For language mode, make sure to reinitialize the language selection
                 if (mode === 'language') {
@@ -1407,8 +1371,8 @@
             const currentLanguage = selectedLanguageButton ? selectedLanguageButton.dataset.language : 'English';
             const submitBtn = document.getElementById('submit-btn');
             
-            // Add language indicator to the submit button
-            submitBtn.innerHTML = `Generate <span style="font-size: 0.8em; color: #666; margin-left: 5px;">(${currentLanguage})</span>`;
+            // Remove language indicator from the submit button
+            submitBtn.innerHTML = `Generate`;
             
             // Also update the translate button
             const translateBtn = document.getElementById('translate-btn');
@@ -1965,6 +1929,7 @@
             // Initialize the language actions section
             const languageActions = document.getElementById('language-actions');
             languageActions.style.display = 'flex';
+            languageActions.classList.add('dual-buttons'); // Initially in language mode with both buttons
             document.getElementById('submit-btn').style.display = 'block';
             document.getElementById('translate-btn').style.display = 'block';
             
@@ -2203,6 +2168,17 @@
                             
                             // Prepend new translation at the top of the container
                             flashcardsContainer.insertBefore(translationElement, flashcardsContainer.firstChild);
+                            
+                            // Calculate auto-discard duration based on number of words
+                            const wordCount = data.translation.split(/\s+/).length;
+                            const autoDismissDuration = Math.max(60, Math.ceil(wordCount)) * 1000;
+                            console.log('Word count:', wordCount);
+                            console.log('Auto-discard duration:', autoDismissDuration);
+
+                            // Set up silent auto-discard after the calculated duration
+                            setTimeout(() => {
+                                translationElement.remove();
+                            }, autoDismissDuration);
                         }
                         
                         // Update notification
@@ -2237,11 +2213,14 @@
             // Style the language actions container
             const languageActions = document.getElementById('language-actions');
             if (languageActions) {
-                languageActions.style.display = 'none'; // Initially hidden
                 languageActions.style.marginBottom = '10px';
-                // Make the buttons appear side by side
-                languageActions.style.display = 'flex';
-                languageActions.style.gap = '10px';
+                // Make the buttons appear side by side with equal width when in language mode
+                if (mode === 'language') {
+                    languageActions.classList.add('dual-buttons');
+                } else {
+                    languageActions.classList.add('single-button');
+                    document.getElementById('translate-btn').style.display = 'none';
+                }
             }
         });
     </script>
