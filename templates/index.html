@@ -35,15 +35,44 @@
                 <button id="go-to-page-btn">Go</button>
             </div>
         </div>
-        <div id="settings-panel" style="display: none;">
-            <input type="password" id="api-key-input" placeholder="Enter API Key">
-            <select id="model-select"></select>
-            <textarea id="system-prompt" placeholder="Enter system prompt for flashcard generation"></textarea>
-            <textarea id="explain-prompt" placeholder="Enter system prompt for explanation" style="display: none;"></textarea>
-            <textarea id="language-prompt" placeholder="Enter system prompt for language mode"></textarea>
-            <div id="language-buttons" style="display: none; margin-top: 10px;">
-                <button class="mode-btn" data-language="English">English</button>
-                <button class="mode-btn" data-language="French">French</button>
+        <!-- Replace settings-panel with a modal -->
+        <!-- Settings Modal -->
+        <div id="settingsModal" class="modal">
+            <div class="modal-content">
+                <span class="close" id="settingsModalClose">&times;</span>
+                <h2>Settings</h2>
+                
+                <div class="settings-section">
+                    <h3>API Configuration</h3>
+                    <input type="password" id="api-key-input" placeholder="Enter API Key">
+                    <select id="model-select"></select>
+                </div>
+                
+                <div class="settings-section">
+                    <h3>Prompts</h3>
+                    <h4>Flashcard Mode</h4>
+                    <textarea id="system-prompt" placeholder="Enter system prompt for flashcard generation"></textarea>
+                    
+                    <h4>Explanation Mode</h4>
+                    <textarea id="explain-prompt" placeholder="Enter system prompt for explanation"></textarea>
+                    
+                    <h4>Language Mode</h4>
+                    <textarea id="language-prompt" placeholder="Enter system prompt for language mode"></textarea>
+                    <div id="language-buttons">
+                        <button class="mode-btn" data-language="English">English</button>
+                        <button class="mode-btn" data-language="French">French</button>
+                    </div>
+                </div>
+                
+                <div class="settings-section">
+                    <h3>Usage Tips</h3>
+                    <div class="tip">
+                        <strong>Language Mode:</strong> Double-click a word to create a flashcard with pronunciation and translation.
+                    </div>
+                    <div class="tip">
+                        <strong>Highlights:</strong> Use Alt+Select to highlight text in any document.
+                    </div>
+                </div>
             </div>
         </div>
         <div id="mode-toggle">
@@ -1914,8 +1943,8 @@
 
             // Add event listener for settings icon
             document.getElementById('settings-icon').addEventListener('click', function () {
-                const settingsPanel = document.getElementById('settings-panel');
-                settingsPanel.style.display = settingsPanel.style.display === 'none' ? 'block' : 'none';
+                const settingsModal = document.getElementById('settingsModal');
+                settingsModal.style.display = 'block';
             });
 
             // Remove 'selected' class from main mode buttons only
@@ -2221,6 +2250,18 @@
                     languageActions.classList.add('single-button');
                     document.getElementById('translate-btn').style.display = 'none';
                 }
+            }
+        });
+
+        document.getElementById('settingsModalClose').addEventListener('click', function() {
+            document.getElementById('settingsModal').style.display = 'none';
+        });
+
+        // Close modal when clicking outside the content (like explanation modal)
+        window.addEventListener('click', function(event) {
+            const settingsModal = document.getElementById('settingsModal');
+            if (event.target == settingsModal) {
+                settingsModal.style.display = 'none';
             }
         });
     </script>

@@ -313,20 +313,52 @@ body {
   max-height: 80vh;
   overflow-y: auto;
   color: var(--text-primary);
+  border-radius: 5px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  animation: modalFadeIn 0.3s ease;
 }
 
-.close {
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Make the settings modal specifically have a bit more room */
+#settingsModal .modal-content {
+  max-width: 900px;
+  max-height: 85vh;
+}
+
+/* Add styling for the close button to be more prominent */
+.modal .close {
   color: #aaa;
   float: right;
   font-size: 28px;
   font-weight: bold;
+  line-height: 1;
+  transition: color 0.2s ease;
 }
 
-.close:hover,
-.close:focus {
-  color: black;
+.modal .close:hover,
+.modal .close:focus {
+  color: var(--primary-color);
   text-decoration: none;
   cursor: pointer;
+}
+
+/* Style the modal header */
+#settingsModal h2 {
+  color: var(--primary-color);
+  margin-top: 0;
+  border-bottom: 2px solid var(--border-color);
+  padding-bottom: 10px;
+  margin-bottom: 20px;
 }
 
 /* Markdown styles */
@@ -855,4 +887,69 @@ body {
     position: absolute;
     bottom: 5px;
     right: 5px;
+}
+
+/* Settings Modal Styles */
+.settings-section {
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.settings-section:last-child {
+    border-bottom: none;
+}
+
+.settings-section h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: var(--primary-color);
+}
+
+.settings-section h4 {
+    margin-top: 15px;
+    margin-bottom: 10px;
+    color: var(--text-primary);
+}
+
+.tip {
+    background-color: rgba(52, 152, 219, 0.1);
+    border-left: 4px solid var(--primary-color);
+    padding: 10px 15px;
+    margin-bottom: 10px;
+    border-radius: 0 4px 4px 0;
+}
+
+.dark-mode .tip {
+    background-color: rgba(52, 152, 219, 0.2);
+}
+
+/* Make sure all textareas in settings have proper visibility */
+#settingsModal textarea {
+    display: block;
+    width: 100%;
+    height: 100px;
+    margin-bottom: 15px;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 3px;
+    resize: vertical;
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+/* Style for language buttons in settings */
+#settingsModal #language-buttons {
+    display: flex;
+    margin-top: 10px;
+}
+
+#settingsModal #language-buttons .mode-btn {
+    flex: 1;
+    margin-right: 5px;
+    padding: 8px;
+}
+
+#settingsModal #language-buttons .mode-btn:last-child {
+    margin-right: 0;
 }
