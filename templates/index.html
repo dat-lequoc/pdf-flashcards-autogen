@@ -138,9 +138,29 @@
         let lastRequestTime = 0;
         const cooldownTime = 1000; // 1 second cooldown
 
+        // Add these new variables for page recycling
+        const renderedPages = new Map(); // Map to track rendered pages
+        const viewportWindowSize = 4; // Number of pages to keep above and below the current page
+        let lastRecycleCheck = 0; // Throttle recycling checks
+        const recycleThrottleTime = 200; // Milliseconds between recycle checks
+
         function renderPage(num) {
+            // Don't re-render if this page is already rendered
+            if (renderedPages.has(num)) {
+                return;
+            }
+            
+            // Add a rendering lock for this page to prevent race conditions
+            renderedPages.set(num, 'rendering');
+            
             pageRendering = true;
             pdfDoc.getPage(num).then(function (page) {
+                // Check again if another process has rendered this page while we were fetching
+                if (renderedPages.get(num) !== 'rendering') {
+                    pageRendering = false;
+                    return;
+                }
+                
                 const viewport = page.getViewport({ scale: scale });
                 const pixelRatio = window.devicePixelRatio || 1;
                 const adjustedViewport = page.getViewport({ scale: scale * pixelRatio });
@@ -193,7 +213,18 @@
                     });
                 });
 
-                pdfViewer.appendChild(pageDiv);
+                // Before inserting, check if this page hasn't been added by another process
+                const existingPage = document.querySelector(`.page[data-page-number="${num}"]`);
+                if (existingPage) {
+                    // Remove the old page to prevent duplication
+                    existingPage.remove();
+                }
+                
+                // Insert the page div at the correct position in the document
+                insertPageAtCorrectPosition(pageDiv, num);
+                
+                // Add page to tracking map with the actual element
+                renderedPages.set(num, pageDiv);
 
                 // Attach language mode listener to the new page
                 attachLanguageModeListener(pageDiv);
@@ -207,6 +238,120 @@
                 }
             });
         }
+
+        // Add function to insert page at the correct position in the DOM
+        function insertPageAtCorrectPosition(pageDiv, pageNumber) {
+            const pageNodes = pdfViewer.querySelectorAll('.page');
+            let inserted = false;
+            
+            // Find the right position to insert the page
+            for (let i = 0; i < pageNodes.length; i++) {
+                const currentNode = pageNodes[i];
+                const currentPageNum = parseInt(currentNode.dataset.pageNumber);
+                
+                if (currentPageNum > pageNumber) {
+                    pdfViewer.insertBefore(pageDiv, currentNode);
+                    inserted = true;
+                    break;
+                }
+            }
+            
+            // If we didn't insert it in the middle, append it at the end
+            if (!inserted) {
+                pdfViewer.appendChild(pageDiv);
+            }
+        }
+
+        // Function to remove pages outside the viewport window
+        function recyclePages() {
+            const currentTime = Date.now();
+            
+            // Throttle recycle operations to avoid performance issues
+            if (currentTime - lastRecycleCheck < recycleThrottleTime) return;
+            lastRecycleCheck = currentTime;
+            
+            // Only perform recycling if we have a significant number of pages
+            if (renderedPages.size <= viewportWindowSize * 2 + 1) return;
+            
+            const minPageToKeep = Math.max(1, currentPage - viewportWindowSize);
+            const maxPageToKeep = Math.min(pdfDoc.numPages, currentPage + viewportWindowSize);
+            
+            // Get all page numbers that need to be recycled
+            const pagesToRemove = [];
+            renderedPages.forEach((pageDiv, pageNum) => {
+                if (pageNum < minPageToKeep || pageNum > maxPageToKeep) {
+                    pagesToRemove.push(pageNum);
+                }
+            });
+            
+            // Remove the pages outside the window
+            pagesToRemove.forEach(pageNum => {
+                // Get the page element
+                const pageDiv = renderedPages.get(pageNum);
+                // Make sure we have the element before trying to remove it
+                if (pageDiv && pageDiv.parentNode) {
+                    pageDiv.parentNode.removeChild(pageDiv);
+                    renderedPages.delete(pageNum);
+                }
+            });
+            
+            // Log recycling stats if needed
+            if (pagesToRemove.length > 0) {
+                console.log(`Recycled ${pagesToRemove.length} pages. ${renderedPages.size} pages remain in memory.`);
+            }
+        }
+
+        // Update the scroll handler to add recycling logic
+        let scrollTimeout = null;
+        document.getElementById('left-panel').addEventListener('scroll', function() {
+            // Clear previous timeout to debounce rapid scrolling
+            if (scrollTimeout) clearTimeout(scrollTimeout);
+            
+            // Delayed execution for scroll-based page loading
+            scrollTimeout = setTimeout(() => {
+                // Existing logic for adding pages
+                if (this.scrollTop + this.clientHeight >= this.scrollHeight - 500) {
+                    if (pageNum < pdfDoc.numPages) {
+                        pageNum++;
+                        renderPage(pageNum);
+                    }
+                }
+
+                // Updated: Update current page based on the center of the viewport and ensure pages around it are loaded
+                const pages = document.querySelectorAll('.page');
+                const viewportMid = window.innerHeight / 2;
+                let foundCurrentPage = false;
+                
+                for (let i = 0; i < pages.length; i++) {
+                    const page = pages[i];
+                    const rect = page.getBoundingClientRect();
+                    if (rect.top < viewportMid && rect.bottom > viewportMid) {
+                        const newPageNum = parseInt(page.dataset.pageNumber);
+                        if (newPageNum !== currentPage) {
+                            updateCurrentPage(newPageNum);
+                            foundCurrentPage = true;
+                            
+                            // Preload pages around the current page
+                            for (let j = -1; j <= 2; j++) {
+                                const pageToLoad = newPageNum + j;
+                                if (pageToLoad > 0 && pageToLoad <= pdfDoc.numPages && !renderedPages.has(pageToLoad)) {
+                                    renderPage(pageToLoad);
+                                }
+                            }
+                            
+                            // Recycle pages now that the current page has changed
+                            recyclePages();
+                        }
+                        break;
+                    }
+                }
+                
+                // If we didn't find a current page (might be at a boundary), recycle anyway
+                if (!foundCurrentPage) {
+                    recyclePages();
+                }
+            }, 50); // Short delay to prevent multiple executions
+        });
 
         function loadFile(file) {
             if (file.name.endsWith('.pdf')) {
@@ -226,11 +371,14 @@
                     pdfViewer.innerHTML = '';
                     currentFileName = file.name;
                     
+                    // Clear rendered pages tracking when loading a new file
+                    renderedPages.clear();
+                    
                     // Store total pages for this file
                     localStorage.setItem(`totalPages_${currentFileName}`, pdf.numPages);
                     
                     const lastPage = localStorage.getItem(`lastPage_${currentFileName}`);
-                    pageNum = lastPage ? Math.max(parseInt(lastPage) - 2, 1) : 1;
+                    pageNum = lastPage ? Math.max(parseInt(lastPage), 1) : 1;
                     loadScaleForCurrentFile();
                     renderPage(pageNum);
                     updateCurrentPage(pageNum);
@@ -266,24 +414,32 @@
         function goToPage(num) {
             if (num >= 1 && num <= pdfDoc.numPages) {
                 pageNum = num;
-                pdfViewer.innerHTML = '';  // Clear all pages
-                renderPage(pageNum);  // Render the selected page
                 
-                // Also render a few pages after the selected page for better scrolling experience
-                for (let i = 1; i <= 2; i++) {
-                    if (pageNum + i <= pdfDoc.numPages) {
-                        renderPage(pageNum + i);
+                // If we're jumping to a page far away, clear all pages and start fresh
+                if (Math.abs(num - currentPage) > viewportWindowSize * 2) {
+                    pdfViewer.innerHTML = '';  // Clear all pages
+                    renderedPages.clear();  // Reset the tracking map
+                }
+                
+                // Render the selected page and nearby pages
+                for (let i = -viewportWindowSize; i <= viewportWindowSize; i++) {
+                    const pageToRender = num + i;
+                    if (pageToRender >= 1 && pageToRender <= pdfDoc.numPages) {
+                        renderPage(pageToRender);
                     }
                 }
                 
-                updateCurrentPage(pageNum);
-                localStorage.setItem(`lastPage_${currentFileName}`, pageNum);
+                updateCurrentPage(num);
+                localStorage.setItem(`lastPage_${currentFileName}`, num);
                 
                 // Scroll to the selected page
-                const targetPage = document.querySelector(`.page[data-page-number="${pageNum}"]`);
+                const targetPage = document.querySelector(`.page[data-page-number="${num}"]`);
                 if (targetPage) {
                     targetPage.scrollIntoView({ behavior: 'smooth' });
                 }
+                
+                // Recycle pages after a short delay
+                setTimeout(recyclePages, 500);
             } else {
                 alert('Invalid page number');
             }
@@ -307,29 +463,6 @@
                 }
             }
         }
-
-        // Infinite scrolling with page tracking
-        document.getElementById('left-panel').addEventListener('scroll', function () {
-            if (this.scrollTop + this.clientHeight >= this.scrollHeight - 500) {
-                if (pageNum < pdfDoc.numPages) {
-                    pageNum++;
-                    renderPage(pageNum);
-                }
-            }
-
-            // Updated: Update current page based on the center of the viewport
-            const pages = document.querySelectorAll('.page');
-            const viewportMid = window.innerHeight / 2;
-            for (let i = 0; i < pages.length; i++) {
-                const page = pages[i];
-                const rect = page.getBoundingClientRect();
-                if (rect.top < viewportMid && rect.bottom > viewportMid) {
-                    const newPageNum = parseInt(page.dataset.pageNumber);
-                    updateCurrentPage(newPageNum);
-                    break;
-                }
-            }
-        });
 
         function handleLanguageMode(event, targetLanguage) {
             if (mode !== 'language') return;
@@ -1326,6 +1459,7 @@
 
         function reRenderPDF() {
             pdfViewer.innerHTML = '';
+            renderedPages.clear();  // Reset the tracking map
             renderPage(pageNum);
         }
 
